@@ -3,10 +3,10 @@
   "id": "healthindicators",
   "version": "${version}",
 
-  "name": "PlayerHealthIndicators",
+  "name": "MobHealthIndicators",
   "description": "Displays a health bar above players",
   "authors": [
-    "Gaider10"
+    "vi945786"
   ],
 
   "license": "MIT",
@@ -14,17 +14,17 @@
   "environment": "client",
   "entrypoints": {
     "main": [
-      "me.andrew.healthindicators.HealthIndicatorsMod"
+      "net.vi.mobhealthindicator.MobHealthIndicator"
     ]
   },
   "mixins": [
-    "healthindicators.mixins.json"
+    "mobhealthindicator.json"
   ],
 
   "depends": {
-    "fabricloader": ">=0.11.3",
+    "fabricloader": ">=0.15.7",
     "fabric": "*",
-    "minecraft": "1.20.x",
+    "minecraft": "1.20.4",
     "java": ">=17"
   }
 }
