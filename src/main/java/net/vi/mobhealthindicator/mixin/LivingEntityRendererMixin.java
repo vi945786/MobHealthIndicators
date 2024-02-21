@@ -58,40 +58,15 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
             float maxX = pixelsTotal / 2.0f;
 
             double heartDensity = 50F - (Math.max(4F - Math.ceil(heartsTotal / 10F), -3F) * 5F);
-            double h = 0;
 
+            Matrix4f model = null;
+            double h = 0;
+            HeartType lastType = null;
             for (int isDrawingEmpty = 0; isDrawingEmpty < 2; isDrawingEmpty++) {
                 for (int heart = 0; heart < heartsTotal; heart++) {
-                    if (heart % heartsPerRow == 0) {
-                        h = heart / heartDensity;
-                    }
 
-                    matrixStack.push();
-                    vertexConsumer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-
-                    matrixStack.translate(0, livingEntity.getHeight() + 0.5f + h, 0);
-                    if (this.hasLabel(livingEntity) && d <= 4096.0) {
-                        matrixStack.translate(0.0D, 9.0F * 1.15F * 0.025F, 0.0D);
-                        if (d < 100.0 && livingEntity instanceof PlayerEntity && livingEntity.getEntityWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
-                            matrixStack.translate(0.0D, 9.0F * 1.15F * 0.025F, 0.0D);
-                        }
-                    }
-
-                    matrixStack.multiply(this.dispatcher.getRotation());
-
-                    float pixelSize = 0.025F;
-                    matrixStack.scale(pixelSize, pixelSize, pixelSize);
-                    matrixStack.translate(0, Config.getHeartOffset(), 0);
-
-                    Matrix4f model = matrixStack.peek().getPositionMatrix();
-
-
-                    float x = maxX - (heart % 10) * 8;
-
-                    if(isDrawingEmpty == 0) {
-                        drawHeart(model, vertexConsumer, x, HeartType.EMPTY);
-                    } else {
-                        HeartType type;
+                    HeartType type = HeartType.EMPTY;
+                    if(isDrawingEmpty != 0) {
                         if (heart < heartsRed) {
                             type = HeartType.RED_FULL;
                             if (heart == heartsRed - 1 && lastRedHalf) {
@@ -105,13 +80,49 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
                                 type = HeartType.YELLOW_HALF;
                             }
                         }
+                    }
+
+                    if (heart % heartsPerRow == 0 || (lastType != type && lastType != null)) {
+                        if(heart != 0) {
+                            tessellator.draw();
+                            matrixStack.pop();
+                        }
+
+                        matrixStack.push();
+                        vertexConsumer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+
+                        if(heart % heartsPerRow == 0) h = (heart / heartDensity);
+
+                        matrixStack.translate(0, livingEntity.getHeight() + 0.5f + h, 0);
+                        if (this.hasLabel(livingEntity) && d <= 4096.0) {
+                            matrixStack.translate(0.0D, 9.0F * 1.15F * 0.025F, 0.0D);
+                            if (d < 100.0 && livingEntity instanceof PlayerEntity && livingEntity.getEntityWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
+                                matrixStack.translate(0.0D, 9.0F * 1.15F * 0.025F, 0.0D);
+                            }
+                        }
+
+                        matrixStack.multiply(this.dispatcher.getRotation());
+
+                        float pixelSize = 0.025F;
+                        matrixStack.scale(pixelSize, pixelSize, pixelSize);
+                        matrixStack.translate(0, Config.getHeartOffset(), 0);
+
+                        model = matrixStack.peek().getPositionMatrix();
+                    }
+
+                    float x = maxX - (heart % 10) * 8;
+                    lastType = type;
+
+                    if(isDrawingEmpty == 0) {
+                        drawHeart(model, vertexConsumer, x, HeartType.EMPTY);
+                    } else {
                         if (type != HeartType.EMPTY) {
                             drawHeart(model, vertexConsumer, x, type);
                         }
                     }
-                    tessellator.draw();
-                    matrixStack.pop();
                 }
+                tessellator.draw();
+                matrixStack.pop();
             }
         }
     }
