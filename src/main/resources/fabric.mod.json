@@ -9,8 +9,6 @@
     "vi945786"
   ],
 
-  "license": "MIT",
-
   "environment": "client",
   "entrypoints": {
     "main": [

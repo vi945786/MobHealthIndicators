@@ -1,12 +1,6 @@
 {
   "key.categories.mobhealthindicator": "Mob Health Indicator",
   "key.mobhealthindicator.renderingenabled": "Toggle Rendering",
-  "key.mobhealthindicator.heartstackingenabled": "Toggle Heart Stacking",
-  "key.mobhealthindicator.increaseheartoffset": "Increase Heart Height Offset",
-  "key.mobhealthindicator.decreaseheartoffset": "Decrease Heart Height Offset",
   "mobhealthindicator.enabledrendering": "Enabled Health Bars",
-  "mobhealthindicator.disabledrendering": "Disabled Health Bars",
-  "mobhealthindicator.enabledstacking": "Enabled Health Stacking",
-  "mobhealthindicator.disabledstacking": "Disabled Health Stacking",
-  "mobhealthindicator.setheartheight": "Set Heart Height Offset To %s"
+  "mobhealthindicator.disabledrendering": "Disabled Health Bars"
 }

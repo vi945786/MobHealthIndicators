@@ -1,6 +1,7 @@
 package net.vi.mobhealthindicator;
 
-import net.fabricmc.fabric.impl.item.FabricItemInternals;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexFormat;
 import net.minecraft.util.Identifier;
 
 public enum HeartType {

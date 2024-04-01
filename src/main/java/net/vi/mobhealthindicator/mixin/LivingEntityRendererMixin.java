@@ -1,9 +1,8 @@
 package net.vi.mobhealthindicator.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
@@ -11,32 +10,53 @@ import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.feature.FeatureRendererContext;
 import net.minecraft.client.render.entity.model.EntityModel;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.texture.SpriteLoader;
+import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.resource.Resource;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
-import net.vi.mobhealthindicator.Config;
 import net.vi.mobhealthindicator.HeartType;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.NVDrawTexture;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static net.vi.mobhealthindicator.MobHealthIndicator.renderEnabled;
+
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extends EntityModel<T>> extends EntityRenderer<T> implements FeatureRendererContext<T, M> {
+
+    @Shadow protected M model;
 
     protected LivingEntityRendererMixin(EntityRendererFactory.Context ctx) {
         super(ctx);
     }
 
+    BufferBuilder bufferBuilder = null;
+
     @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("TAIL"))
     public void renderHealth(T livingEntity, float yaw, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        if (player != null && Config.getRendering() && player.getVehicle() != livingEntity && livingEntity != player && !livingEntity.isInvisibleTo(player)) {
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder vertexConsumer = tessellator.getBuffer();
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        if (player != null && renderEnabled && player.getVehicle() != livingEntity && livingEntity != player && !livingEntity.isInvisibleTo(player) && this.model != null) {
+            RenderLayer renderLayerEmpty = this.model.getLayer(HeartType.EMPTY.icon);
+            RenderLayer renderLayerRedFull = this.model.getLayer(HeartType.RED_FULL.icon);
+            RenderLayer renderLayerRedHalf = this.model.getLayer(HeartType.RED_HALF.icon);
+            RenderLayer renderLayerYellowFull = this.model.getLayer(HeartType.YELLOW_FULL.icon);
+            RenderLayer renderLayerYellowHalf = this.model.getLayer(HeartType.YELLOW_HALF.icon);
+
+
+            RenderLayer renderLayer = renderLayerEmpty;
+            bufferBuilder = (BufferBuilder) vertexConsumerProvider.getBuffer(renderLayer);
+            renderLayer.startDrawing();
 
             double d = this.dispatcher.getSquaredDistanceToCamera(livingEntity);
 
@@ -52,7 +72,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
             int heartsTotal = heartsNormal + heartsYellow;
 
 
-            int heartsPerRow = Config.getHeartStacking() ? 10 : heartsTotal + 1;
+            int heartsPerRow = 10;
 
             int pixelsTotal = Math.min(heartsTotal, heartsPerRow) * 8 + 1;
             float maxX = pixelsTotal / 2.0f;
@@ -84,12 +104,25 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
 
                     if (heart % heartsPerRow == 0 || (lastType != type && lastType != null)) {
                         if(heart != 0) {
-                            tessellator.draw();
+                            renderLayer.endDrawing();
                             matrixStack.pop();
                         }
 
+                        if(type.equals(HeartType.EMPTY)) {
+                            renderLayer = renderLayerEmpty;
+                        } else if(type.equals(HeartType.RED_FULL)) {
+                            renderLayer = renderLayerRedFull;
+                        } else if(type.equals(HeartType.RED_HALF)) {
+                            renderLayer = renderLayerRedHalf;
+                        } else if(type.equals(HeartType.YELLOW_FULL)) {
+                            renderLayer = renderLayerYellowFull;
+                        } else if(type.equals(HeartType.YELLOW_HALF)) {
+                            renderLayer = renderLayerYellowHalf;
+                        }
+                        bufferBuilder = (BufferBuilder) vertexConsumerProvider.getBuffer(renderLayer);
+
                         matrixStack.push();
-                        vertexConsumer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+                        renderLayer.startDrawing();
 
                         if(heart % heartsPerRow == 0) h = (heart / heartDensity);
 
@@ -105,7 +138,6 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
 
                         float pixelSize = 0.025F;
                         matrixStack.scale(pixelSize, pixelSize, pixelSize);
-                        matrixStack.translate(0, Config.getHeartOffset(), 0);
 
                         model = matrixStack.peek().getPositionMatrix();
                     }
@@ -114,24 +146,20 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
                     lastType = type;
 
                     if(isDrawingEmpty == 0) {
-                        drawHeart(model, vertexConsumer, x, HeartType.EMPTY);
+                        drawHeart(model, bufferBuilder, x, HeartType.EMPTY, light);
                     } else {
                         if (type != HeartType.EMPTY) {
-                            drawHeart(model, vertexConsumer, x, type);
+                            drawHeart(model, bufferBuilder, x, type, light);
                         }
                     }
                 }
-                tessellator.draw();
+                renderLayer.endDrawing();
                 matrixStack.pop();
             }
         }
     }
 
-    private static void drawHeart(Matrix4f model, VertexConsumer vertexConsumer, float x, HeartType type) {
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-        RenderSystem.setShaderTexture(0, type.icon);
-        RenderSystem.enableDepthTest();
-
+    private static void drawHeart(Matrix4f model, VertexConsumer vertexConsumer, float x, HeartType type, int light) {
         float minU = 0F;
         float maxU = 1F;
         float minV = 0F;
@@ -139,13 +167,13 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
 
         float heartSize = 9F;
 
-        drawVertex(model, vertexConsumer, x, 0F - heartSize, minU, maxV);
-        drawVertex(model, vertexConsumer, x - heartSize, 0F - heartSize, maxU, maxV);
-        drawVertex(model, vertexConsumer, x - heartSize, 0F, maxU, minV);
-        drawVertex(model, vertexConsumer, x, 0F, minU, minV);
+        drawVertex(model, vertexConsumer, x, 0F - heartSize, minU, maxV, light);
+        drawVertex(model, vertexConsumer, x - heartSize, 0F - heartSize, maxU, maxV, light);
+        drawVertex(model, vertexConsumer, x - heartSize, 0F, maxU, minV, light);
+        drawVertex(model, vertexConsumer, x, 0F, minU, minV, light);
     }
 
-    private static void drawVertex(Matrix4f model, VertexConsumer vertices, float x, float y, float u, float v) {
-        vertices.vertex(model, x, y, 0.0F).texture(u, v).next();
+    private static void drawVertex(Matrix4f model, VertexConsumer vertices, float x, float y, float u, float v, int light) {
+        vertices.vertex(model, x, y, 0.0F).color(1F, 1F, 1F, 1F).texture(u, v).overlay(0, 10).light(light).normal(x, y, 0.0F).next();
     }
 }
