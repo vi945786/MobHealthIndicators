@@ -6,15 +6,17 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.MathHelper;
 
 public class MobHealthIndicator implements ModInitializer {
 
     public static final String modId = "mobhealthindicator";
 
     public static final KeyBinding renderKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key." + modId + ".renderingenabled",
-            InputUtil.UNKNOWN_KEY.getCode(),
+            "key." + modId + ".togglerendering",
+            InputUtil.GLFW_KEY_PERIOD,
             "key.categories." + modId
     ));
 
@@ -34,9 +36,5 @@ public class MobHealthIndicator implements ModInitializer {
         if(client.player != null) {
             client.player.sendMessage(Text.translatable(modId + "." + message, args), true);
         }
-    }
-
-    public static double getHeartDensity(int heartsTotal) {
-        return 50F - (Math.max(4F - Math.ceil(heartsTotal / 10F), -3F) * 5F);
     }
 }

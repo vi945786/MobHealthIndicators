@@ -1,8 +1,6 @@
 package net.vi.mobhealthindicator.mixin;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
@@ -10,19 +8,13 @@ import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.feature.FeatureRendererContext;
 import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.texture.SpriteLoader;
-import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.resource.Resource;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.util.math.MathHelper;
 import net.vi.mobhealthindicator.HeartType;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.NVDrawTexture;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -146,10 +138,10 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
                     lastType = type;
 
                     if(isDrawingEmpty == 0) {
-                        drawHeart(model, bufferBuilder, x, HeartType.EMPTY, light);
+                        drawHeart(model, bufferBuilder, x, light);
                     } else {
                         if (type != HeartType.EMPTY) {
-                            drawHeart(model, bufferBuilder, x, type, light);
+                            drawHeart(model, bufferBuilder, x, light);
                         }
                     }
                 }
@@ -159,7 +151,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         }
     }
 
-    private static void drawHeart(Matrix4f model, VertexConsumer vertexConsumer, float x, HeartType type, int light) {
+    private static void drawHeart(Matrix4f model, VertexConsumer vertexConsumer, float x, int light) {
         float minU = 0F;
         float maxU = 1F;
         float minV = 0F;

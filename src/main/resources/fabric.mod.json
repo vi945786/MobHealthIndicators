@@ -4,11 +4,11 @@
   "version": "${version}",
 
   "name": "MobHealthIndicators",
-  "description": "Displays a health bar above players",
+  "description": "Displays a health bar above mobs",
   "authors": [
     "vi945786"
   ],
-
+  "icon": "assets/healthindicators/icon.png",
   "environment": "client",
   "entrypoints": {
     "main": [
@@ -16,7 +16,7 @@
     ]
   },
   "mixins": [
-    "mobhealthindicator.json"
+    "mobhealthindicator.mixins.json"
   ],
 
   "depends": {
