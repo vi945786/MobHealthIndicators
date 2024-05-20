@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "healthindicators",
+  "version": "${version}",
+
+  "name": "MobHealthIndicators",
+  "description": "Displays a health bar above mobs",
+  "authors": [
+    "vi945786"
+  ],
+  "icon": "assets/healthindicators/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "net.vi.mobhealthindicator.MobHealthIndicator"
+    ],
+    "modmenu": [
+      "net.vi.mobhealthindicator.config.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "mobhealthindicator.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric": "*",
+    "minecraft": ">=1.20.6",
+    "java": ">=21"
+  }
+}
