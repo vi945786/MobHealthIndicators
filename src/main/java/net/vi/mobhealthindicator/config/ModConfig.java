@@ -2,7 +2,8 @@ package net.vi.mobhealthindicator.config;
 
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
-import me.shedaniel.autoconfig.annotation.ConfigEntry;
+import me.shedaniel.autoconfig.annotation.Config.Gui.Background;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.EnumHandler;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -10,14 +11,15 @@ import net.vi.mobhealthindicator.MobHealthIndicator;
 
 import java.util.Arrays;
 
+import static me.shedaniel.autoconfig.annotation.Config.Gui.Background.TRANSPARENT;
 import static me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON;
 
-@Config(name = MobHealthIndicator.modId)
+@Config(name = MobHealthIndicator.modId) @Background(TRANSPARENT)
 public class ModConfig implements ConfigData {
 
     public boolean showHearts = true;
     public boolean dynamicBrightness = true;
-    @ConfigEntry.Gui.EnumHandler(option=BUTTON) public WhiteOrBlackList filteringMechanism = WhiteOrBlackList.BLACK_LIST;
+    @EnumHandler(option=BUTTON) public WhiteOrBlackList filteringMechanism = WhiteOrBlackList.BLACK_LIST;
     public String[] blackList = new String[] {"minecraft:armor_stand"};
     public String[] whiteList = new String[] {"minecraft:player"};
 
