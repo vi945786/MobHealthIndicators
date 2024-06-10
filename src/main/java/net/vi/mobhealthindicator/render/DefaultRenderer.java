@@ -6,7 +6,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.vi.mobhealthindicator.HeartType;
 import org.joml.Matrix4f;
 
-public class DefaultRenderer implements Renderer{
+public class DefaultRenderer implements Renderer {
 
     private BufferBuilder vertexConsumer;
     private Tessellator tessellator;

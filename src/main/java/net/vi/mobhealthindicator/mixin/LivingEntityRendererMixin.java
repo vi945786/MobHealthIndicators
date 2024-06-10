@@ -29,6 +29,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+
 import static net.vi.mobhealthindicator.MobHealthIndicator.configHolder;
 import static net.vi.mobhealthindicator.MobHealthIndicator.divideBy;
 
@@ -82,14 +85,16 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         float maxX = pixelsTotal / 2.0f;
 
         double heartDensity = Math.max(10 - (heartRows - 2), 3) * 0.0024F;
-        double heartHeight = 0;
 
-        HeartType lastType = null;
-        for (int isDrawingEmpty = 0; isDrawingEmpty < 2; isDrawingEmpty++) {
+
+        Consumer<Boolean> drawHearts = (Boolean isDrawingEmpty) -> {
+            double heartHeight = 0;
+            HeartType lastType = null;
+
             for (int heart = 0; heart < heartsTotal; heart++) {
 
                 HeartType type = HeartType.EMPTY;
-                if (isDrawingEmpty != 0) {
+                if (!isDrawingEmpty) {
                     if (heart < heartsRed) {
                         type = HeartType.RED_FULL;
                         if (heart == heartsRed - 1 && lastRedHalf) {
@@ -125,12 +130,13 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
                     matrixStack.multiply(dispatcher.getRotation());
 
                     matrixStack.scale(pixelSize, pixelSize, pixelSize);
+                    if (isDrawingEmpty) matrixStack.translate(0, 0, 0.1);
                 }
 
                 float x = maxX - (heart % heartsPerRow) * 8;
                 lastType = type;
 
-                if (isDrawingEmpty == 0) {
+                if (isDrawingEmpty) {
                     renderer.render(x);
                 } else {
                     if (type != HeartType.EMPTY) {
@@ -139,6 +145,9 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
                 }
             }
             renderer.endRendering();
-        }
+        };
+
+        drawHearts.accept(true);
+        drawHearts.accept(false);
     }
 }
