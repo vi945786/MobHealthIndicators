@@ -1,7 +1,6 @@
 package net.vi.mobhealthindicator.mixin;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
@@ -13,15 +12,12 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.vi.mobhealthindicator.HeartType;
+import net.vi.mobhealthindicator.render.HeartType;
 import net.vi.mobhealthindicator.config.ModConfig;
 import net.vi.mobhealthindicator.render.DefaultRenderer;
 import net.vi.mobhealthindicator.render.DynamicBrightnessRenderer;
 import net.vi.mobhealthindicator.render.Renderer;
-import org.joml.Quaternionf;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -29,11 +25,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import static net.vi.mobhealthindicator.MobHealthIndicator.configHolder;
-import static net.vi.mobhealthindicator.MobHealthIndicator.divideBy;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extends EntityModel<T>> extends EntityRenderer<T> implements FeatureRendererContext<T, M> {

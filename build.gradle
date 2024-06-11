@@ -20,10 +20,20 @@ dependencies {
 	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 17
+}
+
 processResources {
 	inputs.property "version", project.mod_version
 
 	filesMatching("fabric.mod.json") {
 		expand "version": project.mod_version
+	}
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.archivesBaseName}"}
 	}
 }

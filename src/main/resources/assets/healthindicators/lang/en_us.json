@@ -9,5 +9,10 @@
 
   "text.autoconfig.mobhealthindicator.WhiteOrBlackList.BLACK_LIST": "Black List",
   "text.autoconfig.mobhealthindicator.WhiteOrBlackList.WHITE_LIST": "White List",
-  "text.autoconfig.mobhealthindicator.WhiteOrBlackList.NONE": "None"
+  "text.autoconfig.mobhealthindicator.WhiteOrBlackList.NONE": "None",
+
+  "key.categories.mobhealthindicator": "Mob Health Indicator",
+  "key.mobhealthindicator.renderingenabled": "Toggle Rendering",
+  "mobhealthindicator.enabledrendering": "Enabled Health Bars",
+  "mobhealthindicator.disabledrendering": "Disabled Health Bars"
 }

@@ -8,6 +8,7 @@
   "authors": [
     "vi945786"
   ],
+  "license": "All Rights Reserved",
   "contact": {
     "homepage": "https://modrinth.com/mod/mobhealthindicators/",
     "sources": "https://github.com/vi945786/MobHealthIndicators"
@@ -34,7 +35,6 @@
       "1.20.5",
       "1.20.6"
     ],
-    "java": ">=17",
     "cloth-config2": ">=13.0.121"
   }
 }

@@ -3,7 +3,6 @@ package net.vi.mobhealthindicator.render;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
-import net.vi.mobhealthindicator.HeartType;
 import org.joml.Matrix4f;
 
 public class DefaultRenderer implements Renderer {
