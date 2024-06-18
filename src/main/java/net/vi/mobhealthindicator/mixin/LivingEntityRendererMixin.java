@@ -48,7 +48,6 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
 
     @Unique private static final Map<String, NativeImageBackedTexture> textures = new HashMap<>();
     @Unique private static final int heartsPerRow = 10;
-    @Unique private static final float pixelSize = 0.025f;
 
     @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("TAIL"))
     public void renderHealth(T livingEntity, float yaw, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
@@ -56,9 +55,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         ClientPlayerEntity player = client.player;
         ModConfig config = getConfig();
 
-        if (!(config.shouldRender(livingEntity) && player != null && player.getVehicle() != livingEntity && /*livingEntity != player &&*/ !livingEntity.isInvisibleTo(player))) return;
-
-        double distance = dispatcher.getSquaredDistanceToCamera(livingEntity);
+        if (!(config.shouldRender(livingEntity) && player != null && player.getVehicle() != livingEntity && livingEntity != player && !livingEntity.isInvisibleTo(player))) return;
 
         int redHealth = MathHelper.ceil(livingEntity.getHealth());
         int maxHealth = MathHelper.ceil(livingEntity.getMaxHealth());
@@ -69,7 +66,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
 
         NativeImageBackedTexture texture;
 
-        if(textures.containsKey(healthId)) {
+        if (textures.containsKey(healthId)) {
             texture = textures.get(healthId);
         } else {
 
@@ -127,37 +124,11 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
             textures.put(healthId, texture);
         }
 
-
-        matrixStack.push();
-        matrixStack.translate(0, livingEntity.getHeight() + 0.5f, 0);
-        if (this.hasLabel(livingEntity) && distance <= 4096.0) {
-            matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
-            if (distance < 100.0 && livingEntity instanceof PlayerEntity && livingEntity.getEntityWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
-                matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
-            }
-        }
-
-        matrixStack.peek().getPositionMatrix().rotateY((float) getYaw(livingEntity, client));
-        matrixStack.scale(pixelSize, pixelSize, pixelSize);
-
-        Renderer.render(matrixStack, texture, config, light);
-
-        matrixStack.pop();
+        Renderer.render(client, matrixStack, livingEntity, texture, config, light, dispatcher.getSquaredDistanceToCamera(livingEntity), this.hasLabel(livingEntity));
     }
 
     @Unique
     private void addHeart(Graphics graphics, Image image, int heartRows, int heartDensity, int heart) {
-        graphics.drawImage(image, (heart % heartsPerRow) * 8, (heartRows - (heart / heartsPerRow) -1) * heartDensity, 9, 9, null);
-    }
-
-    @Unique
-    private double getYaw(T livingEntity, MinecraftClient client) {
-        Vec3d entityPos = livingEntity.getPos();
-        Vec3d playerPos = client.gameRenderer.getCamera().getPos();
-
-        Vector3d direction = new Vector3d(playerPos.x - entityPos.x, playerPos.y - entityPos.y, playerPos.z - entityPos.z);
-        direction.normalize();
-
-        return (float) Math.atan2(direction.x, direction.z);
+        graphics.drawImage(image, (heart % heartsPerRow) * 8, (heartRows - (heart / heartsPerRow) - 1) * heartDensity, 9, 9, null);
     }
 }
