@@ -1,0 +1,18 @@
+{
+  "text.autoconfig.mobhealthindicator.title": "Mob Health Indicator",
+
+  "text.autoconfig.mobhealthindicator.option.showHearts": "Show Hearts",
+  "text.autoconfig.mobhealthindicator.option.dynamicBrightness": "Dynamic Brightness",
+  "text.autoconfig.mobhealthindicator.option.filteringMechanism": "Filtering Mechanism",
+  "text.autoconfig.mobhealthindicator.option.blackList": "Black List",
+  "text.autoconfig.mobhealthindicator.option.whiteList": "White List",
+
+  "text.autoconfig.mobhealthindicator.WhiteOrBlackList.BLACK_LIST": "Black List",
+  "text.autoconfig.mobhealthindicator.WhiteOrBlackList.WHITE_LIST": "White List",
+  "text.autoconfig.mobhealthindicator.WhiteOrBlackList.NONE": "None",
+
+  "key.categories.mobhealthindicator": "Mob Health Indicator",
+  "key.mobhealthindicator.renderingenabled": "Toggle Rendering",
+  "mobhealthindicator.enabledrendering": "Enabled Health Bars",
+  "mobhealthindicator.disabledrendering": "Disabled Health Bars"
+}

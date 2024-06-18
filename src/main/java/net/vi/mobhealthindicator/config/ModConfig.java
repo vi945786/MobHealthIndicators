@@ -1,0 +1,65 @@
+package net.vi.mobhealthindicator.config;
+
+import com.mojang.serialization.Codec;
+import me.shedaniel.autoconfig.ConfigData;
+import me.shedaniel.autoconfig.annotation.Config;
+import me.shedaniel.autoconfig.annotation.Config.Gui.Background;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.EnumHandler;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.StringIdentifiable;
+import net.vi.mobhealthindicator.MobHealthIndicator;
+
+import java.util.Arrays;
+
+import static me.shedaniel.autoconfig.annotation.Config.Gui.Background.TRANSPARENT;
+import static me.shedaniel.autoconfig.annotation.ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON;
+
+@Config(name = MobHealthIndicator.modId) @Background(TRANSPARENT)
+public class ModConfig implements ConfigData {
+
+    public boolean showHearts = true;
+    public boolean dynamicBrightness = true;
+    @EnumHandler(option=BUTTON) public WhiteOrBlackList filteringMechanism = WhiteOrBlackList.BLACK_LIST;
+    public String[] blackList = new String[] {"minecraft:armor_stand"};
+    public String[] whiteList = new String[] {"minecraft:player"};
+
+
+    public boolean shouldRender(LivingEntity livingEntity) {
+        if(!showHearts) return false;
+
+        return switch (filteringMechanism) {
+            case BLACK_LIST -> Arrays.stream(blackList).noneMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()));
+            case WHITE_LIST -> Arrays.stream(whiteList).anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()));
+            case NONE -> true;
+        };
+    }
+
+    public enum WhiteOrBlackList implements StringIdentifiable {
+        BLACK_LIST("BLACK_LIST"),
+        WHITE_LIST("WHITE_LIST"),
+        NONE("NONE");
+
+        public static final Codec<WhiteOrBlackList> CODEC = StringIdentifiable.createCodec(WhiteOrBlackList::values);
+        public final String name;
+
+        WhiteOrBlackList(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return I18n.translate("text.autoconfig.mobhealthindicator.WhiteOrBlackList." + this.name());
+        }
+
+        @Override
+        public String asString() {
+            return switch (this) {
+                case BLACK_LIST -> "blackList";
+                case WHITE_LIST -> "whiteList";
+                case NONE -> "none";
+            };
+        }
+    }
+}

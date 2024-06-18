@@ -37,3 +37,7 @@ jar {
 		rename { "${it}_${project.archivesBaseName}"}
 	}
 }
+
+loom {
+	accessWidenerPath = file("src/main/resources/healthindicators.accesswidener")
+}
