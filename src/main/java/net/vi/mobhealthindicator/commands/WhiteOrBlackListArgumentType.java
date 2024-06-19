@@ -1,7 +1,7 @@
 package net.vi.mobhealthindicator.commands;
 
 import net.minecraft.command.argument.EnumArgumentType;
-import net.vi.mobhealthindicator.config.ModConfig.WhiteOrBlackList;
+import net.vi.mobhealthindicator.config.Config.WhiteOrBlackList;
 
 public class WhiteOrBlackListArgumentType extends EnumArgumentType<WhiteOrBlackList> {
 

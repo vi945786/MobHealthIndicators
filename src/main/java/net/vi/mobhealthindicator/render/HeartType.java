@@ -17,7 +17,7 @@ public enum HeartType {
     public final Identifier icon;
 
     HeartType(String heartIcon) {
-        icon = new Identifier("minecraft", "textures/gui/sprites/hud/heart/" + heartIcon + ".png");
+        icon = Identifier.of("minecraft", "textures/gui/sprites/hud/heart/" + heartIcon + ".png");
     }
 
     public BufferedImage getTexture() {

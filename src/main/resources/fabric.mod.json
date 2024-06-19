@@ -19,9 +19,6 @@
   "entrypoints": {
     "main": [
       "net.vi.mobhealthindicator.MobHealthIndicator"
-    ],
-    "modmenu": [
-      "net.vi.mobhealthindicator.config.ModMenuIntegration"
     ]
   },
   "mixins": [
@@ -29,13 +26,10 @@
   ],
 
   "depends": {
-    "fabricloader": ">=0.15.7",
+    "fabricloader": ">=0.15.11",
     "fabric": "*",
     "minecraft": [
-      "1.20.4",
-      "1.20.5",
-      "1.20.6"
-    ],
-    "cloth-config2": ">=13.0.121"
+      "1.21"
+    ]
   }
 }

@@ -2,40 +2,26 @@ package net.vi.mobhealthindicator.mixin;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.feature.FeatureRendererContext;
 import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.vi.mobhealthindicator.render.HeartType;
-import net.vi.mobhealthindicator.config.ModConfig;
 import net.vi.mobhealthindicator.render.Renderer;
-import org.joml.Vector3d;
+import net.vi.mobhealthindicator.render.TextureBuilder;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import static net.vi.mobhealthindicator.MobHealthIndicator.getConfig;
+import static net.vi.mobhealthindicator.config.Config.config;
+import static net.vi.mobhealthindicator.render.TextureBuilder.textures;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extends EntityModel<T>> extends EntityRenderer<T> implements FeatureRendererContext<T, M> {
@@ -46,16 +32,12 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         super(ctx);
     }
 
-    @Unique private static final Map<String, NativeImageBackedTexture> textures = new HashMap<>();
-    @Unique private static final int heartsPerRow = 10;
-
     @Inject(method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("TAIL"))
     public void renderHealth(T livingEntity, float yaw, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
-        ModConfig config = getConfig();
 
-        if (!(config.shouldRender(livingEntity) && player != null && player.getVehicle() != livingEntity && livingEntity != player && !livingEntity.isInvisibleTo(player))) return;
+        if (!config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || livingEntity == player || livingEntity.isInvisibleTo(player)) return;
 
         int redHealth = MathHelper.ceil(livingEntity.getHealth());
         int maxHealth = MathHelper.ceil(livingEntity.getMaxHealth());
@@ -69,66 +51,10 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         if (textures.containsKey(healthId)) {
             texture = textures.get(healthId);
         } else {
-
-            int redHearts = MathHelper.ceil(redHealth / 2.0F);
-            boolean lastRedHalf = (redHealth & 1) == 1;
-            int normalHearts = MathHelper.ceil(maxHealth / 2.0F);
-            int yellowHearts = MathHelper.ceil(yellowHealth / 2.0F);
-            boolean lastYellowHalf = (yellowHealth & 1) == 1;
-            int totalHearts = normalHearts + yellowHearts;
-            int heartRows = (int) Math.ceil(totalHearts / 10F);
-
-            int heartDensity = Math.max(10 - (heartRows - 2), 3);
-            int yPixelsTotal = (heartRows - 1) * heartDensity + 9;
-
-            int xPixelsTotal = Math.min(totalHearts, heartsPerRow) * 8 + 1;
-
-            BufferedImage EmptyTexture = HeartType.EMPTY.getTexture();
-            BufferedImage RedFullTexture = HeartType.RED_FULL.getTexture();
-            BufferedImage RedHalfTexture = HeartType.RED_HALF.getTexture();
-            BufferedImage YellowFullTexture = HeartType.YELLOW_FULL.getTexture();
-            BufferedImage YellowHalfTexture = HeartType.YELLOW_HALF.getTexture();
-
-            BufferedImage healthBar = new BufferedImage(xPixelsTotal, yPixelsTotal, BufferedImage.TYPE_INT_ARGB);
-            Graphics graphics = healthBar.getGraphics();
-
-
-            for (int heart = totalHearts - 1; heart >= 0; heart--) {
-
-                addHeart(graphics, EmptyTexture, heartRows, heartDensity, heart);
-
-                if (heart < redHearts) {
-                    if (heart == redHearts - 1 && lastRedHalf) {
-                        addHeart(graphics, RedHalfTexture, heartRows, heartDensity, heart);
-                    } else {
-                        addHeart(graphics, RedFullTexture, heartRows, heartDensity, heart);
-                    }
-                } else if (heart >= normalHearts) {
-                    if (heart == totalHearts - 1 && lastYellowHalf) {
-                        addHeart(graphics, YellowHalfTexture, heartRows, heartDensity, heart);
-                    } else {
-                        addHeart(graphics, YellowFullTexture, heartRows, heartDensity, heart);
-                    }
-                }
-            }
-
-            graphics.dispose();
-
-            try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-                ImageIO.write(healthBar, "png", byteArrayOutputStream);
-                texture = new NativeImageBackedTexture(NativeImage.read(byteArrayOutputStream.toByteArray()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
+            texture = TextureBuilder.getTexture(redHealth, maxHealth, yellowHealth);
             textures.put(healthId, texture);
         }
 
         Renderer.render(client, matrixStack, livingEntity, texture, config, light, dispatcher.getSquaredDistanceToCamera(livingEntity), this.hasLabel(livingEntity));
-    }
-
-    @Unique
-    private void addHeart(Graphics graphics, Image image, int heartRows, int heartDensity, int heart) {
-        graphics.drawImage(image, (heart % heartsPerRow) * 8, (heartRows - (heart / heartsPerRow) - 1) * heartDensity, 9, 9, null);
     }
 }
