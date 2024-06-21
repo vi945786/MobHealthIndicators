@@ -4,14 +4,14 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.*;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix4f;
 
 public class DefaultRenderer {
 
     public static void draw(MatrixStack matrixStack, NativeImageBackedTexture texture) {
-        BufferBuilder bufferBuilder = new BufferBuilder(new BufferAllocator(256), VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+        BufferBuilder bufferBuilder = new BufferBuilder(256);
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 
         NativeImage image = texture.getImage();
         assert image != null;
@@ -31,6 +31,6 @@ public class DefaultRenderer {
     }
 
     private static void drawVertex(Matrix4f model, BufferBuilder bufferBuilder, float x, float y, float u, float v) {
-        bufferBuilder.vertex(model, x, y, 0).texture(u, v);
+        bufferBuilder.vertex(model, x, y, 0).texture(u, v).next();
     }
 }

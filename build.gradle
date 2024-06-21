@@ -17,10 +17,6 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
-}
-
 processResources {
 	inputs.property "version", project.mod_version
 

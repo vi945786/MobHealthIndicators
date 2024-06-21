@@ -23,9 +23,10 @@ import static net.vi.mobhealthindicator.config.Config.config;
 public class Commands {
 
     @Environment(EnvType.CLIENT)
+    @SuppressWarnings("unchecked")
     public static void registerCommands() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-            dispatcher.register(literal(MobHealthIndicator.modId).executes(context -> {
+            dispatcher.register(literal("MobHealthIndicators").executes(context -> {
                 sendMessage(Text.literal(config.toString()));
                 return 1;
             })

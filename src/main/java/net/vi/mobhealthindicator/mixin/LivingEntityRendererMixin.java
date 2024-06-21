@@ -20,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Objects;
+
 import static net.vi.mobhealthindicator.config.Config.config;
 import static net.vi.mobhealthindicator.render.TextureBuilder.textures;
 
@@ -37,7 +39,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
 
-        if (!config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || livingEntity == player || livingEntity.isInvisibleTo(player)) return;
+        if (!config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || (livingEntity == player && !Objects.equals(System.getProperty("mobhealthindicator.debug"), "true")) || livingEntity.isInvisibleTo(player)) return;
 
         int redHealth = MathHelper.ceil(livingEntity.getHealth());
         int maxHealth = MathHelper.ceil(livingEntity.getMaxHealth());
