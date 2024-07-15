@@ -4,9 +4,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.*;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.vi.mobhealthindicator.render.HeartType;
 import org.joml.Matrix4f;
+
+import static net.vi.mobhealthindicator.render.TextureBuilder.heartSize;
 
 public class DynamicBrightnessRenderer {
 
@@ -14,12 +17,11 @@ public class DynamicBrightnessRenderer {
         RenderLayer.MultiPhase renderLayer = (RenderLayer.MultiPhase) RenderLayer.getEntityCutoutNoCull(HeartType.EMPTY.icon);
         renderLayer.phases.phases.getFirst().beginAction = () -> RenderSystem.setShaderTexture(0, texture.getGlId());
 
-        BufferBuilder bufferBuilder = new BufferBuilder(256);
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
+        BufferBuilder bufferBuilder = new BufferBuilder(new BufferAllocator(256), VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
 
         NativeImage image = texture.getImage();
         assert image != null;
-        drawHeart(matrixStack.peek().getPositionMatrix(), bufferBuilder, image.getWidth() / 2f, image.getHeight() -9F, image.getWidth(), image.getHeight(), light);
+        drawHeart(matrixStack.peek().getPositionMatrix(), bufferBuilder, image.getWidth() / 2f, image.getHeight() -heartSize, image.getWidth(), image.getHeight(), light);
 
         renderLayer.startDrawing();
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
@@ -34,6 +36,6 @@ public class DynamicBrightnessRenderer {
     }
 
     private static void drawVertex(Matrix4f model, BufferBuilder bufferBuilder, float x, float y, float u, float v, int light) {
-        bufferBuilder.vertex(model, x, y, 0).color(1F, 1F, 1F, 1F).texture(u, v).overlay(0, 10).light(light).normal(x, 0, 0).next();
+        bufferBuilder.vertex(model, x, y, 0).color(1F, 1F, 1F, 1F).texture(u, v).overlay(0, 10).light(light).normal(x, 0, 0);
     }
 }

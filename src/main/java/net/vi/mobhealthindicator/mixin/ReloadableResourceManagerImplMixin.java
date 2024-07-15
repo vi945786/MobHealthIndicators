@@ -1,10 +1,12 @@
 package net.vi.mobhealthindicator.mixin;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.resource.ReloadableResourceManagerImpl;
 import net.minecraft.resource.ResourcePack;
 import net.minecraft.resource.ResourceReload;
 import net.minecraft.util.Unit;
+import net.vi.mobhealthindicator.MobHealthIndicator;
 import net.vi.mobhealthindicator.render.HeartType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+import static net.vi.mobhealthindicator.render.Renderer.*;
 import static net.vi.mobhealthindicator.render.TextureBuilder.*;
 
 @Mixin(ReloadableResourceManagerImpl.class)
@@ -25,10 +28,14 @@ public class ReloadableResourceManagerImplMixin {
         textures.values().forEach(NativeImageBackedTexture::close);
         textures.clear();
 
-        EmptyTexture = HeartType.EMPTY.getTexture();
-        RedFullTexture = HeartType.RED_FULL.getTexture();
-        RedHalfTexture = HeartType.RED_HALF.getTexture();
-        YellowFullTexture = HeartType.YELLOW_FULL.getTexture();
-        YellowHalfTexture = HeartType.YELLOW_HALF.getTexture();
+        emptyTexture = HeartType.EMPTY.getTexture();
+        redFullTexture = HeartType.RED_FULL.getTexture();
+        redHalfTexture = HeartType.RED_HALF.getTexture();
+        yellowFullTexture = HeartType.YELLOW_FULL.getTexture();
+        yellowHalfTexture = HeartType.YELLOW_HALF.getTexture();
+
+        heartSize = emptyTexture.getWidth();
+
+        pixelSize = defaultPixelSize / (heartSize / 9F);
     }
 }

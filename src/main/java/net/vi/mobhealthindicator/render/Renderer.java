@@ -15,7 +15,8 @@ import java.util.WeakHashMap;
 
 public class Renderer {
 
-    private static final float pixelSize = 0.025f;
+    public static final float defaultPixelSize = 0.025f;
+    public static float pixelSize = 0.025f;
 
     public static void render(MinecraftClient client, MatrixStack matrixStack, LivingEntity livingEntity, NativeImageBackedTexture texture, Config config, int light, double distance, boolean hasLabel) {
         matrixStack.push();
@@ -39,7 +40,7 @@ public class Renderer {
         matrixStack.pop();
     }
 
-    private static final WeakHashMap<LivingEntity, Double> entityToOldYaw = new WeakHashMap<>();
+    public static final WeakHashMap<LivingEntity, Double> entityToOldYaw = new WeakHashMap<>();
 
     private static double getYaw(LivingEntity livingEntity, MinecraftClient client) {
         Vec3d entityPos = livingEntity.getPos();

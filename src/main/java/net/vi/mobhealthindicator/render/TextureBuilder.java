@@ -14,11 +14,13 @@ import java.util.Map;
 
 public class TextureBuilder {
 
-    public static BufferedImage EmptyTexture;
-    public static BufferedImage RedFullTexture;
-    public static BufferedImage RedHalfTexture;
-    public static BufferedImage YellowFullTexture;
-    public static BufferedImage YellowHalfTexture;
+    public static BufferedImage emptyTexture;
+    public static BufferedImage redFullTexture;
+    public static BufferedImage redHalfTexture;
+    public static BufferedImage yellowFullTexture;
+    public static BufferedImage yellowHalfTexture;
+
+    public static int heartSize;
 
     public static final Map<String, NativeImageBackedTexture> textures = new HashMap<>();
     private static final int heartsPerRow = 10;
@@ -34,28 +36,28 @@ public class TextureBuilder {
         int heartRows = (int) Math.ceil(totalHearts / 10F);
 
         int heartDensity = Math.max(10 - (heartRows - 2), 3);
-        int yPixelsTotal = (heartRows - 1) * heartDensity + 9;
+        int yPixelsTotal = (heartRows - 1) * heartDensity + heartSize;
 
-        int xPixelsTotal = Math.min(totalHearts, heartsPerRow) * 8 + 1;
+        int xPixelsTotal = Math.min(totalHearts, heartsPerRow) * (heartSize -1) + 1;
 
         BufferedImage healthBar = new BufferedImage(xPixelsTotal, yPixelsTotal, BufferedImage.TYPE_INT_ARGB);
         Graphics graphics = healthBar.getGraphics();
 
         for (int heart = totalHearts - 1; heart >= 0; heart--) {
 
-            addHeart(graphics, EmptyTexture, heartRows, heartDensity, heart);
+            addHeart(graphics, emptyTexture, heartRows, heartDensity, heart, heartSize);
 
             if (heart < redHearts) {
                 if (heart == redHearts - 1 && lastRedHalf) {
-                    addHeart(graphics, RedHalfTexture, heartRows, heartDensity, heart);
+                    addHeart(graphics, redHalfTexture, heartRows, heartDensity, heart, heartSize);
                 } else {
-                    addHeart(graphics, RedFullTexture, heartRows, heartDensity, heart);
+                    addHeart(graphics, redFullTexture, heartRows, heartDensity, heart, heartSize);
                 }
             } else if (heart >= normalHearts) {
                 if (heart == totalHearts - 1 && lastYellowHalf) {
-                    addHeart(graphics, YellowHalfTexture, heartRows, heartDensity, heart);
+                    addHeart(graphics, yellowHalfTexture, heartRows, heartDensity, heart, heartSize);
                 } else {
-                    addHeart(graphics, YellowFullTexture, heartRows, heartDensity, heart);
+                    addHeart(graphics, yellowFullTexture, heartRows, heartDensity, heart, heartSize);
                 }
             }
         }
@@ -70,7 +72,7 @@ public class TextureBuilder {
         }
     }
 
-    private static void addHeart(Graphics graphics, Image image, int heartRows, int heartDensity, int heart) {
-        graphics.drawImage(image, (heart % heartsPerRow) * 8, (heartRows - (heart / heartsPerRow) - 1) * heartDensity, 9, 9, null);
+    private static void addHeart(Graphics graphics, Image image, int heartRows, int heartDensity, int heart, int heartSize) {
+        graphics.drawImage(image, (heart % heartsPerRow) * (heartSize -1), (heartRows - (heart / heartsPerRow) - 1) * heartDensity, heartSize, heartSize, null);
     }
 }
