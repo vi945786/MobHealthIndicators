@@ -1,0 +1,12 @@
+accessWidener v2 named
+
+accessible field net/minecraft/client/texture/TextureManager resourceContainer Lnet/minecraft/resource/ResourceManager;
+
+accessible class net/minecraft/client/render/RenderLayer$MultiPhase
+
+accessible field net/minecraft/client/render/RenderLayer$MultiPhase phases Lnet/minecraft/client/render/RenderLayer$MultiPhaseParameters;
+
+accessible field net/minecraft/client/render/RenderLayer$MultiPhaseParameters phases Lcom/google/common/collect/ImmutableList;
+
+accessible field net/minecraft/client/render/RenderPhase beginAction Ljava/lang/Runnable;
+mutable field net/minecraft/client/render/RenderPhase beginAction Ljava/lang/Runnable;

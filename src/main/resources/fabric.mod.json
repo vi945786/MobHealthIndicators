@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "mobhealthindicators",
+  "version": "${version}",
+
+  "name": "Mob Health Indicators",
+  "description": "Displays a health bar above mobs",
+  "authors": [
+    "vi945786"
+  ],
+  "license": "All Rights Reserved",
+  "contact": {
+    "homepage": "https://modrinth.com/mod/mob-health-indicators",
+    "sources": "https://github.com/vi945786/MobHealthIndicators"
+  },
+  "icon": "assets/mobhealthindicators/icon.png",
+  "environment": "client",
+  "accessWidener" : "mobhealthindicators.accesswidener",
+  "entrypoints": {
+    "main": [
+      "net.vi.mobhealthindicators.MobHealthIndicators"
+    ],
+    "modmenu": [
+      "net.vi.mobhealthindicators.config.ConfigScreen"
+    ]
+  },
+  "mixins": [
+    "mobhealthindicators.mixins.json",
+    "mobhealthindicators.cloth_config.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric": "*",
+    "minecraft": "1.21",
+    "cloth-config2": ">=15.0.128"
+  },
+  "custom": {
+    "loom:injected_interfaces": {
+      "me/shedaniel/clothconfig2/gui/entries/BaseListCell": ["net/vi/mobhealthindicators/addmethods/AddedMethodsInBaseListCell"],
+      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry": ["net/vi/mobhealthindicators/addmethods/AddedMethodsInDropdownBoxEntry"],
+      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry.DropdownMenuElement": ["net/vi/mobhealthindicators/addmethods/AddedMethodsInDropdownMenuElement"],
+      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry.SelectionElement": ["net/vi/mobhealthindicators/addmethods/AddedMethodsInSelectionElement"]
+    }
+  }
+}

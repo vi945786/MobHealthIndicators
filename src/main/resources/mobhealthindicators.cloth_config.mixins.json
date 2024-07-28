@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.vi.mobhealthindicators.mixin.cloth_config",
+  "client": [
+    "BaseListCellMixin",
+    "BaseListEntryMixin",
+    "DropdownBoxEntryMixin",
+    "DropdownBoxEntryMixin$DefaultDropdownMenuElementMixin",
+    "DropdownBoxEntryMixin$DefaultSelectionCellElementMixin",
+    "DropdownBoxEntryMixin$DropdownMenuElementMixin",
+    "DropdownBoxEntryMixin$SelectionCellCreatorMixin",
+    "DropdownBoxEntryMixin$SelectionElementMixin",
+    "NestedListListEntryMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
