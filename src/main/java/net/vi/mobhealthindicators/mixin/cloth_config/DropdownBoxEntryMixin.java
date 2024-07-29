@@ -56,11 +56,6 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
         this.selectionElement = new DropdownBoxEntry.SelectionElement<>((DropdownBoxEntry) (Object) this, new Rectangle(0, 0, fieldName.getString().isBlank() ? 300 : 150, 20), new DropdownBoxEntry.DefaultDropdownMenuElement<>(selections == null ? ImmutableList.of() : ImmutableList.copyOf(selections)), topRenderer, cellCreator);
     }
 
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/ButtonWidget;render(Lnet/minecraft/client/gui/DrawContext;IIF)V"), remap = false)
-    private void dontRenderResetButton(ButtonWidget instance, DrawContext context, int mouseX, int mouseY, float delta) {
-        if(!isMobhealthindicators()) instance.render(context, mouseX, mouseY, delta);
-    }
-
     @Redirect(method = "render", at = @At(value = "FIELD", target = "Lme/shedaniel/math/Rectangle;x:I", ordinal = 1), remap = false)
     public void setBoundsX(Rectangle instance, int value, @Local(ordinal = 2, argsOnly = true) int x, @Local(ordinal = 3, argsOnly = true) int entryWidth, @Local Text displayedFieldName) {
         instance.x = x + (!displayedFieldName.getString().isBlank() ? entryWidth - 150 : 0);
