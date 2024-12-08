@@ -9,6 +9,7 @@ import net.minecraft.util.math.Vec3d;
 import net.vi.mobhealthindicators.render.draw.DefaultRenderer;
 import net.vi.mobhealthindicators.render.draw.DynamicBrightnessRenderer;
 import org.joml.Vector3d;
+import org.lwjgl.opengl.GL11;
 
 import java.util.WeakHashMap;
 
@@ -31,6 +32,7 @@ public class Renderer {
 
         matrixStack.peek().getPositionMatrix().rotateY((float) getYaw(livingEntity, client));
         matrixStack.scale(pixelSize, pixelSize, pixelSize);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST); //make the hearts not blurry
 
         if(config.dynamicBrightness) {
             DynamicBrightnessRenderer.draw(matrixStack, texture, light);

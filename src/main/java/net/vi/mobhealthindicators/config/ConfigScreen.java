@@ -7,6 +7,7 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.gui.entries.*;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
@@ -48,9 +49,16 @@ public class ConfigScreen implements ModMenuApi {
     }
 
     public static DropdownListBuilder<String> startEntityDropdownList(Text fieldNameKey, List<String> value) {
-        DropdownListBuilder<String> entry = startDropdownList(fieldNameKey, value, (String string) -> new DropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new DropdownBoxEntry.DefaultSelectionCellCreator<>());
-        entry.setSelections(Registries.ENTITY_TYPE.stream().map(EntityType::getId).map(Identifier::toString).sorted().toList());
+        DropdownListBuilder<String> entry = ConfigScreen.startDropdownList(fieldNameKey, value, (string) -> new DropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new DropdownBoxEntry.DefaultSelectionCellCreator<>());
+        entry.setSelections(Registries.ENTITY_TYPE.getIds().stream().filter(ConfigScreen::isVanillaLivingEntity).map(Identifier::toString).sorted().toList());
         return entry;
+    }
+
+    private static final List<String> vanillaLivingEntities = Arrays.stream(new String[] {"allay", "armadillo", "armor_stand", "axolotl", "bat", "bee", "blaze", "bogged", "breeze", "camel", "cat", "cave_spider", "chicken", "cod", "cow", "creaking", "creeper", "dolphin", "donkey", "drowned", "elder_guardian", "enderman", "endermite", "ender_dragon", "evoker", "fox", "frog", "ghast", "giant", "glow_squid", "goat", "guardian", "hoglin", "horse", "husk", "illusioner", "iron_golem", "llama", "magma_cube", "mooshroom", "mule", "ocelot", "panda", "parrot", "phantom", "pig", "piglin", "piglin_brute", "pillager", "player", "polar_bear", "pufferfish", "rabbit", "ravager", "salmon", "sheep", "shulker", "silverfish", "skeleton", "skeleton_horse", "slime", "sniffer", "snow_golem", "spider", "squid", "stray", "strider", "tadpole", "trader_llama", "tropical_fish", "turtle", "vex", "villager", "vindicator", "wandering_trader", "warden", "witch", "wither", "wither_skeleton", "wolf", "zoglin", "zombie", "zombie_horse", "zombie_villager", "zombified_piglin"}).toList();
+    public static boolean isVanillaLivingEntity(Identifier id) {
+        if(!id.getNamespace().equals("minecraft")) return true;
+
+        return vanillaLivingEntities.contains(id.getPath());
     }
 
     public static <T> DropdownListBuilder<T> startDropdownList(Text fieldNameKey, List<T> value, Function<T, DropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, DropdownBoxEntry.SelectionCellCreator<T> cellCreator) {

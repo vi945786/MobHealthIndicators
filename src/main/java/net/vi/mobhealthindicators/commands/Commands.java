@@ -117,6 +117,6 @@ public class Commands {
 
     private static void sendMessage(Text message) {
         assert MinecraftClient.getInstance().player != null;
-        MinecraftClient.getInstance().player.sendMessage(message);
+        MinecraftClient.getInstance().player.sendMessage(message, false);
     }
 }

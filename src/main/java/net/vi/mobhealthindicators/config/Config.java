@@ -97,7 +97,7 @@ public class Config {
                 for(Field f : Config.class.getFields()) {
                     if(Modifier.isStatic(f.getModifiers())) continue;
 
-                    if(f.get(config) != null) f.set(config, Config.class.getField(f.getName() + "Default").get(null));
+                    if(f.get(config) == null) f.set(config, Config.class.getField(f.getName() + "Default").get(null));
                 }
                 Config.config = config;
             } else {

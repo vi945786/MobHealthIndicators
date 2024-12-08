@@ -7,6 +7,7 @@ import me.shedaniel.clothconfig2.gui.entries.NestedListListEntry;
 
 import me.shedaniel.clothconfig2.impl.builders.FieldBuilder;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -22,7 +23,7 @@ public class DropdownListBuilder<T> extends FieldBuilder<List<T>, NestedListList
     protected Supplier<T> defaultEntryValue = null;
     protected Function<T, SelectionTopCellElement<T>> topCellCreator;
     protected SelectionCellCreator<T> cellCreator;
-    protected Supplier<Optional<Text[]>> tooltipSupplier = () -> Optional.empty();
+    protected Supplier<Optional<Text[]>> tooltipSupplier = Optional::empty;
     protected Consumer<List<T>> saveConsumer = null;
     protected Iterable<T> selections = Collections.emptyList();
     protected boolean suggestionMode = true;
@@ -34,7 +35,7 @@ public class DropdownListBuilder<T> extends FieldBuilder<List<T>, NestedListList
         this.cellCreator = Objects.requireNonNull(cellCreator);
     }
 
-    public DropdownListBuilder<T> setSelections(Iterable<T> selections) {
+    public DropdownListBuilder<T> setSelections(List<T> selections) {
         this.selections = selections;
         return this;
     }

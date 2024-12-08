@@ -33,9 +33,9 @@ public class TextureBuilder {
         int yellowHearts = MathHelper.ceil(yellowHealth / 2.0F);
         boolean lastYellowHalf = (yellowHealth & 1) == 1;
         int totalHearts = normalHearts + yellowHearts;
-        int heartRows = (int) Math.ceil(totalHearts / 10F);
+        int heartRows = (int) Math.ceil(totalHearts / (float) heartsPerRow);
 
-        int heartDensity = Math.max(10 - (heartRows - 2), 3);
+        int heartDensity = Math.max(heartsPerRow - (heartRows - 2), 3);
         int yPixelsTotal = (heartRows - 1) * heartDensity + heartSize;
 
         int xPixelsTotal = Math.min(totalHearts, heartsPerRow) * (heartSize -1) + 1;
