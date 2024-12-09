@@ -11,7 +11,6 @@
     "DropdownBoxEntryMixin$DropdownMenuElementMixin",
     "DropdownBoxEntryMixin$SelectionCellCreatorMixin",
     "DropdownBoxEntryMixin$SelectionElementMixin",
-    "NestedListListEntryMixin",
     "NestedListListEntryMixin$NestedListCellMixin"
   ],
   "injectors": {

@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-@Mixin(value = DropdownBoxEntry.class, remap = false)
+@Mixin(value = DropdownBoxEntry.class)
 public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> implements AddedMethodsInDropdownBoxEntry {
 
     @Unique protected boolean dontReFocus = false;
@@ -58,18 +58,18 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
         return resetButton.getMessage().getString().equals("mobhealthindicators.hidebutton");
     }
 
-    @Inject(method = "<init>", at = @At("RETURN"), remap = false)
+    @Inject(method = "<init>", at = @At("RETURN"))
     public void changeSelectionElement(Text fieldName, Text resetButtonKey, Supplier tooltipSupplier, boolean requiresRestart, Supplier defaultValue, Consumer saveConsumer, Iterable selections, DropdownBoxEntry.SelectionTopCellElement topRenderer, DropdownBoxEntry.SelectionCellCreator cellCreator, CallbackInfo ci) {
         if(isMobhealthindicators()) resetButton.setWidth(0);
         this.selectionElement = new DropdownBoxEntry.SelectionElement<>((DropdownBoxEntry) (Object) this, new Rectangle(0, 0, fieldName.getString().isBlank() ? 300 : 150, 20), new DropdownBoxEntry.DefaultDropdownMenuElement<>(selections == null ? ImmutableList.of() : ImmutableList.copyOf(selections)), topRenderer, cellCreator);
     }
 
-    @Redirect(method = "render", at = @At(value = "FIELD", target = "Lme/shedaniel/math/Rectangle;x:I", ordinal = 1), remap = false)
+    @Redirect(method = "render", at = @At(value = "FIELD", target = "Lme/shedaniel/math/Rectangle;x:I", ordinal = 1))
     public void setBoundsX(Rectangle instance, int value, @Local(ordinal = 2, argsOnly = true) int x, @Local(ordinal = 3, argsOnly = true) int entryWidth, @Local Text displayedFieldName) {
         instance.x = x + (!displayedFieldName.getString().isBlank() ? entryWidth - 150 : 0);
     }
 
-    @Redirect(method = "render", at = @At(value = "FIELD", target = "Lme/shedaniel/math/Rectangle;width:I", ordinal = 0), remap = false)
+    @Redirect(method = "render", at = @At(value = "FIELD", target = "Lme/shedaniel/math/Rectangle;width:I", ordinal = 0))
     public void setBoundsWidth(Rectangle instance, int value, @Local(ordinal = 3, argsOnly = true) int entryWidth, @Local Text displayedFieldName) {
         instance.width = (!displayedFieldName.getString().isBlank() ? 150 : entryWidth) - (resetButton.getWidth() == 0 ? 0 : resetButton.getWidth() -4);
     }
@@ -79,7 +79,7 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
         this.dontReFocus = dontReFocus;
     }
 
-    @Mixin(value = DropdownBoxEntry.DropdownMenuElement.class, remap = false)
+    @Mixin(value = DropdownBoxEntry.DropdownMenuElement.class)
     public static abstract class DropdownMenuElementMixin<R> extends AbstractParentElement implements AddedMethodsInDropdownMenuElement {
 
         @Shadow public abstract @NotNull DropdownBoxEntry.SelectionCellCreator<R> getCellCreator();
@@ -91,7 +91,7 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
         }
     }
 
-    @Mixin(value = DropdownBoxEntry.DefaultDropdownMenuElement.class, remap = false)
+    @Mixin(value = DropdownBoxEntry.DefaultDropdownMenuElement.class)
     public static abstract class DefaultDropdownMenuElementMixin<R> extends DropdownBoxEntry.DropdownMenuElement<R> {
 
         @Shadow
@@ -109,7 +109,7 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
 
         @Shadow protected boolean scrolling;
 
-        @Overwrite(remap = false)
+        @Overwrite()
         public void lateRender(DrawContext graphics, int mouseX, int mouseY, float delta) {
             int last10Height = this.getHeight();
             int cWidth = ((AddedMethodsInDropdownMenuElement) this).getCellWidth();
@@ -157,7 +157,7 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
             graphics.getMatrices().pop();
         }
 
-        @Inject(method = "isMouseOver", at = @At("HEAD"), remap = false, cancellable = true)
+        @Inject(method = "isMouseOver", at = @At("HEAD"), cancellable = true)
         public void overwriteIsMouseOver(double mouseX, double mouseY, CallbackInfoReturnable<Boolean> cir) {
             int cWidth = ((AddedMethodsInDropdownMenuElement) this).getCellWidth();
             cir.setReturnValue(isExpanded() && mouseX >= lastRectangle.x && mouseX <= lastRectangle.x + cWidth && mouseY >= lastRectangle.y + lastRectangle.height && mouseY <= lastRectangle.y + lastRectangle.height + getHeight() + 1);
@@ -169,7 +169,7 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
             this.scrolling = isExpanded() && lastRectangle != null && int_1 == 0 && double_1 >= (double) lastRectangle.x + cWidth - 6 && double_1 < (double) (lastRectangle.x + cWidth);
         }
 
-        @Inject(method = "mouseClicked", at = @At(value = "RETURN", ordinal = 1), remap = false, cancellable = true)
+        @Inject(method = "mouseClicked", at = @At(value = "RETURN", ordinal = 1), cancellable = true)
         public void mouseClicked(double double_1, double double_2, int int_1, CallbackInfoReturnable<Boolean> cir) {
             if(!isMouseOver(double_1, double_2)) {
                 ((AddedMethodsInDropdownBoxEntry) getEntry()).setDontReFocus(true);
@@ -186,16 +186,16 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
         }
     }
 
-    @Mixin(value = DropdownBoxEntry.SelectionCellCreator.class, remap = false)
+    @Mixin(value = DropdownBoxEntry.SelectionCellCreator.class)
     public static abstract class SelectionCellCreatorMixin<R> {
 
-        @ModifyConstant(method = "getCellWidth", constant = @Constant(intValue = 132))
+        @ModifyConstant(method = "getCellWidth", constant = @Constant(intValue = 132), remap = false)
         public int getCellWidth(int constant) {
             return -1;
         }
     }
 
-    @Mixin(value = DropdownBoxEntry.SelectionElement.class, remap = false)
+    @Mixin(value = DropdownBoxEntry.SelectionElement.class)
     public abstract static class SelectionElementMixin<R> extends AbstractParentElement implements Drawable, AddedMethodsInSelectionElement<R> {
 
         @Shadow protected Rectangle bounds;
@@ -212,13 +212,13 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
             topRenderer.setValue(value);
         }
 
-        @Inject(method = "mouseClicked", at = @At("HEAD"), remap = false, cancellable = true)
+        @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
         public void mouseClicked(double double_1, double double_2, int int_1, CallbackInfoReturnable<Boolean> cir) {
             cir.setReturnValue(super.mouseClicked(double_1, double_2, int_1));
         }
     }
 
-    @Mixin(value = DropdownBoxEntry.DefaultSelectionCellElement.class, remap = false)
+    @Mixin(value = DropdownBoxEntry.DefaultSelectionCellElement.class)
     public abstract static class DefaultSelectionCellElementMixin<R> extends DropdownBoxEntry.SelectionCellElement<R> {
 
         @Shadow protected boolean rendering;
@@ -233,7 +233,7 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
             return d >= x && d <= x + width -1 && e >= y && e <= y + height -1;
         }
 
-        @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"), remap = false)
+        @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"))
         public void render(DrawContext graphics, int x1, int y1, int x2, int y2, int color, @Local(ordinal = 0, argsOnly = true) int mouseX, @Local(ordinal = 1, argsOnly = true) int mouseY) {
             boolean b = mouseX >= x && mouseX <= x + width -1 && mouseY >= y && mouseY <= y + height -1;
             if (b) {
@@ -241,7 +241,7 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
             }
         }
 
-        @Inject(method = "mouseClicked", at = @At("HEAD"), remap = false, cancellable = true)
+        @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
         public void mouseClicked(double mouseX, double mouseY, int int_1, CallbackInfoReturnable<Boolean> cir) {
             boolean b = rendering && mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
             if (b) {

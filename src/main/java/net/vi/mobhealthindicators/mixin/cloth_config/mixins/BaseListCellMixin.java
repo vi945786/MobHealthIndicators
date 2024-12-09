@@ -7,7 +7,7 @@ import net.minecraft.client.gui.Selectable;
 import net.vi.mobhealthindicators.mixin.cloth_config.addmethods.AddedMethodsInBaseListCell;
 import org.spongepowered.asm.mixin.Mixin;
 
-@Mixin(value = BaseListCell.class, remap = false)
+@Mixin(value = BaseListCell.class)
 public abstract class BaseListCellMixin extends AbstractParentElement implements Selectable, AddedMethodsInBaseListCell {
 
     @Override

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-@Mixin(value = BaseListEntry.class, remap = false)
+@Mixin(value = BaseListEntry.class)
 public abstract class BaseListEntryMixin<T, C extends BaseListCell, SELF extends BaseListEntry<T, C, SELF>> extends TooltipListEntry<List<T>> implements Expandable {
 
     public BaseListEntryMixin(Text fieldName, @Nullable Supplier<Optional<Text[]>> tooltipSupplier) {

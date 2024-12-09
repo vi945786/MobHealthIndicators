@@ -23,7 +23,7 @@ public class Commands {
     @Environment(EnvType.CLIENT)
     public static void registerCommands() {
         registerSubCommands("MobHealthIndicators");
-        registerSubCommands("moi");
+        registerSubCommands("mhi");
     }
 
     private static void registerSubCommands(String mainCommand) {
