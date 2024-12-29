@@ -7,6 +7,7 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Identifier;
 import net.vi.mobhealthindicators.render.HeartType;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
@@ -16,7 +17,7 @@ import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 public class DynamicBrightnessRenderer {
 
     public static void draw(MatrixStack matrixStack, NativeImageBackedTexture texture, int light) {
-        RenderLayer.MultiPhase renderLayer = (RenderLayer.MultiPhase) RenderLayer.getEntityCutoutNoCull(HeartType.EMPTY.icon);
+        RenderLayer.MultiPhase renderLayer = (RenderLayer.MultiPhase) RenderLayer.getEntityCutoutNoCull(Identifier.of("minecraft", "textures/gui/sprites/hud/heart/container.png"));
         renderLayer.phases.phases.getFirst().beginAction = () -> {
             RenderSystem.setShaderTexture(0, texture.getGlId());
         };

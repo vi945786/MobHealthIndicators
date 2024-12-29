@@ -53,14 +53,13 @@ public class Renderer {
 
         double yaw = Math.atan2(direction.x, direction.z);
 
-        double oldYaw = yaw;
-        if(entityToOldYaw.containsKey(livingEntity)) oldYaw = entityToOldYaw.get(livingEntity);
+        double oldYaw = entityToOldYaw.getOrDefault(livingEntity, yaw);
 
         double tickDelta = 0.1F;
         double CS = (1-tickDelta) * Math.cos(oldYaw) + tickDelta * Math.cos(yaw);
         double SN = (1-tickDelta) * Math.sin(oldYaw) + tickDelta * Math.sin(yaw);
 
-        yaw = Math.atan2(SN,CS);
+        yaw = Math.atan2(SN, CS);
         entityToOldYaw.put(livingEntity, yaw);
 
         return yaw;

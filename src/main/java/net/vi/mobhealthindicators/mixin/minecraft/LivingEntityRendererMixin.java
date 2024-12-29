@@ -13,6 +13,7 @@ import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.MathHelper;
+import net.vi.mobhealthindicators.render.HeartType;
 import net.vi.mobhealthindicators.render.Renderer;
 import net.vi.mobhealthindicators.render.TextureBuilder;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,9 +23,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Objects;
 import java.util.WeakHashMap;
 
+import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.render.Renderer.entityToOldYaw;
 import static net.vi.mobhealthindicators.render.TextureBuilder.textures;
@@ -47,29 +48,30 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
 
     @Inject(method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("TAIL"))
     public void renderHealth(S livingEntityRenderState, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
-        MinecraftClient client = MinecraftClient.getInstance();
+
         ClientPlayerEntity player = client.player;
 
         T livingEntity = livingEntitys.get(livingEntityRenderState);
 
-        if (livingEntity != null && !config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || (livingEntity == player && !Objects.equals(System.getProperty("mobhealthindicators.debug"), "true")) || livingEntity.isInvisibleTo(player)) {
+        if (livingEntity != null && !config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player)) {
             entityToOldYaw.remove(livingEntity);
             return;
         }
 
-        int redHealth = MathHelper.ceil(livingEntity.getHealth());
+        int normalHealth = MathHelper.ceil(livingEntity.getHealth());
         int maxHealth = MathHelper.ceil(livingEntity.getMaxHealth());
-        int emptyHealth = maxHealth - redHealth;
-        int yellowHealth = MathHelper.ceil(livingEntity.getAbsorptionAmount());
+        int emptyHealth = maxHealth - normalHealth;
+        int absorptionHealth = MathHelper.ceil(livingEntity.getAbsorptionAmount());
+        HeartType.Effect effect = HeartType.Effect.getEffect(livingEntity);
 
-        String healthId = redHealth + " " + emptyHealth + " " + yellowHealth;
+        String healthId = normalHealth + " " + emptyHealth + " " + absorptionHealth + " " + effect;
 
         NativeImageBackedTexture texture;
 
         if (textures.containsKey(healthId)) {
             texture = textures.get(healthId);
         } else {
-            texture = TextureBuilder.getTexture(redHealth, maxHealth, yellowHealth);
+            texture = TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect);
             textures.put(healthId, texture);
         }
 

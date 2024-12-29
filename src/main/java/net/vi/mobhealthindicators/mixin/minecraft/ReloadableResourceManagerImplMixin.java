@@ -26,11 +26,17 @@ public class ReloadableResourceManagerImplMixin {
         textures.values().forEach(NativeImageBackedTexture::close);
         textures.clear();
 
-        emptyTexture = HeartType.EMPTY.getTexture();
-        redFullTexture = HeartType.RED_FULL.getTexture();
-        redHalfTexture = HeartType.RED_HALF.getTexture();
-        yellowFullTexture = HeartType.YELLOW_FULL.getTexture();
-        yellowHalfTexture = HeartType.YELLOW_HALF.getTexture();
+        emptyTexture = HeartType.EMPTY.getTexture(HeartType.Effect.NONE);
+        normalFullTexture = HeartType.FULL.getTexture(HeartType.Effect.NONE);
+        normalHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.NONE);
+        poisonFullTexture = HeartType.FULL.getTexture(HeartType.Effect.POISON);
+        poisonHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.POISON);
+        witherFullTexture = HeartType.FULL.getTexture(HeartType.Effect.WITHER);
+        witherHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.WITHER);
+        absorbingFullTexture = HeartType.FULL.getTexture(HeartType.Effect.ABSORPTION);
+        absorbingHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.ABSORPTION);
+        frozenFullTexture = HeartType.FULL.getTexture(HeartType.Effect.FROZEN);
+        frozenHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.FROZEN);
 
         heartSize = emptyTexture.getWidth();
 

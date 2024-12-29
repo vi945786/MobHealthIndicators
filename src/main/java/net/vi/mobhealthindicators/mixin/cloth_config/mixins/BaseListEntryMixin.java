@@ -6,10 +6,13 @@ import me.shedaniel.clothconfig2.gui.entries.BaseListEntry;
 import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
 import net.vi.mobhealthindicators.mixin.cloth_config.addmethods.AddedMethodsInBaseListCell;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,5 +47,10 @@ public abstract class BaseListEntryMixin<T, C extends BaseListCell, SELF extends
     public int getMorePossibleHeight() {
         BaseListCell focused = !isExpanded() || getFocused() == null || !(getFocused() instanceof BaseListCell) ? null : (BaseListCell) getFocused();
         return focused != null ? ((AddedMethodsInBaseListCell) focused).getMorePossibleHeight() : 0;
+    }
+
+    @Redirect(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/widget/ClickableWidget;active:Z"))
+    public void render(ClickableWidget instance, boolean value) {
+        instance.active = true;
     }
 }

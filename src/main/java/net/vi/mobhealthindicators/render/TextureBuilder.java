@@ -15,24 +15,29 @@ import java.util.Map;
 public class TextureBuilder {
 
     public static BufferedImage emptyTexture;
-    public static BufferedImage redFullTexture;
-    public static BufferedImage redHalfTexture;
-    public static BufferedImage yellowFullTexture;
-    public static BufferedImage yellowHalfTexture;
+    public static BufferedImage normalFullTexture;
+    public static BufferedImage normalHalfTexture;
+    public static BufferedImage poisonFullTexture;
+    public static BufferedImage poisonHalfTexture;
+    public static BufferedImage witherFullTexture;
+    public static BufferedImage witherHalfTexture;
+    public static BufferedImage absorbingFullTexture;
+    public static BufferedImage absorbingHalfTexture;
+    public static BufferedImage frozenFullTexture;
+    public static BufferedImage frozenHalfTexture;
 
     public static int heartSize;
 
     public static final Map<String, NativeImageBackedTexture> textures = new HashMap<>();
     private static final int heartsPerRow = 10;
 
-    public static NativeImageBackedTexture getTexture(int redHealth, int maxHealth, int yellowHealth) {
+    public static NativeImageBackedTexture getTexture(int normalHealth, int maxHealth, int absorbingHealth, HeartType.Effect effect) {
 
-        int redHearts = MathHelper.ceil(redHealth / 2.0F);
-        boolean lastRedHalf = (redHealth & 1) == 1;
-        int normalHearts = MathHelper.ceil(maxHealth / 2.0F);
-        int yellowHearts = MathHelper.ceil(yellowHealth / 2.0F);
-        boolean lastYellowHalf = (yellowHealth & 1) == 1;
-        int totalHearts = normalHearts + yellowHearts;
+        int normalHearts = MathHelper.ceil(normalHealth / 2.0F);
+        int maxHearts = MathHelper.ceil(maxHealth / 2.0F);
+        int absorptionHearts = MathHelper.ceil(absorbingHealth / 2.0F);
+        boolean lastAbsorptionHalf = (absorptionHearts & 1) == 1;
+        int totalHearts = maxHearts + absorptionHearts;
         int heartRows = (int) Math.ceil(totalHearts / (float) heartsPerRow);
 
         int heartDensity = Math.max(heartsPerRow - (heartRows - 2), 3);
@@ -44,21 +49,15 @@ public class TextureBuilder {
         Graphics graphics = healthBar.getGraphics();
 
         for (int heart = totalHearts - 1; heart >= 0; heart--) {
-
             addHeart(graphics, emptyTexture, heartRows, heartDensity, heart, heartSize);
+            HeartColor heartColor = getHeartTexture(heart, normalHearts,  absorptionHearts, maxHearts, effect, lastAbsorptionHalf);
 
-            if (heart < redHearts) {
-                if (heart == redHearts - 1 && lastRedHalf) {
-                    addHeart(graphics, redHalfTexture, heartRows, heartDensity, heart, heartSize);
-                } else {
-                    addHeart(graphics, redFullTexture, heartRows, heartDensity, heart, heartSize);
-                }
-            } else if (heart >= normalHearts) {
-                if (heart == totalHearts - 1 && lastYellowHalf) {
-                    addHeart(graphics, yellowHalfTexture, heartRows, heartDensity, heart, heartSize);
-                } else {
-                    addHeart(graphics, yellowFullTexture, heartRows, heartDensity, heart, heartSize);
-                }
+            if(heartColor == null) continue;
+
+            if (heart == heartColor.heartAmount - 1 && heartColor.lastHeart) {
+                addHeart(graphics, heartColor.halfHeartTexture, heartRows, heartDensity, heart, heartSize);
+            } else {
+                addHeart(graphics, heartColor.fullHeartTexture, heartRows, heartDensity, heart, heartSize);
             }
         }
 
@@ -70,6 +69,24 @@ public class TextureBuilder {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public record HeartColor(BufferedImage fullHeartTexture, BufferedImage halfHeartTexture, boolean lastHeart, int heartAmount) {}
+
+    public static HeartColor getHeartTexture(int currentHeart, int totalNormalHearts, int totalAbsorptionHearts, int maxHearts, HeartType.Effect effect, boolean lastAbsorptionHalf) {
+        if (currentHeart < totalNormalHearts) {
+            boolean lastNormalHalf = totalNormalHearts % 2 == 1;
+            return switch (effect) {
+                case NONE -> new HeartColor(normalFullTexture, normalHalfTexture, lastNormalHalf, totalNormalHearts);
+                case POISON -> new HeartColor(poisonFullTexture, poisonHalfTexture, lastNormalHalf, totalNormalHearts);
+                case WITHER -> new HeartColor(witherFullTexture, witherHalfTexture, lastNormalHalf, totalNormalHearts);
+                case FROZEN -> new HeartColor(frozenFullTexture, frozenHalfTexture, lastNormalHalf, totalNormalHearts);
+                default -> null;
+            };
+        } else if (currentHeart >= maxHearts) {
+            return new HeartColor(absorbingFullTexture, absorbingHalfTexture, lastAbsorptionHalf, totalAbsorptionHearts);
+        }
+        return null;
     }
 
     private static void addHeart(Graphics graphics, Image image, int heartRows, int heartDensity, int heart, int heartSize) {

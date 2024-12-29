@@ -1,19 +1,24 @@
 {
-  "config.mobhealthindicators.title": "Mob Health Indicator",
+  "mobhealthindicators.name": "Mob Health Indicator",
 
-  "config.mobhealthindicators.category.general": "General",
+  "config.mobhealthindicators.category.display": "General",
   "config.mobhealthindicators.option.showhearts": "Show Hearts",
   "config.mobhealthindicators.option.dynamicbrightness": "Dynamic Brightness",
-  "config.mobhealthindicators.option.filteringmechanism": "Filtering Mechanism",
+
+  "config.mobhealthindicators.category.filter": "Filter",
   "config.mobhealthindicators.option.blacklist": "Black List",
   "config.mobhealthindicators.option.whitelist": "White List",
 
-  "filteringmechanism.mobhealthindicators.black_list": "Black List",
-  "filteringmechanism.mobhealthindicators.white_list": "White List",
-  "filteringmechanism.mobhealthindicators.none": "None",
+  "config.mobhealthindicators.subcategory.showfor": "Show For",
+  "config.mobhealthindicators.option.showhostile": "Hostile Mobs",
+  "config.mobhealthindicators.option.showpassive": "Passive Mobs",
+  "config.mobhealthindicators.option.showself": "Yourself",
+  "config.mobhealthindicators.option.onlyshowDamaged": "Damaged Entities Only",
 
-  "key.mobhealthindicators.category": "Mob Health Indicator",
-  "key.mobhealthindicators.renderingenabled": "Toggle Rendering",
+  "config.mobhealthindicators.category.keybinds": "Keybinds",
+
+  "key.mobhealthindicators.toggle": "Toggle Rendering",
+  "key.mobhealthindicators.overridefilters": "Override Filters",
 
   "message.mobhealthindicators.enabledrendering": "Enabled Health Bars",
   "message.mobhealthindicators.disabledrendering": "Disabled Health Bars"

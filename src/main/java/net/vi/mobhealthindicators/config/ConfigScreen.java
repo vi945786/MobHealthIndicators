@@ -6,6 +6,7 @@ import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import me.shedaniel.clothconfig2.gui.entries.*;
+import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -16,6 +17,8 @@ import net.minecraft.util.Identifier;
 import java.util.*;
 import java.util.function.Function;
 
+import static net.vi.mobhealthindicators.MobHealthIndicators.overrideFiltersKey;
+import static net.vi.mobhealthindicators.MobHealthIndicators.toggleKey;
 import static net.vi.mobhealthindicators.config.Config.config;
 
 public class ConfigScreen implements ModMenuApi {
@@ -30,26 +33,34 @@ public class ConfigScreen implements ModMenuApi {
         configBuilder.setParentScreen(parent);
         configBuilder.setEditable(true);
         configBuilder.setSavingRunnable(Config::save);
-
-        configBuilder.setTitle(Text.translatable("config.mobhealthindicators.title"));
+        configBuilder.setTitle(Text.translatable("mobhealthindicators.name"));
         configBuilder.transparentBackground();
 
         ConfigEntryBuilder entryBuilder = configBuilder.entryBuilder();
 
-        ConfigCategory general = configBuilder.getOrCreateCategory(Text.translatable("config.mobhealthindicators.category.general"));
+        ConfigCategory display = configBuilder.getOrCreateCategory(Text.translatable("config.mobhealthindicators.category.display"));
+            display.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showhearts"), config.showHearts).setDefaultValue(Config.showHeartsDefault).setSaveConsumer(value -> config.showHearts=value).build());
+            display.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.dynamicbrightness"), config.dynamicBrightness).setDefaultValue(Config.dynamicBrightnessDefault).setSaveConsumer(value -> config.dynamicBrightness=value).build());
 
-        general.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showhearts"), config.showHearts).setDefaultValue(Config.showHeartsDefault).setSaveConsumer(value -> config.showHearts=value).build());
-        general.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.dynamicbrightness"), config.dynamicBrightness).setDefaultValue(Config.dynamicBrightnessDefault).setSaveConsumer(value -> config.dynamicBrightness=value).build());
-        general.addEntry(entryBuilder.startEnumSelector(Text.translatable("config.mobhealthindicators.option.filteringmechanism"), Config.FilteringMechanism.class, config.filteringMechanism).setDefaultValue(Config.filteringMechanismDefault).setSaveConsumer(value -> config.filteringMechanism=value).build());
+        ConfigCategory filter = configBuilder.getOrCreateCategory(Text.translatable("config.mobhealthindicators.category.filter"));
+            filter.addEntry(startToggleableEntityDropdownList(Text.translatable("config.mobhealthindicators.option.blacklist"), config.blackList.entityList.stream().toList(), config.blackList.toggle).setDefaultValue(Config.blackListDefault.entityList.stream().toList()).setSaveConsumer((list,toggle) -> {config.blackList.entityList=new HashSet<>(list);config.blackList.toggle=toggle;}).build());
+            filter.addEntry(startToggleableEntityDropdownList(Text.translatable("config.mobhealthindicators.option.whitelist"), config.whiteList.entityList.stream().toList(), config.whiteList.toggle).setDefaultValue(Config.whiteListDefault.entityList.stream().toList()).setSaveConsumer((list,toggle) -> {config.whiteList.entityList=new HashSet<>(list);config.whiteList.toggle=toggle;}).build());
+            SubCategoryBuilder showFor = entryBuilder.startSubCategory(Text.translatable("config.mobhealthindicators.subcategory.showfor"));
+                showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showhostile"), config.showHostile).setDefaultValue(Config.showHostileDefault).setSaveConsumer(value -> config.showHostile=value).build());
+                showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showpassive"), config.showPassive).setDefaultValue(Config.showPassiveDefault).setSaveConsumer(value -> config.showPassive=value).build());
+                showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showself"), config.showSelf).setDefaultValue(Config.showSelfDefault).setSaveConsumer(value -> config.showSelf=value).build());
+                showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.onlyshowDamaged"), config.onlyShowDamaged).setDefaultValue(Config.onlyShowDamagedDefault).setSaveConsumer(value -> config.onlyShowDamaged=value).build());
+            filter.addEntry(showFor.build());
 
-        general.addEntry(startEntityDropdownList(Text.translatable("config.mobhealthindicators.option.blacklist"), config.blackList.stream().toList()).setDefaultValue(Config.blackListDefault.stream().toList()).setSaveConsumer(value -> config.blackList= new HashSet<>(value)).build());
-        general.addEntry(startEntityDropdownList(Text.translatable("config.mobhealthindicators.option.whitelist"), config.whiteList.stream().toList()).setDefaultValue(Config.whiteListDefault.stream().toList()).setSaveConsumer(value -> config.whiteList= new HashSet<>(value)).build());
+        ConfigCategory keybinds = configBuilder.getOrCreateCategory(Text.translatable("config.mobhealthindicators.category.keybinds"));
+            keybinds.addEntry(entryBuilder.fillKeybindingField(Text.translatable(toggleKey.getTranslationKey()), toggleKey).build());
+            keybinds.addEntry(entryBuilder.fillKeybindingField(Text.translatable(overrideFiltersKey.getTranslationKey()), overrideFiltersKey).build());
 
         return configBuilder.build();
     }
 
-    public static DropdownListBuilder<String> startEntityDropdownList(Text fieldNameKey, List<String> value) {
-        DropdownListBuilder<String> entry = ConfigScreen.startDropdownList(fieldNameKey, value, (string) -> new DropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new DropdownBoxEntry.DefaultSelectionCellCreator<>());
+    public static DropdownListBuilder<String> startToggleableEntityDropdownList(Text fieldNameKey, List<String> value, boolean toggled) {
+        DropdownListBuilder<String> entry = ConfigScreen.startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new DropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new DropdownBoxEntry.DefaultSelectionCellCreator<>());
         entry.setSelections(Registries.ENTITY_TYPE.getIds().stream().filter(ConfigScreen::isVanillaLivingEntity).map(Identifier::toString).sorted().toList());
         return entry;
     }
@@ -61,7 +72,7 @@ public class ConfigScreen implements ModMenuApi {
         return vanillaLivingEntities.contains(id.getPath());
     }
 
-    public static <T> DropdownListBuilder<T> startDropdownList(Text fieldNameKey, List<T> value, Function<T, DropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, DropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
-        return new DropdownListBuilder<>(Text.translatable("text.cloth-config.reset_value"), fieldNameKey, value, topCellCreator, cellCreator);
+    public static <T> DropdownListBuilder<T> startToggleableDropdownList(Text fieldNameKey, List<T> value, boolean toggled, Function<T, DropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, DropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
+        return new DropdownListBuilder<>(Text.translatable("text.cloth-config.reset_value"), fieldNameKey, value, toggled, topCellCreator, cellCreator);
     }
 }

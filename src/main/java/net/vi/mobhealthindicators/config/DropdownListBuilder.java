@@ -1,5 +1,6 @@
 package net.vi.mobhealthindicators.config;
 
+import me.shedaniel.clothconfig2.gui.entries.BooleanListEntry;
 import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry;
 import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry.SelectionCellCreator;
 import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry.SelectionTopCellElement;
@@ -14,23 +15,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class DropdownListBuilder<T> extends FieldBuilder<List<T>, NestedListListEntry<T, DropdownBoxEntry<T>>, DropdownListBuilder<T>> {
+public class DropdownListBuilder<T> extends FieldBuilder<List<T>, ToggleableNestedListListEntry<T, DropdownBoxEntry<T>>, DropdownListBuilder<T>> {
     protected List<T> value;
     protected Supplier<T> defaultEntryValue = null;
     protected Function<T, SelectionTopCellElement<T>> topCellCreator;
     protected SelectionCellCreator<T> cellCreator;
     protected Supplier<Optional<Text[]>> tooltipSupplier = Optional::empty;
-    protected Consumer<List<T>> saveConsumer = null;
+    protected BiConsumer<List<T>, Boolean> saveConsumer = null;
     protected Iterable<T> selections = Collections.emptyList();
     protected boolean suggestionMode = true;
+    protected boolean toggled;
 
-    public DropdownListBuilder(Text resetButtonKey, Text fieldNameKey, List<T> value, Function<T, SelectionTopCellElement<T>> topCellCreator, SelectionCellCreator<T> cellCreator) {
+    public DropdownListBuilder(Text resetButtonKey, Text fieldNameKey, List<T> value, boolean toggled, Function<T, SelectionTopCellElement<T>> topCellCreator, SelectionCellCreator<T> cellCreator) {
         super(resetButtonKey, fieldNameKey);
         this.value = value;
+        this.toggled = toggled;
         this.topCellCreator = Objects.requireNonNull(topCellCreator);
         this.cellCreator = Objects.requireNonNull(cellCreator);
     }
@@ -60,7 +64,7 @@ public class DropdownListBuilder<T> extends FieldBuilder<List<T>, NestedListList
         return this;
     }
 
-    public DropdownListBuilder<T> setSaveConsumer(Consumer<List<T>> saveConsumer) {
+    public DropdownListBuilder<T> setSaveConsumer(BiConsumer<List<T>, Boolean> saveConsumer) {
         this.saveConsumer = saveConsumer;
         return this;
     }
@@ -101,10 +105,11 @@ public class DropdownListBuilder<T> extends FieldBuilder<List<T>, NestedListList
 
     @NotNull
     @Override
-    public NestedListListEntry<T, DropdownBoxEntry<T>> build() {
-        NestedListListEntry<T, DropdownBoxEntry<T>> listEntry = new NestedListListEntry<>(
+    public ToggleableNestedListListEntry<T, DropdownBoxEntry<T>> build() {
+        ToggleableNestedListListEntry<T, DropdownBoxEntry<T>> listEntry = new ToggleableNestedListListEntry<>(
                 getFieldNameKey(),
                 value,
+                toggled,
                 false,
                 tooltipSupplier,
                 saveConsumer,

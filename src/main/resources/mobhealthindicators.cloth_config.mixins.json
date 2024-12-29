@@ -10,8 +10,7 @@
     "DropdownBoxEntryMixin$DefaultSelectionCellElementMixin",
     "DropdownBoxEntryMixin$DropdownMenuElementMixin",
     "DropdownBoxEntryMixin$SelectionCellCreatorMixin",
-    "DropdownBoxEntryMixin$SelectionElementMixin",
-    "NestedListListEntryMixin$NestedListCellMixin"
+    "DropdownBoxEntryMixin$SelectionElementMixin"
   ],
   "injectors": {
     "defaultRequire": 1

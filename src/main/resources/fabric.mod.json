@@ -36,10 +36,10 @@
   },
   "custom": {
     "loom:injected_interfaces": {
-      "me/shedaniel/clothconfig2/gui/entries/BaseListCell": ["net/vi/mobhealthindicators/addmethods/AddedMethodsInBaseListCell"],
-      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry": ["net/vi/mobhealthindicators/addmethods/AddedMethodsInDropdownBoxEntry"],
-      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry.DropdownMenuElement": ["net/vi/mobhealthindicators/addmethods/AddedMethodsInDropdownMenuElement"],
-      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry.SelectionElement": ["net/vi/mobhealthindicators/addmethods/AddedMethodsInSelectionElement"]
+      "me/shedaniel/clothconfig2/gui/entries/BaseListCell": ["net/vi/mobhealthindicators/mixin/cloth_config/addmethods/AddedMethodsInBaseListCell"],
+      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry": ["net/vi/mobhealthindicators/mixin/cloth_config/addmethods/AddedMethodsInDropdownBoxEntry"],
+      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry.DropdownMenuElement": ["net/vi/mobhealthindicators/mixin/cloth_config/addmethods/AddedMethodsInDropdownMenuElement"],
+      "me/shedaniel/clothconfig2/gui/entries/DropdownBoxEntry.SelectionElement": ["net/vi/mobhealthindicators/mixin/cloth_config/addmethods/AddedMethodsInSelectionElement"]
     }
   }
 }

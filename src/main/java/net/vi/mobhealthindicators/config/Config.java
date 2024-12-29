@@ -8,7 +8,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.mob.Monster;
 import net.minecraft.util.StringIdentifiable;
+import net.minecraft.util.math.MathHelper;
 import net.vi.mobhealthindicators.MobHealthIndicators;
 
 import java.io.File;
@@ -17,54 +19,65 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static net.vi.mobhealthindicators.MobHealthIndicators.client;
+import static net.vi.mobhealthindicators.MobHealthIndicators.overrideFiltersKey;
 
 public class Config {
 
-    public static Config config = new Config();
+    public static Config config;
 
-    public static boolean showHeartsDefault = true;
-    public static boolean dynamicBrightnessDefault = true;
-    public static FilteringMechanism filteringMechanismDefault = FilteringMechanism.BLACK_LIST;
-    public static Set<String> blackListDefault = new HashSet<>() {{add("minecraft:armor_stand");}};
-    public static Set<String> whiteListDefault = new HashSet<>() {{add("minecraft:player");}};
+    public static final boolean showHeartsDefault = true;
+    public static final boolean dynamicBrightnessDefault = true;
+    public static final ToggleableEntityList blackListDefault = new ToggleableEntityList(true, "minecraft:armor_stand");
+    public static final ToggleableEntityList whiteListDefault = new ToggleableEntityList(false, "minecraft:player");
+    public static final boolean showHostileDefault = true;
+    public static final boolean showPassiveDefault = true;
+    public static final boolean showSelfDefault = false;
+    public static final boolean onlyShowDamagedDefault = false;
 
     @Expose public boolean showHearts = showHeartsDefault;
     @Expose public boolean dynamicBrightness = dynamicBrightnessDefault;
-    @Expose public FilteringMechanism filteringMechanism = filteringMechanismDefault;
-    @Expose public Set<String> blackList = blackListDefault;
-    @Expose public Set<String> whiteList = whiteListDefault;
+    @Expose public ToggleableEntityList blackList = blackListDefault;
+    @Expose public ToggleableEntityList whiteList = whiteListDefault;
+    @Expose public boolean showHostile = showHostileDefault;
+    @Expose public boolean showPassive = showPassiveDefault;
+    @Expose public boolean showSelf = showSelfDefault;
+    @Expose public boolean onlyShowDamaged = onlyShowDamagedDefault;
 
     public boolean shouldRender(LivingEntity livingEntity) {
+        if(overrideFiltersKey.isPressed()) return true;
+
         if(!showHearts) return false;
 
-        return switch (filteringMechanism) {
-            case BLACK_LIST -> blackList.stream().noneMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()));
-            case WHITE_LIST -> whiteList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()));
-            case NONE -> true;
-        };
+        if(showSelf && livingEntity == client.player) return true;
+        if(onlyShowDamaged && MathHelper.ceil(livingEntity.getHealth()) >= MathHelper.ceil(livingEntity.getMaxHealth())) return false;
+        if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return true;
+        if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return false;
+        if(!showHostile && livingEntity instanceof Monster) return false;
+        if(!showPassive && !(livingEntity instanceof Monster)) return false;
+
+        return true;
     }
 
-    public enum FilteringMechanism implements StringIdentifiable {
-        BLACK_LIST(),
-        WHITE_LIST(),
-        NONE();
+    public static class ToggleableEntityList {
+        @Expose public HashSet<String> entityList;
+        @Expose public boolean toggle;
 
-        public static final Codec<FilteringMechanism> CODEC = StringIdentifiable.createCodec(FilteringMechanism::values);
+        public ToggleableEntityList() {}
 
-        @Override
-        public String toString() {
-            return I18n.translate("filteringmechanism.mobhealthindicators." + this.name().toLowerCase());
+        public ToggleableEntityList(boolean toggle, String... entityList) {
+            this.entityList = Arrays.stream(entityList).collect(Collectors.toCollection(HashSet::new));
+            this.toggle = toggle;
         }
 
         @Override
-        public String asString() {
-            return switch (this) {
-                case BLACK_LIST -> "blackList";
-                case WHITE_LIST -> "whiteList";
-                case NONE -> "none";
-            };
+        public String toString() {
+            return entityList.toString() + ", " + toggle;
         }
     }
 
@@ -72,9 +85,12 @@ public class Config {
     public String toString() {
         return "showHearts = " + showHearts + "\n" +
                 "dynamicBrightness = " + dynamicBrightness + "\n" +
-                "filteringMechanism = " + filteringMechanism + "\n" +
                 "blackList = " + blackList + "\n" +
-                "whiteList = " + whiteList;
+                "whiteList = " + whiteList + "\n" +
+                "showHostile = " + showHostile + "\n" +
+                "showPassive = " + showPassive + "\n" +
+                "showSelf = " + showSelf + "\n" +
+                "onlyShowDamaged = " + onlyShowDamaged;
     }
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
@@ -105,7 +121,8 @@ public class Config {
                 save();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Config.config = new Config();
+            save();
         }
     }
 
