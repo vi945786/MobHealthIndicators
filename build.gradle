@@ -2,6 +2,11 @@ plugins {
 	id 'fabric-loom' version '1.7-SNAPSHOT'
 }
 
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
 version = "${project.mod_version}-${project.minecraft_version}"
 
 repositories {
