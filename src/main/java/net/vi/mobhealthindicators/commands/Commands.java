@@ -1,12 +1,17 @@
 package net.vi.mobhealthindicators.commands;
 
+import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.command.argument.NumberRangeArgumentType;
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType;
 import net.minecraft.entity.EntityType;
+import net.minecraft.predicate.NumberRange;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -17,6 +22,7 @@ import net.vi.mobhealthindicators.config.Config;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 import static net.vi.mobhealthindicators.config.Config.config;
+import static net.vi.mobhealthindicators.config.Config.heightRange;
 
 public class Commands {
 
@@ -53,6 +59,16 @@ public class Commands {
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.dynamicBrightness = context.getArgument("value", boolean.class);
+                        Config.save();
+                        return 1;
+                    }))
+                )
+
+                .then(literal("height").executes(context -> {
+                    sendMessage(Text.literal(String.valueOf(config.height)));
+                    return 1;
+                    }).then(argument("value", IntegerArgumentType.integer(-heightRange, heightRange)).executes(context -> {
+                        config.height = context.getArgument("value", int.class);
                         Config.save();
                         return 1;
                     }))

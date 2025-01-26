@@ -31,8 +31,12 @@ public class Config {
 
     public static Config config;
 
+    public static final int heightRange = 25;
+    public static final int heightDivisor = 50;
+
     public static final boolean showHeartsDefault = true;
     public static final boolean dynamicBrightnessDefault = true;
+    public static final int heightDefault = 0;
     public static final ToggleableEntityList blackListDefault = new ToggleableEntityList(true, "minecraft:armor_stand");
     public static final ToggleableEntityList whiteListDefault = new ToggleableEntityList(false, "minecraft:player");
     public static final boolean showHostileDefault = true;
@@ -42,6 +46,7 @@ public class Config {
 
     @Expose public boolean showHearts = showHeartsDefault;
     @Expose public boolean dynamicBrightness = dynamicBrightnessDefault;
+    @Expose public int height = heightDefault;
     @Expose public ToggleableEntityList blackList = blackListDefault;
     @Expose public ToggleableEntityList whiteList = whiteListDefault;
     @Expose public boolean showHostile = showHostileDefault;
@@ -55,7 +60,6 @@ public class Config {
         if(!showHearts) return false;
 
         if(showSelf && livingEntity == client.player) return true;
-        if(!showSelf && livingEntity == client.player) return false;
         if(onlyShowDamaged && MathHelper.ceil(livingEntity.getHealth()) >= MathHelper.ceil(livingEntity.getMaxHealth())) return false;
         if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return true;
         if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return false;
@@ -86,6 +90,7 @@ public class Config {
     public String toString() {
         return "showHearts = " + showHearts + "\n" +
                 "dynamicBrightness = " + dynamicBrightness + "\n" +
+                "height = " + height + "\n" +
                 "blackList = " + blackList + "\n" +
                 "whiteList = " + whiteList + "\n" +
                 "showHostile = " + showHostile + "\n" +

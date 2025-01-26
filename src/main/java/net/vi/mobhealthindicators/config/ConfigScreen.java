@@ -20,6 +20,7 @@ import java.util.function.Function;
 import static net.vi.mobhealthindicators.MobHealthIndicators.overrideFiltersKey;
 import static net.vi.mobhealthindicators.MobHealthIndicators.toggleKey;
 import static net.vi.mobhealthindicators.config.Config.config;
+import static net.vi.mobhealthindicators.config.Config.heightRange;
 
 public class ConfigScreen implements ModMenuApi {
 
@@ -41,6 +42,7 @@ public class ConfigScreen implements ModMenuApi {
         ConfigCategory display = configBuilder.getOrCreateCategory(Text.translatable("config.mobhealthindicators.category.display"));
             display.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showhearts"), config.showHearts).setDefaultValue(Config.showHeartsDefault).setSaveConsumer(value -> config.showHearts=value).build());
             display.addEntry(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.dynamicbrightness"), config.dynamicBrightness).setDefaultValue(Config.dynamicBrightnessDefault).setSaveConsumer(value -> config.dynamicBrightness=value).build());
+            display.addEntry(entryBuilder.startIntSlider(Text.translatable("config.mobhealthindicators.option.height"), config.height, -heightRange, heightRange).setDefaultValue(Config.heightDefault).setSaveConsumer(value -> config.height=value).build());
 
         ConfigCategory filter = configBuilder.getOrCreateCategory(Text.translatable("config.mobhealthindicators.category.filter"));
             filter.addEntry(startToggleableEntityDropdownList(Text.translatable("config.mobhealthindicators.option.blacklist"), config.blackList.entityList.stream().toList(), config.blackList.toggle).setDefaultValue(Config.blackListDefault.entityList.stream().toList()).setSaveConsumer((list,toggle) -> {config.blackList.entityList=new HashSet<>(list);config.blackList.toggle=toggle;}).build());

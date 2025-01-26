@@ -9,7 +9,6 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 import net.vi.mobhealthindicators.commands.Commands;
 import net.vi.mobhealthindicators.config.Config;
-import net.vi.mobhealthindicators.config.ConfigScreen;
 
 import static net.vi.mobhealthindicators.config.Config.config;
 

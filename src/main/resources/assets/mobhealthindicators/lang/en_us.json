@@ -4,6 +4,7 @@
   "config.mobhealthindicators.category.display": "General",
   "config.mobhealthindicators.option.showhearts": "Show Hearts",
   "config.mobhealthindicators.option.dynamicbrightness": "Dynamic Brightness",
+  "config.mobhealthindicators.option.height": "Height",
 
   "config.mobhealthindicators.category.filter": "Filter",
   "config.mobhealthindicators.option.blacklist": "Black List",

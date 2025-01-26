@@ -1,10 +1,16 @@
 package net.vi.mobhealthindicators.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.OtherClientPlayerEntity;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.Frustum;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.vi.mobhealthindicators.render.draw.DefaultRenderer;
 import net.vi.mobhealthindicators.render.draw.DynamicBrightnessRenderer;
@@ -13,7 +19,9 @@ import org.lwjgl.opengl.GL11;
 
 import java.util.WeakHashMap;
 
+import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.config.Config.config;
+import static net.vi.mobhealthindicators.config.Config.heightDivisor;
 
 public class Renderer {
 
@@ -22,7 +30,7 @@ public class Renderer {
 
     public static void render(MinecraftClient client, MatrixStack matrixStack, LivingEntity livingEntity, NativeImageBackedTexture texture, int light, double distance, boolean hasLabel) {
         matrixStack.push();
-        matrixStack.translate(0, livingEntity.getHeight() + 0.5f, 0);
+        matrixStack.translate(0, livingEntity.getHeight() + 0.5f + config.height/(float)heightDivisor, 0);
         if (hasLabel && distance <= 4096.0) {
             matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
             if (distance < 100.0 && livingEntity.getEntityWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
