@@ -22,12 +22,7 @@ import static net.vi.mobhealthindicators.MobHealthIndicators.toggleKey;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.config.Config.heightRange;
 
-public class ConfigScreen implements ModMenuApi {
-
-    @Override
-    public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return ConfigScreen::getConfigScreen;
-    }
+public class ConfigScreen {
 
     public static Screen getConfigScreen(Screen parent) {
         ConfigBuilder configBuilder = ConfigBuilder.create();

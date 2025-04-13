@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Frustum;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
@@ -40,7 +41,6 @@ public class Renderer {
 
         matrixStack.peek().getPositionMatrix().rotateY((float) getYaw(livingEntity, client));
         matrixStack.scale(pixelSize, pixelSize, pixelSize);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST); //make the hearts not blurry
 
         if(config.dynamicBrightness) {
             DynamicBrightnessRenderer.draw(matrixStack, texture, light);

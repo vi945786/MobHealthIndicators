@@ -26,19 +26,14 @@ public class ReloadableResourceManagerImplMixin {
         textures.values().forEach(NativeImageBackedTexture::close);
         textures.clear();
 
-        emptyTexture = HeartType.EMPTY.getTexture(HeartType.Effect.NONE);
-        normalFullTexture = HeartType.FULL.getTexture(HeartType.Effect.NONE);
-        normalHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.NONE);
-        poisonFullTexture = HeartType.FULL.getTexture(HeartType.Effect.POISON);
-        poisonHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.POISON);
-        witherFullTexture = HeartType.FULL.getTexture(HeartType.Effect.WITHER);
-        witherHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.WITHER);
-        absorbingFullTexture = HeartType.FULL.getTexture(HeartType.Effect.ABSORPTION);
-        absorbingHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.ABSORPTION);
-        frozenFullTexture = HeartType.FULL.getTexture(HeartType.Effect.FROZEN);
-        frozenHalfTexture = HeartType.HALF.getTexture(HeartType.Effect.FROZEN);
+        emptyTexture = new HeartType.HeartColor(HeartType.EMPTY.getTexture(HeartType.Effect.NONE), HeartType.EMPTY.getTexture(HeartType.Effect.NONE));
+        normalHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.NONE), HeartType.HALF.getTexture(HeartType.Effect.NONE));
+        poisonHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.POISON), HeartType.HALF.getTexture(HeartType.Effect.POISON));
+        witherHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.WITHER), HeartType.HALF.getTexture(HeartType.Effect.WITHER));
+        absorptionHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.ABSORPTION), HeartType.HALF.getTexture(HeartType.Effect.ABSORPTION));
+        frozenHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.FROZEN), HeartType.HALF.getTexture(HeartType.Effect.FROZEN));
 
-        heartSize = emptyTexture.getWidth();
+        heartSize = emptyTexture.fullHeartTexture().getWidth();
 
         pixelSize = defaultPixelSize / (heartSize / 9F);
     }

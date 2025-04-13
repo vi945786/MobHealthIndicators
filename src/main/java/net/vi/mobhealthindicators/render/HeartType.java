@@ -20,6 +20,8 @@ public enum HeartType {
         this.heartIcon = heartIcon;
     }
 
+    public record HeartColor(BufferedImage fullHeartTexture, BufferedImage halfHeartTexture) {}
+
     public enum Effect {
         NONE(""),
         POISON("poisoned_"),

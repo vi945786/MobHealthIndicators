@@ -1,11 +1,8 @@
 package net.vi.mobhealthindicators.mixin.minecraft;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.OtherClientPlayerEntity;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
@@ -16,8 +13,6 @@ import net.minecraft.client.render.entity.state.LivingEntityRenderState;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.vi.mobhealthindicators.render.HeartType;
 import net.vi.mobhealthindicators.render.Renderer;
@@ -59,7 +54,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
 
         T livingEntity = livingEntitys.get(livingEntityRenderState);
 
-        if (livingEntity != null && !config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player)) {
+        if (livingEntity != null && !config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player) || client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen) {
             entityToOldYaw.remove(livingEntity);
             return;
         }

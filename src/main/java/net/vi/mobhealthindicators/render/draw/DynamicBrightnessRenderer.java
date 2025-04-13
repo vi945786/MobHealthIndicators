@@ -1,16 +1,14 @@
 package net.vi.mobhealthindicators.render.draw;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.render.*;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
-import net.vi.mobhealthindicators.render.HeartType;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
 
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 
@@ -18,19 +16,14 @@ public class DynamicBrightnessRenderer {
 
     public static void draw(MatrixStack matrixStack, NativeImageBackedTexture texture, int light) {
         RenderLayer.MultiPhase renderLayer = (RenderLayer.MultiPhase) RenderLayer.getEntityCutoutNoCull(Identifier.of("minecraft", "textures/gui/sprites/hud/heart/container.png"));
-        renderLayer.phases.phases.getFirst().beginAction = () -> {
-            RenderSystem.setShaderTexture(0, texture.getGlId());
-        };
+        renderLayer.phases.phases.getFirst().beginAction = () -> RenderSystem.setShaderTexture(0, texture.getGlTexture());
 
         BufferBuilder bufferBuilder = new BufferBuilder(new BufferAllocator(256), VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
 
         NativeImage image = texture.getImage();
-        assert image != null;
         drawHeart(matrixStack.peek().getPositionMatrix(), bufferBuilder, image.getWidth() / 2f, image.getHeight() -heartSize, image.getWidth(), image.getHeight(), light);
 
-        renderLayer.startDrawing();
-        BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-        renderLayer.endDrawing();
+        renderLayer.draw(bufferBuilder.end());
     }
 
     private static void drawHeart(Matrix4f matrix4f, BufferBuilder bufferBuilder, float x, float y, float xOffset, float yOffset, int light) {

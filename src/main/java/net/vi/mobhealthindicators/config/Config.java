@@ -59,7 +59,7 @@ public class Config {
 
         if(!showHearts) return false;
 
-        if(showSelf && livingEntity == client.player) return true;
+        if(!showSelf && livingEntity == client.player) return false;
         if(onlyShowDamaged && MathHelper.ceil(livingEntity.getHealth()) >= MathHelper.ceil(livingEntity.getMaxHealth())) return false;
         if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return true;
         if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return false;

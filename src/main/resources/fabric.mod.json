@@ -21,7 +21,7 @@
       "net.vi.mobhealthindicators.MobHealthIndicators"
     ],
     "modmenu": [
-      "net.vi.mobhealthindicators.config.ConfigScreen"
+      "net.vi.mobhealthindicators.config.ModMenuScreen"
     ]
   },
   "mixins": [
@@ -29,10 +29,10 @@
   ],
 
   "depends": {
-    "fabricloader": ">=0.16.9",
+    "fabricloader": ">=0.16.13",
     "fabric": "*",
-    "minecraft": "1.21.4",
-    "cloth-config2": ">=17.0.142"
+    "minecraft": "1.21.5",
+    "cloth-config2": ">=18.0.145"
   },
   "custom": {
     "loom:injected_interfaces": {
