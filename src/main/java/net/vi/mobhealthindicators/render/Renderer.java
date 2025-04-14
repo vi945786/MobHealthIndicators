@@ -1,30 +1,21 @@
 package net.vi.mobhealthindicators.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.OtherClientPlayerEntity;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
-import net.vi.mobhealthindicators.render.draw.DefaultRenderer;
-import net.vi.mobhealthindicators.render.draw.DynamicBrightnessRenderer;
 import org.joml.Vector3d;
-import org.lwjgl.opengl.GL11;
 
 import java.util.WeakHashMap;
 
-import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.config.Config.heightDivisor;
 
-public class Renderer {
+public abstract class Renderer {
+
+    public abstract void draw(MatrixStack matrixStack, NativeImageBackedTexture texture, int light);
 
     public static final float defaultPixelSize = 0.025f;
     public static float pixelSize = 0.025f;
@@ -42,11 +33,7 @@ public class Renderer {
         matrixStack.peek().getPositionMatrix().rotateY((float) getYaw(livingEntity, client));
         matrixStack.scale(pixelSize, pixelSize, pixelSize);
 
-        if(config.dynamicBrightness) {
-            DynamicBrightnessRenderer.draw(matrixStack, texture, light);
-        } else {
-            DefaultRenderer.draw(matrixStack, texture);
-        }
+        config.getRenderer().draw(matrixStack, texture, light);
 
         matrixStack.pop();
     }

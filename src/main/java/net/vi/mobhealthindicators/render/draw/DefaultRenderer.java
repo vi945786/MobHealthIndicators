@@ -8,13 +8,15 @@ import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
+import net.vi.mobhealthindicators.render.Renderer;
 import org.joml.Matrix4f;
 
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 
-public class DefaultRenderer {
+public class DefaultRenderer extends Renderer {
+    public static final DefaultRenderer INSTANCE = new DefaultRenderer();
 
-    public static void draw(MatrixStack matrixStack, NativeImageBackedTexture texture) {
+    public void draw(MatrixStack matrixStack, NativeImageBackedTexture texture, int light) {
         RenderLayer.MultiPhase renderLayer = (RenderLayer.MultiPhase) RenderLayer.getEntityAlpha(Identifier.of("minecraft", "textures/gui/sprites/hud/heart/container.png"));
         renderLayer.phases.phases.getFirst().beginAction = () -> RenderSystem.setShaderTexture(0, texture.getGlTexture());
 

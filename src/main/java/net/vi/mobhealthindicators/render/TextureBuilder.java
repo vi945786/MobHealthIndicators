@@ -27,6 +27,9 @@ public class TextureBuilder {
     private static final int heartsPerRow = 10;
 
     public static NativeImageBackedTexture getTexture(int normalHealth, int maxHealth, int absorptionHealth, HeartType.Effect effect) {
+        String healthId = normalHealth + " " + (maxHealth - normalHealth) + " " + absorptionHealth + " " + effect;
+        if (textures.containsKey(healthId)) return textures.get(healthId);
+
 
         int normalHearts = MathHelper.ceil(normalHealth / 2.0F);
         int maxHearts = MathHelper.ceil(maxHealth / 2.0F);

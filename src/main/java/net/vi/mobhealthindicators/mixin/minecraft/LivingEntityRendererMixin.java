@@ -29,7 +29,6 @@ import java.util.WeakHashMap;
 import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.render.Renderer.entityToOldYaw;
-import static net.vi.mobhealthindicators.render.TextureBuilder.textures;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>> extends EntityRenderer<T, S> implements FeatureRendererContext<S, M> {
@@ -61,22 +60,10 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
 
         int normalHealth = MathHelper.ceil(livingEntity.getHealth());
         int maxHealth = MathHelper.ceil(livingEntity.getMaxHealth());
-        int emptyHealth = maxHealth - normalHealth;
         int absorptionHealth = MathHelper.ceil(livingEntity.getAbsorptionAmount());
         HeartType.Effect effect = HeartType.Effect.getEffect(livingEntity);
 
-        String healthId = normalHealth + " " + emptyHealth + " " + absorptionHealth + " " + effect;
-
-        NativeImageBackedTexture texture;
-
-        if (textures.containsKey(healthId)) {
-            texture = textures.get(healthId);
-        } else {
-            texture = TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect);
-            textures.put(healthId, texture);
-        }
-
         double d = dispatcher.getSquaredDistanceToCamera(livingEntity);
-        Renderer.render(client, matrixStack, livingEntity, texture, light, d, this.hasLabel(livingEntity, d));
+        Renderer.render(client, matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d));
     }
 }

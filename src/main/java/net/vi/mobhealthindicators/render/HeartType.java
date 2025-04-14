@@ -35,6 +35,10 @@ public enum HeartType {
             this.prefix = prefix;
         }
 
+        public static boolean hasAbnormalHearts(LivingEntity entity) {
+            return getEffect(entity) != NONE ||  entity.hasStatusEffect(StatusEffects.ABSORPTION) || entity.hasStatusEffect(StatusEffects.HEALTH_BOOST);
+        }
+
         public static Effect getEffect(LivingEntity entity) {
             if (entity.hasStatusEffect(StatusEffects.POISON)) {
                 return POISON;

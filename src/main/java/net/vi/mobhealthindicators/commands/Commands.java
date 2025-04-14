@@ -1,17 +1,13 @@
 package net.vi.mobhealthindicators.commands;
 
-import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.argument.NumberRangeArgumentType;
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType;
 import net.minecraft.entity.EntityType;
-import net.minecraft.predicate.NumberRange;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;

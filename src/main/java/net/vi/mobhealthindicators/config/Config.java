@@ -3,15 +3,17 @@ package net.vi.mobhealthindicators.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
-import com.mojang.serialization.Codec;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.Monster;
-import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.MathHelper;
 import net.vi.mobhealthindicators.MobHealthIndicators;
+import net.vi.mobhealthindicators.render.HeartType;
+import net.vi.mobhealthindicators.render.Renderer;
+import net.vi.mobhealthindicators.render.draw.DefaultRenderer;
+import net.vi.mobhealthindicators.render.draw.DynamicBrightnessRenderer;
 
 import java.io.File;
 import java.io.FileReader;
@@ -21,7 +23,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static net.vi.mobhealthindicators.MobHealthIndicators.client;
@@ -54,13 +55,18 @@ public class Config {
     @Expose public boolean showSelf = showSelfDefault;
     @Expose public boolean onlyShowDamaged = onlyShowDamagedDefault;
 
+    public Renderer getRenderer() {
+        if(config.dynamicBrightness) return DynamicBrightnessRenderer.INSTANCE;
+        else return DefaultRenderer.INSTANCE;
+    }
+
     public boolean shouldRender(LivingEntity livingEntity) {
         if(overrideFiltersKey.isPressed()) return true;
 
         if(!showHearts) return false;
 
         if(!showSelf && livingEntity == client.player) return false;
-        if(onlyShowDamaged && MathHelper.ceil(livingEntity.getHealth()) >= MathHelper.ceil(livingEntity.getMaxHealth())) return false;
+        if(onlyShowDamaged && MathHelper.ceil(livingEntity.getHealth()) >= MathHelper.ceil(livingEntity.getMaxHealth()) && !HeartType.Effect.hasAbnormalHearts(livingEntity)) return false;
         if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return true;
         if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return false;
         if(!showHostile && livingEntity instanceof Monster) return false;
@@ -72,8 +78,6 @@ public class Config {
     public static class ToggleableEntityList {
         @Expose public HashSet<String> entityList;
         @Expose public boolean toggle;
-
-        public ToggleableEntityList() {}
 
         public ToggleableEntityList(boolean toggle, String... entityList) {
             this.entityList = Arrays.stream(entityList).collect(Collectors.toCollection(HashSet::new));
