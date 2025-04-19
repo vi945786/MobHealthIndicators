@@ -1,26 +1,45 @@
 package net.vi.mobhealthindicators.render.draw;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.render.*;
+import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import net.vi.mobhealthindicators.render.Renderer;
 import org.joml.Matrix4f;
 
+import java.util.function.Function;
+
+import static net.minecraft.client.gl.RenderPipelines.MATRICES_SNIPPET;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 
 public class DefaultRenderer extends Renderer {
     public static final DefaultRenderer INSTANCE = new DefaultRenderer();
+    private static final RenderPipeline renderPipeline = RenderPipeline.builder(MATRICES_SNIPPET)
+            .withLocation(Identifier.of("mobhealthindicators", "pipeline/default_indicators"))
+            .withVertexShader(Identifier.of("mobhealthindicators", "default"))
+            .withFragmentShader(Identifier.of("mobhealthindicators", "default"))
+            .withSampler("Sampler0")
+            .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
+            .withPolygonMode(PolygonMode.FILL)
+            .withVertexFormat(VertexFormats.POSITION_TEXTURE, VertexFormat.DrawMode.QUADS)
+            .build();
+    private static final Function<AbstractTexture, RenderLayer.MultiPhase> renderLayerFactory = Util.memoize(abstractTexture -> {
+            RenderLayer.MultiPhaseParameters multiPhase = RenderLayer.MultiPhaseParameters.builder().texture(new AbstractRenderLayerTexture(abstractTexture)).build(false);
+            return RenderLayer.of("health_indicators_default", 256, renderPipeline, multiPhase);
+    });
 
     public void draw(MatrixStack matrixStack, NativeImageBackedTexture texture, int light) {
-        RenderLayer.MultiPhase renderLayer = (RenderLayer.MultiPhase) RenderLayer.getEntityAlpha(Identifier.of("minecraft", "textures/gui/sprites/hud/heart/container.png"));
-        renderLayer.phases.phases.getFirst().beginAction = () -> RenderSystem.setShaderTexture(0, texture.getGlTexture());
-
-        BufferBuilder bufferBuilder = new BufferBuilder(new BufferAllocator(256), VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
+        RenderLayer renderLayer = renderLayerFactory.apply(texture);
+        BufferBuilder bufferBuilder = new BufferBuilder(new BufferAllocator(1536), VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 
         NativeImage image = texture.getImage();
         drawHeart(matrixStack.peek().getPositionMatrix(), bufferBuilder, image.getWidth() / 2f, image.getHeight() -heartSize, image.getWidth(), image.getHeight());
@@ -36,6 +55,6 @@ public class DefaultRenderer extends Renderer {
     }
 
     private static void drawVertex(Matrix4f model, BufferBuilder bufferBuilder, float x, float y, float u, float v) {
-        bufferBuilder.vertex(model, x, y, 0).color(1F, 1F, 1F, 1F).texture(u, v).overlay(0, 10).light(0, 0).normal(x, 0, 0);
+        bufferBuilder.vertex(model, x, y, 0).texture(u, v);
     }
 }

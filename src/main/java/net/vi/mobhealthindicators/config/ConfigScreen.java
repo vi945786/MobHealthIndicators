@@ -17,8 +17,7 @@ import net.minecraft.util.Identifier;
 import java.util.*;
 import java.util.function.Function;
 
-import static net.vi.mobhealthindicators.MobHealthIndicators.overrideFiltersKey;
-import static net.vi.mobhealthindicators.MobHealthIndicators.toggleKey;
+import static net.vi.mobhealthindicators.MobHealthIndicators.*;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.config.Config.heightRange;
 

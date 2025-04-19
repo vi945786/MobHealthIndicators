@@ -9,6 +9,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,6 +66,7 @@ public class TextureBuilder {
             NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "hearts", NativeImage.read(byteArrayOutputStream.toByteArray()));
             texture.setFilter(false, false);
             texture.upload();
+
             return texture;
         } catch (IOException e) {
             throw new RuntimeException(e);
