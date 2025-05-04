@@ -39,3 +39,8 @@ jar {
 loom {
 	accessWidenerPath = file("src/main/resources/mobhealthindicators.accesswidener")
 }
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}

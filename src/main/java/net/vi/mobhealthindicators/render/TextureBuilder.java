@@ -9,8 +9,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +29,6 @@ public class TextureBuilder {
     public static NativeImageBackedTexture getTexture(int normalHealth, int maxHealth, int absorptionHealth, HeartType.Effect effect) {
         String healthId = normalHealth + " " + (maxHealth - normalHealth) + " " + absorptionHealth + " " + effect;
         if (textures.containsKey(healthId)) return textures.get(healthId);
-
 
         int normalHearts = MathHelper.ceil(normalHealth / 2.0F);
         int maxHearts = MathHelper.ceil(maxHealth / 2.0F);
@@ -67,6 +64,7 @@ public class TextureBuilder {
             texture.setFilter(false, false);
             texture.upload();
 
+            textures.put(healthId, texture);
             return texture;
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -15,8 +15,6 @@ import net.minecraft.text.Text;
 import net.vi.mobhealthindicators.config.ConfigScreen;
 import net.vi.mobhealthindicators.config.Config;
 
-import java.util.Set;
-
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 import static net.vi.mobhealthindicators.config.Config.config;

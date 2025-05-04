@@ -1,8 +1,6 @@
 package net.vi.mobhealthindicators.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderPhase;
 import net.minecraft.client.texture.AbstractTexture;
@@ -20,7 +18,6 @@ import static net.vi.mobhealthindicators.config.Config.heightDivisor;
 
 public abstract class Renderer {
 
-    public static VertexFormat POSITION_TEXTURE_LIGHT = VertexFormat.builder().add("Position", VertexFormatElement.POSITION).add("UV0", VertexFormatElement.UV0).add("UV2", VertexFormatElement.UV2).build();
     public static class AbstractRenderLayerTexture extends RenderPhase.TextureBase {
         public AbstractRenderLayerTexture(AbstractTexture texture) {
             super(() -> RenderSystem.setShaderTexture(0, texture.getGlTexture()), () -> {});
