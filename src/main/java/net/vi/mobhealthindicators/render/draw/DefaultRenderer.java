@@ -30,6 +30,7 @@ public class DefaultRenderer extends Renderer {
             .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
             .withPolygonMode(PolygonMode.FILL)
             .withVertexFormat(VertexFormats.POSITION_TEXTURE, VertexFormat.DrawMode.QUADS)
+            .withCull(false)
             .build();
     private static final Function<AbstractTexture, RenderLayer.MultiPhase> renderLayerFactory = Util.memoize(abstractTexture -> {
             RenderLayer.MultiPhaseParameters multiPhase = RenderLayer.MultiPhaseParameters.builder().texture(new AbstractRenderLayerTexture(abstractTexture)).build(false);

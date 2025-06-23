@@ -1,7 +1,6 @@
 package net.vi.mobhealthindicators.render.draw;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
 import net.minecraft.client.texture.AbstractTexture;
 import net.minecraft.client.texture.NativeImage;
@@ -14,18 +13,20 @@ import org.joml.Matrix4f;
 
 import java.util.function.Function;
 
+import static net.minecraft.client.gl.RenderPipelines.ENTITY_CUTOUT_NO_CULL_Z_OFFSET;
 import static net.minecraft.client.render.RenderPhase.*;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 
 public class DynamicBrightnessRenderer extends Renderer {
     public static final DynamicBrightnessRenderer INSTANCE = new DynamicBrightnessRenderer();
     private static final Function<AbstractTexture, RenderLayer.MultiPhase> renderLayerFactory = Util.memoize(abstractTexture -> {
-            RenderLayer.MultiPhaseParameters multiPhase = RenderLayer.MultiPhaseParameters.builder().texture(new AbstractRenderLayerTexture(abstractTexture)).lightmap(ENABLE_LIGHTMAP).build(false);
-            return RenderLayer.of("health_indicators_dynamic_brightness", 256, RenderPipelines.ENTITY_CUTOUT, multiPhase);
+            RenderLayer.MultiPhaseParameters multiPhase = RenderLayer.MultiPhaseParameters.builder().texture(new AbstractRenderLayerTexture(abstractTexture)).lightmap(ENABLE_LIGHTMAP).overlay(ENABLE_OVERLAY_COLOR).build(true);
+            return RenderLayer.of("health_indicators_dynamic_brightness", 256, ENTITY_CUTOUT_NO_CULL_Z_OFFSET, multiPhase);
     });
 
     public void draw(MatrixStack matrixStack, NativeImageBackedTexture texture, int light) {
         RenderLayer renderLayer = renderLayerFactory.apply(texture);
+
         BufferBuilder bufferBuilder = new BufferBuilder(new BufferAllocator(256), VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
 
         NativeImage image = texture.getImage();

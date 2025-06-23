@@ -65,6 +65,7 @@ public class TextureBuilder {
             texture.upload();
 
             textures.put(healthId, texture);
+
             return texture;
         } catch (IOException e) {
             throw new RuntimeException(e);

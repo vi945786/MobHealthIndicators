@@ -27,7 +27,6 @@ import java.util.WeakHashMap;
 
 import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.config.Config.config;
-import static net.vi.mobhealthindicators.render.Renderer.entityToOldYaw;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>> extends EntityRenderer<T, S> implements FeatureRendererContext<S, M> {
@@ -53,7 +52,6 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
         T livingEntity = livingEntitys.get(livingEntityRenderState);
 
         if (livingEntity != null && !config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player) || client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen) {
-            entityToOldYaw.remove(livingEntity);
             return;
         }
 
@@ -63,6 +61,6 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
         HeartType.Effect effect = HeartType.Effect.getEffect(livingEntity);
 
         double d = dispatcher.getSquaredDistanceToCamera(livingEntity);
-        Renderer.render(client, matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d));
+        Renderer.render(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher);
     }
 }
