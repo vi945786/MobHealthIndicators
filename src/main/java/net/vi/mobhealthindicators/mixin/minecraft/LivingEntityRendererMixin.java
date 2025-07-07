@@ -51,7 +51,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
 
         T livingEntity = livingEntitys.get(livingEntityRenderState);
 
-        if (livingEntity != null && !config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player) || client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen) {
+        if (livingEntity != null && !config.shouldRender(livingEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player) || ((client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen) && livingEntity == player)) {
             return;
         }
 
@@ -61,6 +61,6 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
         HeartType.Effect effect = HeartType.Effect.getEffect(livingEntity);
 
         double d = dispatcher.getSquaredDistanceToCamera(livingEntity);
-        Renderer.render(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher);
+        Renderer.render(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher, vertexConsumerProvider);
     }
 }

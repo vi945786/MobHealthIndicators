@@ -41,51 +41,65 @@ public class Commands {
                 }))
 
                 .then(literal("showHearts").executes(context -> {
-                    sendMessage(Text.literal(String.valueOf(config.showHearts)));
+                    sendMessage(Text.literal("showHearts is currently set to: " + config.showHearts));
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.showHearts = context.getArgument("value", boolean.class);
                         Config.save();
+                        sendMessage(Text.literal("set showHearts to " + config.showHearts));
                         return 1;
                     }))
                 )
 
                 .then(literal("dynamicBrightness").executes(context -> {
-                    sendMessage(Text.literal(String.valueOf(config.dynamicBrightness)));
+                    sendMessage(Text.literal("dynamicBrightness is currently set to: " + config.dynamicBrightness));
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.dynamicBrightness = context.getArgument("value", boolean.class);
                         Config.save();
+                        sendMessage(Text.literal("set dynamicBrightness to " + config.dynamicBrightness));
                         return 1;
                     }))
                 )
 
                 .then(literal("height").executes(context -> {
-                    sendMessage(Text.literal(String.valueOf(config.height)));
+                    sendMessage(Text.literal("height is currently set to: " + config.height));
                     return 1;
                     }).then(argument("value", IntegerArgumentType.integer(-heightRange, heightRange)).executes(context -> {
                         config.height = context.getArgument("value", int.class);
                         Config.save();
+                        sendMessage(Text.literal("set height to " + config.height));
+                        return 1;
+                    }))
+                )
+
+                .then(literal("renderOnTopOnHover").executes(context -> {
+                    sendMessage(Text.literal("renderOnTopOnHover is currently set to: " + config.renderOnTopOnHover));
+                    return 1;
+                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
+                        config.renderOnTopOnHover = context.getArgument("value", boolean.class);
+                        Config.save();
+                        sendMessage(Text.literal("set renderOnTopOnHover to " + config.renderOnTopOnHover));
                         return 1;
                     }))
                 )
 
                 .then(literal("blackList").executes(context -> {
-                    sendMessage(Text.literal(config.blackList.toString()));
+                    sendMessage(Text.literal("blackList is currently " + (config.blackList.toggle ? "enabled" : "disabled") + " with entities: " + config.blackList.entityList));
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.blackList.toggle = context.getArgument("value", boolean.class);
                         Config.save();
+                        sendMessage(Text.literal("toggled blackList to " + config.blackList.toggle));
                         return 1;
                     }))
 
                     .then(literal("add").then(argument("value", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE)).executes(context -> {
                         String value = ((RegistryKey<EntityType<?>>) context.getArgument("value", RegistryEntry.Reference.class).getKey().get()).getValue().toString();
 
-                        if(config.blackList.entityList.contains(value)) return 1;
-
                         config.blackList.entityList.add(value);
                         Config.save();
+                        sendMessage(Text.literal(value + " added to blackList"));
                         return 1;
                     })))
 
@@ -94,26 +108,27 @@ public class Commands {
 
                         config.blackList.entityList.remove(value);
                         Config.save();
+                        sendMessage(Text.literal(value + " removed from blackList"));
                         return 1;
                     })))
                 )
 
                 .then(literal("whiteList").executes(context -> {
-                    sendMessage(Text.literal(config.whiteList.toString()));
+                    sendMessage(Text.literal("whiteList is currently " + (config.whiteList.toggle ? "enabled" : "disabled") + " with entities: " + config.whiteList.entityList));
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.whiteList.toggle = context.getArgument("value", boolean.class);
                         Config.save();
+                        sendMessage(Text.literal("toggled whiteList to " + config.whiteList.toggle));
                         return 1;
                     }))
 
                     .then(literal("add").then(argument("value", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE)).executes(context -> {
                         String value = ((RegistryKey<EntityType<?>>) context.getArgument("value", RegistryEntry.Reference.class).getKey().get()).getValue().toString();
 
-                        if(config.whiteList.entityList.contains(value)) return 1;
-
                         config.whiteList.entityList.add(value);
                         Config.save();
+                        sendMessage(Text.literal(value + " added to whiteList"));
                         return 1;
                     })))
 
@@ -122,46 +137,51 @@ public class Commands {
 
                         config.whiteList.entityList.remove(value);
                         Config.save();
+                        sendMessage(Text.literal(value + " removed from whiteList"));
                         return 1;
                     })))
                 )
 
                 .then(literal("showHostile").executes(context -> {
-                    sendMessage(Text.literal(String.valueOf(config.showHostile)));
+                    sendMessage(Text.literal("showHostile is currently set to: " + config.showHostile));
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.showHostile = context.getArgument("value", boolean.class);
                         Config.save();
+                        sendMessage(Text.literal("set showHostile to " + config.showHostile));
                         return 1;
                     }))
                 )
 
                 .then(literal("showPassive").executes(context -> {
-                    sendMessage(Text.literal(String.valueOf(config.showPassive)));
+                    sendMessage(Text.literal("showPassive is currently set to: " + config.showPassive));
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.showPassive = context.getArgument("value", boolean.class);
                         Config.save();
+                        sendMessage(Text.literal("set showPassive to " + config.showPassive));
                         return 1;
                     }))
                 )
 
                 .then(literal("showSelf").executes(context -> {
-                    sendMessage(Text.literal(String.valueOf(config.showSelf)));
+                    sendMessage(Text.literal("showSelf is currently set to: " + config.showSelf));
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.showSelf = context.getArgument("value", boolean.class);
                         Config.save();
+                        sendMessage(Text.literal("set showSelf to " + config.showSelf));
                         return 1;
                     }))
                 )
 
                 .then(literal("onlyShowDamaged").executes(context -> {
-                    sendMessage(Text.literal(String.valueOf(config.onlyShowDamaged)));
+                    sendMessage(Text.literal("onlyShowDamaged is currently set to: " + config.onlyShowDamaged));
                     return 1;
                     }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                         config.onlyShowDamaged = context.getArgument("value", boolean.class);
                         Config.save();
+                        sendMessage(Text.literal("set onlyShowDamaged to " + config.onlyShowDamaged));
                         return 1;
                     }))
                 )

@@ -10,9 +10,6 @@ import net.minecraft.entity.mob.Monster;
 import net.minecraft.util.math.MathHelper;
 import net.vi.mobhealthindicators.MobHealthIndicators;
 import net.vi.mobhealthindicators.render.HeartType;
-import net.vi.mobhealthindicators.render.Renderer;
-import net.vi.mobhealthindicators.render.draw.DefaultRenderer;
-import net.vi.mobhealthindicators.render.draw.DynamicBrightnessRenderer;
 
 import java.io.File;
 import java.io.FileReader;
@@ -36,6 +33,7 @@ public class Config {
     public static final boolean showHeartsDefault = true;
     public static final boolean dynamicBrightnessDefault = true;
     public static final int heightDefault = 0;
+    public static final boolean renderOnTopOnHoverDefault = true;
     public static final ToggleableEntityList blackListDefault = new ToggleableEntityList(true, "minecraft:armor_stand");
     public static final ToggleableEntityList whiteListDefault = new ToggleableEntityList(false, "minecraft:player");
     public static final boolean showHostileDefault = true;
@@ -46,17 +44,13 @@ public class Config {
     @Expose public boolean showHearts = showHeartsDefault;
     @Expose public boolean dynamicBrightness = dynamicBrightnessDefault;
     @Expose public int height = heightDefault;
+    @Expose public boolean renderOnTopOnHover = renderOnTopOnHoverDefault;
     @Expose public ToggleableEntityList blackList = blackListDefault;
     @Expose public ToggleableEntityList whiteList = whiteListDefault;
     @Expose public boolean showHostile = showHostileDefault;
     @Expose public boolean showPassive = showPassiveDefault;
     @Expose public boolean showSelf = showSelfDefault;
     @Expose public boolean onlyShowDamaged = onlyShowDamagedDefault;
-
-    public Renderer getRenderer() {
-        if(config.dynamicBrightness) return DynamicBrightnessRenderer.INSTANCE;
-        else return DefaultRenderer.INSTANCE;
-    }
 
     public boolean shouldRender(LivingEntity livingEntity) {
         if(overrideFiltersKey.isPressed()) return true;
