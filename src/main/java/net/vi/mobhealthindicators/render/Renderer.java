@@ -26,7 +26,6 @@ import static net.minecraft.client.gl.RenderPipelines.*;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.config.Config.heightDivisor;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
-import static org.lwjgl.opengl.GL11.*;
 
 public abstract class Renderer {
 
@@ -42,17 +41,8 @@ public abstract class Renderer {
             .build());
 
     public static class AbstractRenderLayerTexture extends RenderPhase.TextureBase {
-        public AbstractRenderLayerTexture(AbstractTexture texture, boolean renderOverBlocks) {
-            super(() -> {
-                RenderSystem.setShaderTexture(0, texture.getGlTexture());
-                if(renderOverBlocks) {
-                    glDepthFunc(GL_ALWAYS);
-                    glDepthMask(false);
-                }
-            }, () -> {
-                glDepthMask(true);
-                glDepthFunc(GL_LEQUAL);
-            });
+        public AbstractRenderLayerTexture(AbstractTexture texture) {
+            super(() -> RenderSystem.setShaderTexture(0, texture.getGlTexture()), () -> {});
         }
     }
 
@@ -63,7 +53,7 @@ public abstract class Renderer {
         Triple<AbstractTexture, Boolean, Boolean> key = Triple.of(texture, renderOverBlocks, areShadersEnabled);
 
         return renderLayerCache.computeIfAbsent(key, (Triple<AbstractTexture, Boolean, Boolean> triple) -> {
-            RenderLayer.MultiPhaseParameters multiPhase = RenderLayer.MultiPhaseParameters.builder().texture(new AbstractRenderLayerTexture(triple.getLeft(), triple.getMiddle())).build(true);
+            RenderLayer.MultiPhaseParameters multiPhase = RenderLayer.MultiPhaseParameters.builder().texture(new AbstractRenderLayerTexture(triple.getLeft())).target(triple.getMiddle() ? RenderPhase.OUTLINE_TARGET : RenderPhase.MAIN_TARGET).build(true);
             return RenderLayer.of("health_indicators", 1536, false, true, triple.getRight() ? ENTITY_CUTOUT_NO_CULL : FULL_BRIGHT_INDICATORS, multiPhase);
         });
     }
