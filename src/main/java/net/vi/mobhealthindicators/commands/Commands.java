@@ -2,10 +2,13 @@ package net.vi.mobhealthindicators.commands;
 
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType;
 import net.minecraft.entity.EntityType;
 import net.minecraft.registry.RegistryKey;
@@ -17,8 +20,7 @@ import net.vi.mobhealthindicators.config.Config;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
-import static net.vi.mobhealthindicators.config.Config.config;
-import static net.vi.mobhealthindicators.config.Config.heightRange;
+import static net.vi.mobhealthindicators.config.Config.*;
 
 public class Commands {
 
@@ -28,165 +30,94 @@ public class Commands {
         registerSubCommands("mhi");
     }
 
+    private static void registerSubCommandOfBool(ArgumentBuilder argumentBuilder, String name) {
+        argumentBuilder.then(literal(name).executes(context -> {
+            sendMessage(Text.literal(name + " is currently set to: " + config.getName(name)));
+            return 1;
+            }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
+                config.setName(name, context.getArgument("value", boolean.class));
+                Config.save();
+                sendMessage(Text.literal("set " + name + " to " + config.getName(name)));
+                return 1;
+            }))
+        );
+    }
+
+    private static void registerSubCommandOfInt(ArgumentBuilder argumentBuilder, String name, int max, int min) {
+        argumentBuilder.then(literal(name).executes(context -> {
+            sendMessage(Text.literal(name + " is currently set to: " + config.getName(name)));
+            return 1;
+            }).then(argument("value", IntegerArgumentType.integer(min, max)).executes(context -> {
+                config.setName(name, context.getArgument("value", int.class));
+                Config.save();
+                sendMessage(Text.literal("set " + name + " to " + config.getName(name)));
+                return 1;
+            }))
+        );
+    }
+
+    private static void registerSubCommandOfToggleableEntityList(ArgumentBuilder argumentBuilder, CommandRegistryAccess registryAccess, String name) {
+        Config.ToggleableEntityList list = (Config.ToggleableEntityList) config.getName(name);
+        argumentBuilder.then(literal(name).executes(context -> {
+            sendMessage(Text.literal(name + " is currently toggled to: " + list.toggle));
+            return 1;
+            }).then(literal("set").executes(context -> {
+                sendMessage(Text.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
+                return 1;
+                }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
+                    list.toggle = context.getArgument("value", boolean.class);
+                    Config.save();
+                    sendMessage(Text.literal("toggled blackList to " + list));
+                    return 1;
+                })))
+
+            .then(literal("add").then(argument("value", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE)).executes(context -> {
+                String value = ((RegistryKey<EntityType<?>>) context.getArgument("value", RegistryEntry.Reference.class).getKey().get()).getValue().toString();
+
+                list.entityList.add(value);
+                Config.save();
+                sendMessage(Text.literal(value + " added to blackList"));
+                return 1;
+            })))
+
+            .then(literal("remove").then(argument("value", SpecificStringArgumentType.specificString(() -> list.entityList)).executes(context -> {
+                String value = context.getArgument("value", String.class);
+
+                list.entityList.remove(value);
+                Config.save();
+                sendMessage(Text.literal(value + " removed from blackList"));
+                return 1;
+            })))
+        );
+    }
+
     private static void registerSubCommands(String mainCommand) {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-            dispatcher.register(literal(mainCommand).executes(context -> {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            LiteralArgumentBuilder builder = literal(mainCommand).executes(context -> {
                 sendMessage(Text.literal(config.toString()));
                 return 1;
-            })
-                .then(literal("config").executes(context -> {
-                    MinecraftClient client = context.getSource().getClient();
-                    client.send(() -> client.setScreen(ConfigScreen.getConfigScreen(client.currentScreen)));
-                    return 1;
-                }))
+            });
 
-                .then(literal("showHearts").executes(context -> {
-                    sendMessage(Text.literal("showHearts is currently set to: " + config.showHearts));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.showHearts = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("set showHearts to " + config.showHearts));
-                        return 1;
-                    }))
-                )
+            builder.then(literal("config").executes(context -> {
+                MinecraftClient client = context.getSource().getClient();
+                client.send(() -> client.setScreen(ConfigScreen.getConfigScreen(client.currentScreen)));
+                return 1;
+            }));
 
-                .then(literal("dynamicBrightness").executes(context -> {
-                    sendMessage(Text.literal("dynamicBrightness is currently set to: " + config.dynamicBrightness));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.dynamicBrightness = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("set dynamicBrightness to " + config.dynamicBrightness));
-                        return 1;
-                    }))
-                )
+            registerSubCommandOfBool(builder, "showHearts");
+            registerSubCommandOfBool(builder, "dynamicBrightness");
+            registerSubCommandOfInt(builder, "height", heightRange, -heightRange);
+            registerSubCommandOfBool(builder, "renderOnTopOnHover");
+            registerSubCommandOfToggleableEntityList(builder, registryAccess, "blackList");
+            registerSubCommandOfToggleableEntityList(builder, registryAccess, "whiteList");
+            registerSubCommandOfBool(builder, "showHostile");
+            registerSubCommandOfBool(builder, "showPassive");
+            registerSubCommandOfBool(builder, "showSelf");
+            registerSubCommandOfBool(builder, "onlyShowDamaged");
+            registerSubCommandOfBool(builder, "onlyShowOnHover");
 
-                .then(literal("height").executes(context -> {
-                    sendMessage(Text.literal("height is currently set to: " + config.height));
-                    return 1;
-                    }).then(argument("value", IntegerArgumentType.integer(-heightRange, heightRange)).executes(context -> {
-                        config.height = context.getArgument("value", int.class);
-                        Config.save();
-                        sendMessage(Text.literal("set height to " + config.height));
-                        return 1;
-                    }))
-                )
-
-                .then(literal("renderOnTopOnHover").executes(context -> {
-                    sendMessage(Text.literal("renderOnTopOnHover is currently set to: " + config.renderOnTopOnHover));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.renderOnTopOnHover = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("set renderOnTopOnHover to " + config.renderOnTopOnHover));
-                        return 1;
-                    }))
-                )
-
-                .then(literal("blackList").executes(context -> {
-                    sendMessage(Text.literal("blackList is currently " + (config.blackList.toggle ? "enabled" : "disabled") + " with entities: " + config.blackList.entityList));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.blackList.toggle = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("toggled blackList to " + config.blackList.toggle));
-                        return 1;
-                    }))
-
-                    .then(literal("add").then(argument("value", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE)).executes(context -> {
-                        String value = ((RegistryKey<EntityType<?>>) context.getArgument("value", RegistryEntry.Reference.class).getKey().get()).getValue().toString();
-
-                        config.blackList.entityList.add(value);
-                        Config.save();
-                        sendMessage(Text.literal(value + " added to blackList"));
-                        return 1;
-                    })))
-
-                    .then(literal("remove").then(argument("value", SpecificStringArgumentType.specificString(() -> config.blackList.entityList)).executes(context -> {
-                        String value = context.getArgument("value", String.class);
-
-                        config.blackList.entityList.remove(value);
-                        Config.save();
-                        sendMessage(Text.literal(value + " removed from blackList"));
-                        return 1;
-                    })))
-                )
-
-                .then(literal("whiteList").executes(context -> {
-                    sendMessage(Text.literal("whiteList is currently " + (config.whiteList.toggle ? "enabled" : "disabled") + " with entities: " + config.whiteList.entityList));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.whiteList.toggle = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("toggled whiteList to " + config.whiteList.toggle));
-                        return 1;
-                    }))
-
-                    .then(literal("add").then(argument("value", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE)).executes(context -> {
-                        String value = ((RegistryKey<EntityType<?>>) context.getArgument("value", RegistryEntry.Reference.class).getKey().get()).getValue().toString();
-
-                        config.whiteList.entityList.add(value);
-                        Config.save();
-                        sendMessage(Text.literal(value + " added to whiteList"));
-                        return 1;
-                    })))
-
-                    .then(literal("remove").then(argument("value", SpecificStringArgumentType.specificString(() -> config.whiteList.entityList)).executes(context -> {
-                        String value = context.getArgument("value", String.class);
-
-                        config.whiteList.entityList.remove(value);
-                        Config.save();
-                        sendMessage(Text.literal(value + " removed from whiteList"));
-                        return 1;
-                    })))
-                )
-
-                .then(literal("showHostile").executes(context -> {
-                    sendMessage(Text.literal("showHostile is currently set to: " + config.showHostile));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.showHostile = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("set showHostile to " + config.showHostile));
-                        return 1;
-                    }))
-                )
-
-                .then(literal("showPassive").executes(context -> {
-                    sendMessage(Text.literal("showPassive is currently set to: " + config.showPassive));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.showPassive = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("set showPassive to " + config.showPassive));
-                        return 1;
-                    }))
-                )
-
-                .then(literal("showSelf").executes(context -> {
-                    sendMessage(Text.literal("showSelf is currently set to: " + config.showSelf));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.showSelf = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("set showSelf to " + config.showSelf));
-                        return 1;
-                    }))
-                )
-
-                .then(literal("onlyShowDamaged").executes(context -> {
-                    sendMessage(Text.literal("onlyShowDamaged is currently set to: " + config.onlyShowDamaged));
-                    return 1;
-                    }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                        config.onlyShowDamaged = context.getArgument("value", boolean.class);
-                        Config.save();
-                        sendMessage(Text.literal("set onlyShowDamaged to " + config.onlyShowDamaged));
-                        return 1;
-                    }))
-                )
-            )
-        );
+            dispatcher.register(builder);
+        });
     }
 
     private static void sendMessage(Text message) {

@@ -47,8 +47,12 @@ public abstract class Renderer {
                 RenderSystem.setShaderTexture(0, texture.getGlTexture());
                 if(renderOverBlocks) {
                     glDepthFunc(GL_ALWAYS);
+                    glDepthMask(false);
                 }
-            }, () -> glDepthFunc(GL_LEQUAL));
+            }, () -> {
+                glDepthMask(true);
+                glDepthFunc(GL_LEQUAL);
+            });
         }
     }
 
@@ -65,7 +69,7 @@ public abstract class Renderer {
     }
 
     public static final float defaultPixelSize = 0.025f;
-    public static float pixelSize = 0.025f;
+    public static float pixelSize = defaultPixelSize;
 
     public static void render(MatrixStack matrixStack, LivingEntity livingEntity, NativeImageBackedTexture texture, int light, double distance, boolean hasLabel, EntityRenderDispatcher dispatcher, VertexConsumerProvider vertexConsumerProvider) {
         matrixStack.push();
@@ -77,8 +81,8 @@ public abstract class Renderer {
             }
         }
 
-        matrixStack.peek().getPositionMatrix().rotateY(getYaw(dispatcher.camera.getYaw()));
         matrixStack.scale(pixelSize, pixelSize, pixelSize);
+        matrixStack.peek().getPositionMatrix().rotateY(getYaw(dispatcher.camera.getYaw()));
 
         draw(matrixStack, texture, vertexConsumerProvider, light, dispatcher.targetedEntity == livingEntity, config);
 
@@ -89,18 +93,18 @@ public abstract class Renderer {
         VertexConsumer bufferBuilder = vertexConsumerProvider.getBuffer(getHealthIndicatorsRenderLayer(config, texture, renderOverBlocks));
 
         NativeImage image = texture.getImage();
-        drawHeart(matrixStack.peek().getPositionMatrix(), bufferBuilder, image.getWidth() / 2f, image.getHeight() -heartSize, image.getWidth(), image.getHeight(), config.dynamicBrightness ? light : LightmapTextureManager.MAX_LIGHT_COORDINATE);
+        drawHeart(matrixStack.peek().getPositionMatrix(), bufferBuilder, image.getWidth() / 2f, image.getHeight() , config.dynamicBrightness ? light : LightmapTextureManager.MAX_LIGHT_COORDINATE);
     }
 
-    private static void drawHeart(Matrix4f matrix4f, VertexConsumer bufferBuilder, float x, float y, float xOffset, float yOffset, int light) {
-        drawVertex(matrix4f, bufferBuilder, x - xOffset, y -yOffset, 0F, 1F, light);
-        drawVertex(matrix4f, bufferBuilder, x, y - yOffset, 1F, 1F, light);
-        drawVertex(matrix4f, bufferBuilder, x, y, 1F, 0F, light);
-        drawVertex(matrix4f, bufferBuilder, x - xOffset, y, 0F, 0F, light);
+    private static void drawHeart(Matrix4f matrix4f, VertexConsumer bufferBuilder, float width, float height, int light) {
+        drawVertex(matrix4f, bufferBuilder, -width, -heartSize, 0, 1, light);
+        drawVertex(matrix4f, bufferBuilder, +width, -heartSize, 1, 1, light);
+        drawVertex(matrix4f, bufferBuilder, +width, height-heartSize, 1, 0, light);
+        drawVertex(matrix4f, bufferBuilder, -width, height-heartSize, 0, 0, light);
     }
 
     private static void drawVertex(Matrix4f model, VertexConsumer bufferBuilder, float x, float y, float u, float v, int light) {
-        bufferBuilder.vertex(model, x, y, 0).color(1F, 1F, 1F, 1F).texture(u, v).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(x, 0, 0);
+        bufferBuilder.vertex(model, x, y, 0).color(1F, 1F, 1F, 1F).texture(u, v).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, 0);
     }
 
     public static float getYaw(double yaw) {

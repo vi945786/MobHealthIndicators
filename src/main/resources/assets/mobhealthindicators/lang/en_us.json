@@ -17,7 +17,9 @@
   "config.mobhealthindicators.option.showhostile": "Hostile Mobs",
   "config.mobhealthindicators.option.showpassive": "Passive Mobs",
   "config.mobhealthindicators.option.showself": "Yourself",
-  "config.mobhealthindicators.option.onlyshowDamaged": "Damaged Entities Only",
+  "config.mobhealthindicators.option.onlyshowdamaged": "Damaged Entities Only",
+  "config.mobhealthindicators.option.onlyshowonhover": "Targeted Entity Only",
+  "config.mobhealthindicators.option.onlyshowonhover.tooltip": "A targeted entity is the entity you are looking at.",
 
   "config.mobhealthindicators.category.keybinds": "Keybinds",
 

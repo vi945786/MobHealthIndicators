@@ -42,7 +42,8 @@ public class ConfigScreen {
                 showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showhostile"), config.showHostile).setDefaultValue(Config.showHostileDefault).setSaveConsumer(value -> config.showHostile=value).build());
                 showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showpassive"), config.showPassive).setDefaultValue(Config.showPassiveDefault).setSaveConsumer(value -> config.showPassive=value).build());
                 showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.showself"), config.showSelf).setDefaultValue(Config.showSelfDefault).setSaveConsumer(value -> config.showSelf=value).build());
-                showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.onlyshowDamaged"), config.onlyShowDamaged).setDefaultValue(Config.onlyShowDamagedDefault).setSaveConsumer(value -> config.onlyShowDamaged=value).build());
+                showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.onlyshowdamaged"), config.onlyShowDamaged).setDefaultValue(Config.onlyShowDamagedDefault).setSaveConsumer(value -> config.onlyShowDamaged=value).build());
+                showFor.add(entryBuilder.startBooleanToggle(Text.translatable("config.mobhealthindicators.option.onlyshowonhover"), config.onlyShowOnHover).setDefaultValue(Config.onlyShowOnHoverDefault).setSaveConsumer(value -> config.onlyShowOnHover=value).setTooltip(Text.translatable("config.mobhealthindicators.option.onlyshowonhover.tooltip")).build());
             filter.addEntry(showFor.build());
 
         ConfigCategory keybinds = configBuilder.getOrCreateCategory(Text.translatable("config.mobhealthindicators.category.keybinds"));

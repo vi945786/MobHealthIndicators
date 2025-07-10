@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "net.vi.mobhealthindicators.mixin.minecraft",
   "client": [
-    "LivingEntityRendererMixin",
+    "EntityRendererMixin",
     "ReloadableResourceManagerImplMixin"
   ],
   "injectors": {
