@@ -15,7 +15,6 @@
   },
   "icon": "assets/mobhealthindicators/icon.png",
   "environment": "client",
-  "accessWidener" : "mobhealthindicators.accesswidener",
   "entrypoints": {
     "main": [
       "net.vi.mobhealthindicators.MobHealthIndicators"

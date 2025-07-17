@@ -4,7 +4,8 @@
   "package": "net.vi.mobhealthindicators.mixin.minecraft",
   "client": [
     "EntityRendererMixin",
-    "ReloadableResourceManagerImplMixin"
+    "ReloadableResourceManagerImplMixin",
+    "WorldRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

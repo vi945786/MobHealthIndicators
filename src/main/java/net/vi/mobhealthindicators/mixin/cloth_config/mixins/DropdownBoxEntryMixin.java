@@ -52,14 +52,8 @@ public abstract class DropdownBoxEntryMixin<T> extends TooltipListEntry<T> imple
         super(fieldName, tooltipSupplier);
     }
 
-    @Unique
-    public boolean isMobhealthindicators() {
-        return resetButton.getMessage().getString().equals("mobhealthindicators.hidebutton");
-    }
-
     @Inject(method = "<init>", at = @At("RETURN"))
     public void changeSelectionElement(Text fieldName, Text resetButtonKey, Supplier tooltipSupplier, boolean requiresRestart, Supplier defaultValue, Consumer saveConsumer, Iterable selections, DropdownBoxEntry.SelectionTopCellElement topRenderer, DropdownBoxEntry.SelectionCellCreator cellCreator, CallbackInfo ci) {
-        if(isMobhealthindicators()) resetButton.setWidth(0);
         this.selectionElement = new DropdownBoxEntry.SelectionElement<>((DropdownBoxEntry) (Object) this, new Rectangle(0, 0, fieldName.getString().isBlank() ? 300 : 150, 20), new DropdownBoxEntry.DefaultDropdownMenuElement<>(selections == null ? ImmutableList.of() : ImmutableList.copyOf(selections)), topRenderer, cellCreator);
     }
 

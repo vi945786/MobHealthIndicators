@@ -1,6 +1,5 @@
 package net.vi.mobhealthindicators.render;
 
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.Identifier;
@@ -8,6 +7,8 @@ import net.minecraft.util.Identifier;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+
+import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 
 public enum HeartType {
     EMPTY("container"),
@@ -54,7 +55,7 @@ public enum HeartType {
 
     public BufferedImage getTexture(Effect effect) {
         try {
-            return ImageIO.read(MinecraftClient.getInstance().getTextureManager().resourceContainer.open(Identifier.of("minecraft", "textures/gui/sprites/hud/heart/" + effect.prefix + heartIcon + ".png")));
+            return ImageIO.read(client.getResourceManager().getResourceOrThrow(Identifier.of("minecraft", "textures/gui/sprites/hud/heart/" + effect.prefix + heartIcon + ".png")).getInputStream());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

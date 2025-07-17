@@ -53,8 +53,8 @@ public class ConfigScreen {
         return configBuilder.build();
     }
 
-    public static DropdownListBuilder<String> startToggleableEntityDropdownList(Text fieldNameKey, List<String> value, boolean toggled) {
-        DropdownListBuilder<String> entry = ConfigScreen.startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new DropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new DropdownBoxEntry.DefaultSelectionCellCreator<>());
+    public static DropdownNoRestListBuilder<String> startToggleableEntityDropdownList(Text fieldNameKey, List<String> value, boolean toggled) {
+        DropdownNoRestListBuilder<String> entry = ConfigScreen.startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new DropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new DropdownBoxEntry.DefaultSelectionCellCreator<>());
         entry.setSelections(Registries.ENTITY_TYPE.getIds().stream().filter(ConfigScreen::isVanillaLivingEntity).map(Identifier::toString).sorted().toList());
         return entry;
     }
@@ -66,7 +66,7 @@ public class ConfigScreen {
         return vanillaLivingEntities.contains(id.getPath());
     }
 
-    public static <T> DropdownListBuilder<T> startToggleableDropdownList(Text fieldNameKey, List<T> value, boolean toggled, Function<T, DropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, DropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
-        return new DropdownListBuilder<>(Text.translatable("text.cloth-config.reset_value"), fieldNameKey, value, toggled, topCellCreator, cellCreator);
+    public static <T> DropdownNoRestListBuilder<T> startToggleableDropdownList(Text fieldNameKey, List<T> value, boolean toggled, Function<T, DropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, DropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
+        return new DropdownNoRestListBuilder<>(Text.translatable("text.cloth-config.reset_value"), fieldNameKey, value, toggled, topCellCreator, cellCreator);
     }
 }

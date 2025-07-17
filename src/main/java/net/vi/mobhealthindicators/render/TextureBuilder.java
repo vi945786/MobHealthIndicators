@@ -2,6 +2,7 @@ package net.vi.mobhealthindicators.render;
 
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
 import javax.imageio.ImageIO;
@@ -12,6 +13,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.vi.mobhealthindicators.MobHealthIndicators.client;
+import static net.vi.mobhealthindicators.MobHealthIndicators.modId;
+
 public class TextureBuilder {
 
     public static HeartType.HeartColor emptyTexture;
@@ -21,13 +25,14 @@ public class TextureBuilder {
     public static HeartType.HeartColor absorptionHeart;
     public static HeartType.HeartColor frozenHeart;
 
+    public static final int defaultHeartSize = 9;
     public static int heartSize;
 
-    public static final Map<String, NativeImageBackedTexture> textures = new HashMap<>();
+    public static final Map<String, Identifier> textures = new HashMap<>();
     private static final int heartsPerRow = 10;
 
-    public static NativeImageBackedTexture getTexture(int normalHealth, int maxHealth, int absorptionHealth, HeartType.Effect effect) {
-        String healthId = normalHealth + " " + (maxHealth - normalHealth) + " " + absorptionHealth + " " + effect;
+    public static Identifier getTexture(int normalHealth, int maxHealth, int absorptionHealth, HeartType.Effect effect) {
+        String healthId = normalHealth + "_" + (maxHealth - normalHealth) + "_" + absorptionHealth + "_" + effect;
         if (textures.containsKey(healthId)) return textures.get(healthId);
 
         int normalHearts = MathHelper.ceil(normalHealth / 2.0F);
@@ -64,9 +69,11 @@ public class TextureBuilder {
             texture.setFilter(false, false);
             texture.upload();
 
-            textures.put(healthId, texture);
+            Identifier identifier = Identifier.of(modId, healthId);
+            textures.put(healthId, identifier);
+            client.getTextureManager().registerTexture(identifier, texture);
 
-            return texture;
+            return identifier;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

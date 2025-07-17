@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.WeakHashMap;
 
+import static net.vi.mobhealthindicators.MobHealthIndicators.areShadersEnabled;
 import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.config.Config.config;
 
@@ -54,6 +55,11 @@ public abstract class EntityRendererMixin {
         HeartType.Effect effect = HeartType.Effect.getEffect(livingEntity);
 
         double d = dispatcher.getSquaredDistanceToCamera(livingEntity);
-        Renderer.render(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher, vertexConsumerProvider);
+        Renderer.HealthBarRenderState state = Renderer.getRenderState(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher);
+        if (state.isTargeted() && config.renderOnTopOnHover && !areShadersEnabled) {
+            Renderer.healthBarRenderStates.add(state);
+        } else {
+            Renderer.draw(state);
+        }
     }
 }

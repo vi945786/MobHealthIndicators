@@ -6,8 +6,8 @@
   "config.mobhealthindicators.option.dynamicbrightness": "Dynamic Brightness",
   "config.mobhealthindicators.option.dynamicbrightness.tooltip": "Render the health bar at the entity’s light level.\nIf disabled, it always renders at max brightness.",
   "config.mobhealthindicators.option.height": "Height",
-  "config.mobhealthindicators.option.renderontoponhover": "Render On Top On Hover",
-  "config.mobhealthindicators.option.renderontoponhover.tooltip": "When looking at an entity, its health bar renders through blocks and other entities.",
+  "config.mobhealthindicators.option.renderontoponhover": "Render On Top On Hover*",
+  "config.mobhealthindicators.option.renderontoponhover.tooltip": "When looking at an entity, its health bar renders through blocks and other entities.\nThis option currently doesn't work with shaders enabled",
 
   "config.mobhealthindicators.category.filter": "Filter",
   "config.mobhealthindicators.option.blacklist": "Black List",
@@ -19,7 +19,7 @@
   "config.mobhealthindicators.option.showself": "Yourself",
   "config.mobhealthindicators.option.onlyshowdamaged": "Damaged Entities Only",
   "config.mobhealthindicators.option.onlyshowonhover": "Targeted Entity Only",
-  "config.mobhealthindicators.option.onlyshowonhover.tooltip": "A targeted entity is the entity you are looking at.",
+  "config.mobhealthindicators.option.onlyshowonhover.tooltip": "Shows only the entity you are looking at.",
 
   "config.mobhealthindicators.category.keybinds": "Keybinds",
 
