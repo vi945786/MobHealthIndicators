@@ -55,11 +55,6 @@ public abstract class EntityRendererMixin {
         HeartType.Effect effect = HeartType.Effect.getEffect(livingEntity);
 
         double d = dispatcher.getSquaredDistanceToCamera(livingEntity);
-        Renderer.HealthBarRenderState state = Renderer.getRenderState(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher);
-        if (state.isTargeted() && config.renderOnTopOnHover) {
-            Renderer.healthBarRenderStates.add(state);
-        } else {
-            Renderer.draw(state);
-        }
+        Renderer.render(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher);
     }
 }
