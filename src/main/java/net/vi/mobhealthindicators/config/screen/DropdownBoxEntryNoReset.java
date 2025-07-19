@@ -1,4 +1,4 @@
-package net.vi.mobhealthindicators.config;
+package net.vi.mobhealthindicators.config.screen;
 
 import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry;
 import net.minecraft.text.Text;

@@ -22,8 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.WeakHashMap;
 
-import static net.vi.mobhealthindicators.MobHealthIndicators.areShadersEnabled;
 import static net.vi.mobhealthindicators.MobHealthIndicators.client;
+import static net.vi.mobhealthindicators.MobHealthIndicators.targetedEntity;
 import static net.vi.mobhealthindicators.config.Config.config;
 
 @Mixin(EntityRenderer.class)
@@ -45,7 +45,7 @@ public abstract class EntityRendererMixin {
         Entity entity = entities.get(entityRenderState);
 
         EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
-        if (!(entity instanceof LivingEntity livingEntity) || !config.shouldRender(livingEntity, dispatcher.targetedEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player) || ((client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen) && livingEntity == player)) {
+        if (!(entity instanceof LivingEntity livingEntity) || !config.shouldRender(livingEntity, targetedEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player) || ((client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen) && livingEntity == player)) {
             return;
         }
 
@@ -56,7 +56,7 @@ public abstract class EntityRendererMixin {
 
         double d = dispatcher.getSquaredDistanceToCamera(livingEntity);
         Renderer.HealthBarRenderState state = Renderer.getRenderState(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher);
-        if (state.isTargeted() && config.renderOnTopOnHover && !areShadersEnabled) {
+        if (state.isTargeted() && config.renderOnTopOnHover) {
             Renderer.healthBarRenderStates.add(state);
         } else {
             Renderer.draw(state);

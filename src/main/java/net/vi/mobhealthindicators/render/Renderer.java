@@ -25,14 +25,13 @@ import static net.minecraft.client.gl.RenderPipelines.*;
 import static net.minecraft.client.render.RenderPhase.*;
 import static net.vi.mobhealthindicators.MobHealthIndicators.*;
 import static net.vi.mobhealthindicators.config.Config.config;
-import static net.vi.mobhealthindicators.config.Config.heightDivisor;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 
 public abstract class Renderer {
     public static final List<HealthBarRenderState> healthBarRenderStates = new ArrayList<>();
     public record HealthBarRenderState(Matrix4f positionMatrix, Matrix4fStack modelViewStack, Identifier texture, int light, boolean isTargeted) {}
 
-    private static final RenderPipeline FULL_BRIGHT_INDICATORS_PIPELINE = register(RenderPipeline.builder(ENTITY_SNIPPET).withLocation(Identifier.of("mobhealthindicators", "pipeline/full_bright_indicators")).withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("NO_OVERLAY").withShaderDefine("NO_CARDINAL_LIGHTING").withSampler("Sampler1").withCull(false).build());
+    private static final RenderPipeline FULL_BRIGHT_INDICATORS_PIPELINE = register(RenderPipeline.builder(ENTITY_SNIPPET).withLocation(Identifier.of(modId, "pipeline/full_bright_indicators")).withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("NO_OVERLAY").withShaderDefine("NO_CARDINAL_LIGHTING").withSampler("Sampler1").withCull(false).build());
     public static final Function<Identifier, RenderLayer> FULL_BRIGHT_INDICATORS = Util.memoize(texture -> {
         RenderLayer.MultiPhaseParameters multiPhaseParameters = RenderLayer.MultiPhaseParameters.builder().texture(new RenderPhase.Texture(texture, TriState.FALSE, false)).lightmap(ENABLE_LIGHTMAP).overlay(ENABLE_OVERLAY_COLOR).build(false);
         return RenderLayer.of("full_bright_indicators", 1536, true, false, FULL_BRIGHT_INDICATORS_PIPELINE, multiPhaseParameters);
@@ -40,6 +39,8 @@ public abstract class Renderer {
 
     public static final float defaultPixelSize = 0.025f;
     public static float pixelSize = defaultPixelSize;
+    public static final int heightDivisor = 50;
+
     public static HealthBarRenderState getRenderState(MatrixStack matrixStack, LivingEntity livingEntity, Identifier texture, int light, double distance, boolean hasLabel, EntityRenderDispatcher dispatcher) {
             try {
             matrixStack.push();
@@ -54,7 +55,7 @@ public abstract class Renderer {
             matrixStack.scale(pixelSize, pixelSize, pixelSize);
             matrixStack.peek().getPositionMatrix().rotateY(getYaw(dispatcher.camera.getYaw()));
 
-            HealthBarRenderState state = new HealthBarRenderState(new Matrix4f(matrixStack.peek().getPositionMatrix()), (Matrix4fStack) RenderSystem.getModelViewStack().clone(), texture, light, dispatcher.targetedEntity == livingEntity);
+            HealthBarRenderState state = new HealthBarRenderState(new Matrix4f(matrixStack.peek().getPositionMatrix()), (Matrix4fStack) RenderSystem.getModelViewStack().clone(), texture, light, targetedEntity == livingEntity);
             matrixStack.pop();
             return state;
         } catch (CloneNotSupportedException e) {

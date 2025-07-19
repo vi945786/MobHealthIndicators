@@ -1,4 +1,4 @@
-package net.vi.mobhealthindicators.config;
+package net.vi.mobhealthindicators.config.screen;
 
 import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry.SelectionCellCreator;
 import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry.SelectionTopCellElement;
@@ -25,6 +25,7 @@ public class DropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, Toggleab
     protected Iterable<T> selections = Collections.emptyList();
     protected boolean suggestionMode = true;
     protected boolean toggled;
+    protected Supplier<Boolean> defaultToggled = null;
 
     public DropdownNoRestListBuilder(Text resetButtonKey, Text fieldNameKey, List<T> value, boolean toggled, Function<T, SelectionTopCellElement<T>> topCellCreator, SelectionCellCreator<T> cellCreator) {
         super(resetButtonKey, fieldNameKey);
@@ -46,6 +47,16 @@ public class DropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, Toggleab
 
     public DropdownNoRestListBuilder<T> setDefaultValue(List<T> defaultValue) {
         this.defaultValue = () -> Objects.requireNonNull(defaultValue);
+        return this;
+    }
+
+    public DropdownNoRestListBuilder<T> setDefaultToggled(Supplier<Boolean> defaultToggled) {
+        this.defaultToggled = defaultToggled;
+        return this;
+    }
+
+    public DropdownNoRestListBuilder<T> setDefaultToggled(boolean defaultToggled) {
+        this.defaultToggled = () -> defaultToggled;
         return this;
     }
 
@@ -109,6 +120,7 @@ public class DropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, Toggleab
                 tooltipSupplier,
                 saveConsumer,
                 defaultValue,
+                defaultToggled,
                 getResetButtonKey(),
                 true,
                 false,

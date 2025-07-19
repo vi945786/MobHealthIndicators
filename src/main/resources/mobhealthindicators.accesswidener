@@ -1,0 +1,3 @@
+accessWidener v2 named
+
+accessible method net/minecraft/client/render/GameRenderer findCrosshairTarget (Lnet/minecraft/entity/Entity;DDF)Lnet/minecraft/util/hit/HitResult;

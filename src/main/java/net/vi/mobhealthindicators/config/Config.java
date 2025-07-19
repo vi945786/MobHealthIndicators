@@ -19,23 +19,26 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.MobHealthIndicators.overrideFiltersKey;
+import static net.vi.mobhealthindicators.commands.Commands.Command;
+import static net.vi.mobhealthindicators.config.screen.ConfigScreenHandler.ConfigScreen;
+import static net.vi.mobhealthindicators.config.screen.ConfigScreenHandler.Category;
 
 public class Config {
 
     public static Config config;
 
-    public static final int heightRange = 25;
-    public static final int heightDivisor = 50;
+    public static final int heightMin = -25;
+    public static final int heightMax = 25;
 
     public static final boolean showHeartsDefault = true;
     public static final boolean dynamicBrightnessDefault = true;
     public static final int heightDefault = 0;
     public static final boolean renderOnTopOnHoverDefault = true;
-    public static final ToggleableEntityList blackListDefault = new ToggleableEntityList(true, "minecraft:armor_stand", "minecraft:ender_dragon");
+    public static final boolean infiniteHoverRangeDefault = false;
+    public static final ToggleableEntityList blackListDefault = new ToggleableEntityList(true, "minecraft:armor_stand");
     public static final ToggleableEntityList whiteListDefault = new ToggleableEntityList(false, "minecraft:player");
     public static final boolean showHostileDefault = true;
     public static final boolean showPassiveDefault = true;
@@ -43,17 +46,18 @@ public class Config {
     public static final boolean onlyShowDamagedDefault = false;
     public static final boolean onlyShowOnHoverDefault = false;
 
-    @Expose public boolean showHearts = showHeartsDefault;
-    @Expose public boolean dynamicBrightness = dynamicBrightnessDefault;
-    @Expose public int height = heightDefault;
-    @Expose public boolean renderOnTopOnHover = renderOnTopOnHoverDefault;
-    @Expose public ToggleableEntityList blackList = blackListDefault;
-    @Expose public ToggleableEntityList whiteList = whiteListDefault;
-    @Expose public boolean showHostile = showHostileDefault;
-    @Expose public boolean showPassive = showPassiveDefault;
-    @Expose public boolean showSelf = showSelfDefault;
-    @Expose public boolean onlyShowDamaged = onlyShowDamagedDefault;
-    @Expose public boolean onlyShowOnHover = onlyShowOnHoverDefault;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY)                 public boolean showHearts = showHeartsDefault;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true) public boolean dynamicBrightness = dynamicBrightnessDefault;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY)                 public int height = heightDefault;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true) public boolean renderOnTopOnHover = renderOnTopOnHoverDefault;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true) public boolean infiniteHoverRange = infiniteHoverRangeDefault;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public ToggleableEntityList blackList = blackListDefault;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public ToggleableEntityList whiteList = whiteListDefault;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public boolean showHostile = showHostileDefault;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public boolean showPassive = showPassiveDefault;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public boolean showSelf = showSelfDefault;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public boolean onlyShowDamaged = onlyShowDamagedDefault;
+    @Expose @Command @ConfigScreen(category = Category.FILTER, tooltip = true)  public boolean onlyShowOnHover = onlyShowOnHoverDefault;
 
     public void setName(String name, Object value) {
         try {
@@ -64,10 +68,22 @@ public class Config {
         }
     }
 
-    public Object getName(String name) {
+    public <T> T getDefault(String name) {
+        return getStatic(name + "Default");
+    }
+
+    public <T> T getStatic(String name) {
+        return get(name, null);
+    }
+
+    public <T> T getName(String name) {
+        return get(name, this);
+    }
+
+    private <T> T get(String name, Object instance) {
         try {
             Field f = Config.class.getField(name);
-            return f.get(this);
+            return (T) f.get(instance);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -91,11 +107,11 @@ public class Config {
     }
 
     public static class ToggleableEntityList {
-        @Expose public HashSet<String> entityList;
+        @Expose public List<String> entityList;
         @Expose public boolean toggle;
 
         public ToggleableEntityList(boolean toggle, String... entityList) {
-            this.entityList = Arrays.stream(entityList).collect(Collectors.toCollection(HashSet::new));
+            this.entityList = new ArrayList<>(Arrays.stream(entityList).toList());
             this.toggle = toggle;
         }
 

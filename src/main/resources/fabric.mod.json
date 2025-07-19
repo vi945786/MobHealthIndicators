@@ -15,12 +15,13 @@
   },
   "icon": "assets/mobhealthindicators/icon.png",
   "environment": "client",
+  "accessWidener" : "mobhealthindicators.accesswidener",
   "entrypoints": {
-    "main": [
+    "client": [
       "net.vi.mobhealthindicators.MobHealthIndicators"
     ],
     "modmenu": [
-      "net.vi.mobhealthindicators.config.ModMenuScreen"
+      "net.vi.mobhealthindicators.config.screen.ModMenuScreen"
     ]
   },
   "mixins": [

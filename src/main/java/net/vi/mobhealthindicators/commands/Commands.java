@@ -15,14 +15,25 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
-import net.vi.mobhealthindicators.config.ConfigScreen;
+import net.vi.mobhealthindicators.config.screen.ConfigScreenHandler;
 import net.vi.mobhealthindicators.config.Config;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.util.HashSet;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 import static net.vi.mobhealthindicators.config.Config.*;
 
 public class Commands {
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface Command {}
 
     @Environment(EnvType.CLIENT)
     public static void registerCommands() {
@@ -57,19 +68,16 @@ public class Commands {
     }
 
     private static void registerSubCommandOfToggleableEntityList(ArgumentBuilder argumentBuilder, CommandRegistryAccess registryAccess, String name) {
-        Config.ToggleableEntityList list = (Config.ToggleableEntityList) config.getName(name);
+        Config.ToggleableEntityList list = config.getName(name);
         argumentBuilder.then(literal(name).executes(context -> {
-            sendMessage(Text.literal(name + " is currently toggled to: " + list.toggle));
+            sendMessage(Text.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
             return 1;
-            }).then(literal("set").executes(context -> {
-                sendMessage(Text.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
+            }).then(literal("set").then(argument("value", BoolArgumentType.bool()).executes(context -> {
+                list.toggle = context.getArgument("value", boolean.class);
+                Config.save();
+                sendMessage(Text.literal("toggled blackList to " + list.toggle));
                 return 1;
-                }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                    list.toggle = context.getArgument("value", boolean.class);
-                    Config.save();
-                    sendMessage(Text.literal("toggled blackList to " + list));
-                    return 1;
-                })))
+            })))
 
             .then(literal("add").then(argument("value", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE)).executes(context -> {
                 String value = ((RegistryKey<EntityType<?>>) context.getArgument("value", RegistryEntry.Reference.class).getKey().get()).getValue().toString();
@@ -80,7 +88,7 @@ public class Commands {
                 return 1;
             })))
 
-            .then(literal("remove").then(argument("value", SpecificStringArgumentType.specificString(() -> list.entityList)).executes(context -> {
+            .then(literal("remove").then(argument("value", SpecificStringArgumentType.specificString(() -> new HashSet<>(list.entityList))).executes(context -> {
                 String value = context.getArgument("value", String.class);
 
                 list.entityList.remove(value);
@@ -100,21 +108,24 @@ public class Commands {
 
             builder.then(literal("config").executes(context -> {
                 MinecraftClient client = context.getSource().getClient();
-                client.send(() -> client.setScreen(ConfigScreen.getConfigScreen(client.currentScreen)));
+                client.send(() -> client.setScreen(ConfigScreenHandler.getConfigScreen(client.currentScreen)));
                 return 1;
             }));
 
-            registerSubCommandOfBool(builder, "showHearts");
-            registerSubCommandOfBool(builder, "dynamicBrightness");
-            registerSubCommandOfInt(builder, "height", heightRange, -heightRange);
-            registerSubCommandOfBool(builder, "renderOnTopOnHover");
-            registerSubCommandOfToggleableEntityList(builder, registryAccess, "blackList");
-            registerSubCommandOfToggleableEntityList(builder, registryAccess, "whiteList");
-            registerSubCommandOfBool(builder, "showHostile");
-            registerSubCommandOfBool(builder, "showPassive");
-            registerSubCommandOfBool(builder, "showSelf");
-            registerSubCommandOfBool(builder, "onlyShowDamaged");
-            registerSubCommandOfBool(builder, "onlyShowOnHover");
+            for(Field f : Config.class.getFields()) {
+                if(!f.isAnnotationPresent(Command.class)) continue;
+
+                String name = f.getName();
+                Class<?> type = f.getType();
+
+                if(type == int.class) {
+                    registerSubCommandOfInt(builder, name, config.getStatic(name + "Max"), config.getStatic(name + "Min"));
+                } else if(type == boolean.class) {
+                    registerSubCommandOfBool(builder, name);
+                } else if(type == Config.ToggleableEntityList.class) {
+                    registerSubCommandOfToggleableEntityList(builder, registryAccess, name);
+                }
+            }
 
             dispatcher.register(builder);
         });

@@ -11,7 +11,7 @@ import static net.vi.mobhealthindicators.render.Renderer.render;
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
 
-    @Inject(method = "render", at = @At(value = "RETURN", shift = At.Shift.BY, by =-2))
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4fStack;popMatrix()Lorg/joml/Matrix4fStack;", shift = At.Shift.BEFORE))
     private void afterRender(CallbackInfo ci) {
         render(true);
     }
