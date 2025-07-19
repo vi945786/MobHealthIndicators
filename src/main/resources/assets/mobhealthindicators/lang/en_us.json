@@ -6,10 +6,10 @@
   "config.mobhealthindicators.option.dynamicbrightness": "Dynamic Brightness",
   "config.mobhealthindicators.option.dynamicbrightness.tooltip": "Render the health bar at the mob’s light level.\nIf disabled, it always renders at full brightness.",
   "config.mobhealthindicators.option.height": "Height",
-  "config.mobhealthindicators.option.renderontoponhover": "Render On Top On Hover*",
-  "config.mobhealthindicators.option.renderontoponhover.tooltip": "When looking at a mobs, its health bar renders through blocks and other entities.\nThis option does not work with some shaders.",
+  "config.mobhealthindicators.option.renderontoponhover": "Render On Top On Hover",
+  "config.mobhealthindicators.option.renderontoponhover.tooltip": "When looking at a mobs, its health bar renders through blocks and other entities.\nThe health bar's lighting and shadow may render wrong with some shaders.",
   "config.mobhealthindicators.option.infinitehoverrange": "Infinite Hover Range",
-  "config.mobhealthindicators.option.infinitehoverrange.tooltip": "Make the range for targeting a mobs infinite instead of the normal range for interacting with blocks and mobs",
+  "config.mobhealthindicators.option.infinitehoverrange.tooltip": "Make the range for targeting a mobs infinite instead of the normal range for interacting with blocks and mobs.",
 
   "config.mobhealthindicators.category.filter": "Filter",
   "config.mobhealthindicators.option.blacklist": "Black List",
