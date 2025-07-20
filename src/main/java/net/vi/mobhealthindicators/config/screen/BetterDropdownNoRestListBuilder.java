@@ -1,8 +1,5 @@
 package net.vi.mobhealthindicators.config.screen;
 
-import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry.SelectionCellCreator;
-import me.shedaniel.clothconfig2.gui.entries.DropdownBoxEntry.SelectionTopCellElement;
-
 import me.shedaniel.clothconfig2.impl.builders.FieldBuilder;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
@@ -15,11 +12,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class DropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, ToggleableNestedListListEntry<T, DropdownBoxEntryNoReset<T>>, DropdownNoRestListBuilder<T>> {
+public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, ToggleableNestedListListEntry<T, BtterDropdownBoxEntryNoReset<T>>, BetterDropdownNoRestListBuilder<T>> {
     protected List<T> value;
     protected Supplier<T> defaultEntryValue = null;
-    protected Function<T, SelectionTopCellElement<T>> topCellCreator;
-    protected SelectionCellCreator<T> cellCreator;
+    protected Function<T, BetterDropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator;
+    protected BetterDropdownBoxEntry.SelectionCellCreator<T> cellCreator;
     protected Supplier<Optional<Text[]>> tooltipSupplier = Optional::empty;
     protected BiConsumer<List<T>, Boolean> saveConsumer = null;
     protected Iterable<T> selections = Collections.emptyList();
@@ -27,7 +24,7 @@ public class DropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, Toggleab
     protected boolean toggled;
     protected Supplier<Boolean> defaultToggled = null;
 
-    public DropdownNoRestListBuilder(Text resetButtonKey, Text fieldNameKey, List<T> value, boolean toggled, Function<T, SelectionTopCellElement<T>> topCellCreator, SelectionCellCreator<T> cellCreator) {
+    public BetterDropdownNoRestListBuilder(Text resetButtonKey, Text fieldNameKey, List<T> value, boolean toggled, Function<T, BetterDropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, BetterDropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
         super(resetButtonKey, fieldNameKey);
         this.value = value;
         this.toggled = toggled;
@@ -35,72 +32,72 @@ public class DropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, Toggleab
         this.cellCreator = Objects.requireNonNull(cellCreator);
     }
 
-    public DropdownNoRestListBuilder<T> setSelections(List<T> selections) {
+    public BetterDropdownNoRestListBuilder<T> setSelections(List<T> selections) {
         this.selections = selections;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setDefaultValue(Supplier<List<T>> defaultValue) {
+    public BetterDropdownNoRestListBuilder<T> setDefaultValue(Supplier<List<T>> defaultValue) {
         this.defaultValue = defaultValue;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setDefaultValue(List<T> defaultValue) {
+    public BetterDropdownNoRestListBuilder<T> setDefaultValue(List<T> defaultValue) {
         this.defaultValue = () -> Objects.requireNonNull(defaultValue);
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setDefaultToggled(Supplier<Boolean> defaultToggled) {
+    public BetterDropdownNoRestListBuilder<T> setDefaultToggled(Supplier<Boolean> defaultToggled) {
         this.defaultToggled = defaultToggled;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setDefaultToggled(boolean defaultToggled) {
+    public BetterDropdownNoRestListBuilder<T> setDefaultToggled(boolean defaultToggled) {
         this.defaultToggled = () -> defaultToggled;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setDefaultEntryValue(Supplier<T> defaultEntryValue) {
+    public BetterDropdownNoRestListBuilder<T> setDefaultEntryValue(Supplier<T> defaultEntryValue) {
         this.defaultEntryValue = defaultEntryValue;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setDefaultEntryValue(T defaultEntryValue) {
+    public BetterDropdownNoRestListBuilder<T> setDefaultEntryValue(T defaultEntryValue) {
         this.defaultEntryValue = () -> Objects.requireNonNull(defaultEntryValue);
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setSaveConsumer(BiConsumer<List<T>, Boolean> saveConsumer) {
+    public BetterDropdownNoRestListBuilder<T> setSaveConsumer(BiConsumer<List<T>, Boolean> saveConsumer) {
         this.saveConsumer = saveConsumer;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setTooltipSupplier(Supplier<Optional<Text[]>> tooltipSupplier) {
+    public BetterDropdownNoRestListBuilder<T> setTooltipSupplier(Supplier<Optional<Text[]>> tooltipSupplier) {
         this.tooltipSupplier = tooltipSupplier;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setTooltip(Optional<Text[]> tooltip) {
+    public BetterDropdownNoRestListBuilder<T> setTooltip(Optional<Text[]> tooltip) {
         this.tooltipSupplier = () -> tooltip;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setTooltip(Text... tooltip) {
+    public BetterDropdownNoRestListBuilder<T> setTooltip(Text... tooltip) {
         this.tooltipSupplier = () -> Optional.ofNullable(tooltip);
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> requireRestart() {
+    public BetterDropdownNoRestListBuilder<T> requireRestart() {
         requireRestart(true);
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setErrorSupplier(Function<List<T>, Optional<Text>> errorSupplier) {
+    public BetterDropdownNoRestListBuilder<T> setErrorSupplier(Function<List<T>, Optional<Text>> errorSupplier) {
         this.errorSupplier = errorSupplier;
         return this;
     }
 
-    public DropdownNoRestListBuilder<T> setSuggestionMode(boolean suggestionMode) {
+    public BetterDropdownNoRestListBuilder<T> setSuggestionMode(boolean suggestionMode) {
         this.suggestionMode = suggestionMode;
         return this;
     }
@@ -111,8 +108,8 @@ public class DropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, Toggleab
 
     @NotNull
     @Override
-    public ToggleableNestedListListEntry<T, DropdownBoxEntryNoReset<T>> build() {
-        ToggleableNestedListListEntry<T, DropdownBoxEntryNoReset<T>> listEntry = new ToggleableNestedListListEntry<>(
+    public ToggleableNestedListListEntry<T, BtterDropdownBoxEntryNoReset<T>> build() {
+        ToggleableNestedListListEntry<T, BtterDropdownBoxEntryNoReset<T>> listEntry = new ToggleableNestedListListEntry<>(
                 getFieldNameKey(),
                 value,
                 toggled,
@@ -127,7 +124,7 @@ public class DropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, Toggleab
                 (entryValue, list) -> {
                     Supplier<T> defaultValue = () -> entryValue;
                     if (entryValue == null) defaultValue = defaultEntryValue;
-                    DropdownBoxEntryNoReset<T> entry = new DropdownBoxEntryNoReset<>(Text.empty(), null, isRequireRestart(), defaultValue, null, selections, topCellCreator.apply(entryValue), cellCreator);
+                    BtterDropdownBoxEntryNoReset<T> entry = new BtterDropdownBoxEntryNoReset<>(Text.empty(), null, isRequireRestart(), defaultValue, null, selections, topCellCreator.apply(entryValue), cellCreator);
                     entry.setSuggestionMode(suggestionMode);
                     return entry;
                 });

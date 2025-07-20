@@ -7,6 +7,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType;
@@ -41,34 +42,36 @@ public class Commands {
         registerSubCommands("mhi");
     }
 
-    private static void registerSubCommandOfBool(ArgumentBuilder argumentBuilder, String name) {
+    private static void registerSubCommandOfBool(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name) {
         argumentBuilder.then(literal(name).executes(context -> {
-            sendMessage(Text.literal(name + " is currently set to: " + config.getName(name)));
+            sendMessage(Text.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                config.setName(name, context.getArgument("value", boolean.class));
+                boolean value = context.getArgument("value", boolean.class);
+                Config.setName(name, value);
                 Config.save();
-                sendMessage(Text.literal("set " + name + " to " + config.getName(name)));
+                sendMessage(Text.literal("set " + name + " to " + value));
                 return 1;
             }))
         );
     }
 
-    private static void registerSubCommandOfInt(ArgumentBuilder argumentBuilder, String name, int max, int min) {
+    private static void registerSubCommandOfInt(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name, int min, int max) {
         argumentBuilder.then(literal(name).executes(context -> {
-            sendMessage(Text.literal(name + " is currently set to: " + config.getName(name)));
+            sendMessage(Text.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", IntegerArgumentType.integer(min, max)).executes(context -> {
-                config.setName(name, context.getArgument("value", int.class));
+                int value = context.getArgument("value", int.class);
+                Config.setName(name, value);
                 Config.save();
-                sendMessage(Text.literal("set " + name + " to " + config.getName(name)));
+                sendMessage(Text.literal("set " + name + " to " + value));
                 return 1;
             }))
         );
     }
 
-    private static void registerSubCommandOfToggleableEntityList(ArgumentBuilder argumentBuilder, CommandRegistryAccess registryAccess, String name) {
-        Config.ToggleableEntityList list = config.getName(name);
+    private static void registerSubCommandOfToggleableEntityList(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, CommandRegistryAccess registryAccess, String name) {
+        Config.ToggleableEntityList list = Config.getName(name);
         argumentBuilder.then(literal(name).executes(context -> {
             sendMessage(Text.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
             return 1;
@@ -101,7 +104,7 @@ public class Commands {
 
     private static void registerSubCommands(String mainCommand) {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            LiteralArgumentBuilder builder = literal(mainCommand).executes(context -> {
+            LiteralArgumentBuilder<FabricClientCommandSource> builder = literal(mainCommand).executes(context -> {
                 sendMessage(Text.literal(config.toString()));
                 return 1;
             });
@@ -119,7 +122,8 @@ public class Commands {
                 Class<?> type = f.getType();
 
                 if(type == int.class) {
-                    registerSubCommandOfInt(builder, name, config.getStatic(name + "Max"), config.getStatic(name + "Min"));
+                    Range range = f.getAnnotation(Range.class);
+                    registerSubCommandOfInt(builder, name, range.min(), range.max());
                 } else if(type == boolean.class) {
                     registerSubCommandOfBool(builder, name);
                 } else if(type == Config.ToggleableEntityList.class) {

@@ -1,4 +1,4 @@
-package net.vi.mobhealthindicators.mixin.minecraft;
+package net.vi.mobhealthindicators.mixin;
 
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;

@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.function.Function;
 
 import static net.vi.mobhealthindicators.MobHealthIndicators.*;
-import static net.vi.mobhealthindicators.config.Config.config;
 
 public class ConfigScreenHandler {
 
@@ -62,13 +61,14 @@ public class ConfigScreenHandler {
             String name = f.getName();
             Class<?> type = f.getType();
             ConfigCategory configCategory = null;
-            AbstractConfigListEntry entry = null;
+            AbstractConfigListEntry<?> entry = null;
 
             if(annotation.category() == Category.DISPLAY) configCategory = display;
             else if(annotation.category() == Category.FILTER) configCategory = filter;
 
             if(type == int.class) {
-                entry = getIntSlider(entryBuilder, name, annotation.tooltip());
+                Config.Range range = f.getAnnotation(Config.Range.class);
+                entry = getIntSlider(entryBuilder, name, range.min(), range.max(), annotation.tooltip());
             } else if(type == boolean.class) {
                 entry = getBooleanToggle(entryBuilder, name, annotation.tooltip());
             } else if(type == Config.ToggleableEntityList.class) {
@@ -81,26 +81,26 @@ public class ConfigScreenHandler {
         return configBuilder.build();
     }
 
-    private static IntegerSliderEntry getIntSlider(ConfigEntryBuilder entryBuilder, String name, boolean tooltip) {
-        IntSliderBuilder builder = entryBuilder.startIntSlider(Text.translatable("config."  + modId + ".option." + name.toLowerCase()), config.getName(name), config.getStatic(name + "Min"), config.getStatic(name + "Max"));
-        builder.setDefaultValue(() -> config.getDefault(name));
-        builder.setSaveConsumer(value -> config.setName(name, value));
+    private static IntegerSliderEntry getIntSlider(ConfigEntryBuilder entryBuilder, String name, int min, int max, boolean tooltip) {
+        IntSliderBuilder builder = entryBuilder.startIntSlider(Text.translatable("config."  + modId + ".option." + name.toLowerCase()), Config.getName(name), min, max);
+        builder.setDefaultValue(() -> Config.getDefault(name));
+        builder.setSaveConsumer(value -> Config.setName(name, value));
         if(tooltip) builder.setTooltip(Text.translatable("config."  + modId + ".option." + name.toLowerCase() + ".tooltip"));
         return builder.build();
     }
 
     private static BooleanListEntry getBooleanToggle(ConfigEntryBuilder entryBuilder, String name, boolean tooltip) {
-        BooleanToggleBuilder builder = entryBuilder.startBooleanToggle(Text.translatable("config."  + modId + ".option." + name.toLowerCase()), config.getName(name));
-        builder.setDefaultValue(() -> config.getDefault(name));
-        builder.setSaveConsumer(value -> config.setName(name, value));
+        BooleanToggleBuilder builder = entryBuilder.startBooleanToggle(Text.translatable("config."  + modId + ".option." + name.toLowerCase()), Config.getName(name));
+        builder.setDefaultValue(() -> Config.getDefault(name));
+        builder.setSaveConsumer(value -> Config.setName(name, value));
         if(tooltip) builder.setTooltip(Text.translatable("config."  + modId + ".option." + name.toLowerCase() + ".tooltip"));
         return builder.build();
     }
 
-    private static ToggleableNestedListListEntry getToggleableEntityDropdownList(String name, boolean tooltip) {
-        Config.ToggleableEntityList toggleableEntityList = config.getName(name);
-        Config.ToggleableEntityList defaultToggleableEntityList = config.getDefault(name);
-        DropdownNoRestListBuilder<String> builder = startToggleableEntityDropdownList(Text.translatable("config."  + modId + ".option." + name.toLowerCase()), toggleableEntityList.entityList.stream().toList(), toggleableEntityList.toggle);
+    private static ToggleableNestedListListEntry<?, ?> getToggleableEntityDropdownList(String name, boolean tooltip) {
+        Config.ToggleableEntityList toggleableEntityList = Config.getName(name);
+        Config.ToggleableEntityList defaultToggleableEntityList = Config.getDefault(name);
+        BetterDropdownNoRestListBuilder<String> builder = startToggleableEntityDropdownList(Text.translatable("config."  + modId + ".option." + name.toLowerCase()), toggleableEntityList.entityList.stream().toList(), toggleableEntityList.toggle);
         builder.setDefaultValue(() -> defaultToggleableEntityList.entityList.stream().toList());
         builder.setDefaultToggled(() -> defaultToggleableEntityList.toggle);
         builder.setSaveConsumer((list,toggle) -> {toggleableEntityList.entityList=list;toggleableEntityList.toggle=toggle;});
@@ -112,8 +112,8 @@ public class ConfigScreenHandler {
         return entryBuilder.fillKeybindingField(Text.translatable(keyBinding.getTranslationKey()), keyBinding).build();
     }
 
-    private static DropdownNoRestListBuilder<String> startToggleableEntityDropdownList(Text fieldNameKey, List<String> value, boolean toggled) {
-        DropdownNoRestListBuilder<String> entry = ConfigScreenHandler.startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new DropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new DropdownBoxEntry.DefaultSelectionCellCreator<>());
+    private static BetterDropdownNoRestListBuilder<String> startToggleableEntityDropdownList(Text fieldNameKey, List<String> value, boolean toggled) {
+        BetterDropdownNoRestListBuilder<String> entry = ConfigScreenHandler.<String>startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new BetterDropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new BetterDropdownBoxEntry.DefaultSelectionCellCreator<>());
         entry.setSelections(Registries.ENTITY_TYPE.getIds().stream().filter(ConfigScreenHandler::isVanillaLivingEntity).map(Identifier::toString).sorted().toList());
         return entry;
     }
@@ -125,7 +125,7 @@ public class ConfigScreenHandler {
         return vanillaLivingEntities.contains(id.getPath());
     }
 
-    public static <T> DropdownNoRestListBuilder<T> startToggleableDropdownList(Text fieldNameKey, List<T> value, boolean toggled, Function<T, DropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, DropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
-        return new DropdownNoRestListBuilder<>(Text.translatable("text.cloth-config.reset_value"), fieldNameKey, value, toggled, topCellCreator, cellCreator);
+    public static <T> BetterDropdownNoRestListBuilder<T> startToggleableDropdownList(Text fieldNameKey, List<T> value, boolean toggled, Function<T, BetterDropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, BetterDropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
+        return new BetterDropdownNoRestListBuilder<>(Text.translatable("text.cloth-config.reset_value"), fieldNameKey, value, toggled, topCellCreator, cellCreator);
     }
 }

@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
-import me.shedaniel.clothconfig2.gui.entries.BaseListCell;
 import me.shedaniel.math.Rectangle;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -15,8 +14,7 @@ import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
-@Environment(EnvType.CLIENT)
-public abstract class AbstractToggleableListListEntry<T, C extends AbstractToggleableListListEntry.AbstractListCell<T, C, SELF>, SELF extends AbstractToggleableListListEntry<T, C, SELF>> extends ToggleableBaseListEntry<T, C, SELF> {
+public abstract class AbstractToggleableListListEntry<T, C extends AbstractToggleableListListEntry.AbstractListCell<T, C, SELF>, SELF extends AbstractToggleableListListEntry<T, C, SELF>> extends ToggleableBetterBaseListEntry<T, C, SELF> {
     protected final BiFunction<T, SELF, C> createNewCell;
     protected Function<T, Optional<Text>> cellErrorSupplier;
     protected List<T> original;
@@ -26,7 +24,7 @@ public abstract class AbstractToggleableListListEntry<T, C extends AbstractToggl
     public AbstractToggleableListListEntry(Text fieldName, List<T> value, boolean toggled, boolean defaultExpanded, Supplier<Optional<Text[]>> tooltipSupplier, BiConsumer<List<T>, Boolean> saveConsumer, Supplier<List<T>> defaultValue, Supplier<Boolean> defaultToggle, Text resetButtonKey, boolean requiresRestart, boolean deleteButtonEnabled, boolean insertInFront, BiFunction<T, SELF, C> createNewCell) {
         super(fieldName, tooltipSupplier, toggled, defaultValue, defaultToggle, (abstractListListEntry) -> createNewCell.apply(null, abstractListListEntry), saveConsumer, resetButtonKey, requiresRestart, deleteButtonEnabled, insertInFront);
         this.createNewCell = createNewCell;
-        this.original = new ArrayList(value);
+        this.original = new ArrayList<>(value);
         originalToggled = toggled;
 
         for(T f : value) {
@@ -72,13 +70,13 @@ public abstract class AbstractToggleableListListEntry<T, C extends AbstractToggl
         }
     }
 
-    public abstract static class AbstractListCell<T, SELF extends AbstractToggleableListListEntry.AbstractListCell<T, SELF, OUTER_SELF>, OUTER_SELF extends AbstractToggleableListListEntry<T, SELF, OUTER_SELF>> extends BaseListCell {
+    public abstract static class AbstractListCell<T, SELF extends AbstractToggleableListListEntry.AbstractListCell<T, SELF, OUTER_SELF>, OUTER_SELF extends AbstractToggleableListListEntry<T, SELF, OUTER_SELF>> extends BetterBaseListCell {
         protected final OUTER_SELF listListEntry;
         protected final Rectangle cellBounds = new Rectangle();
 
         public AbstractListCell(@Nullable T value, OUTER_SELF listListEntry) {
             this.listListEntry = listListEntry;
-            this.setErrorSupplier(() -> Optional.ofNullable(listListEntry.cellErrorSupplier).flatMap((cellErrorFn) -> (Optional)cellErrorFn.apply(this.getValue())));
+            this.setErrorSupplier(() -> Optional.ofNullable(listListEntry.cellErrorSupplier).flatMap((cellErrorFn) -> cellErrorFn.apply(this.getValue())));
         }
 
         public abstract T getValue();

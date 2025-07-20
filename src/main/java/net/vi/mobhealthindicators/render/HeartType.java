@@ -24,11 +24,11 @@ public enum HeartType {
     public record HeartColor(BufferedImage fullHeartTexture, BufferedImage halfHeartTexture) {}
 
     public enum Effect {
-        NONE(""),
-        POISON("poisoned_"),
-        WITHER("withered_"),
-        ABSORPTION("absorbing_"),
-        FROZEN("frozen_");
+        none(""),
+        poison("poisoned_"),
+        wither("withered_"),
+        absorption("absorbing_"),
+        frozen("frozen_");
 
         public final String prefix;
 
@@ -37,18 +37,18 @@ public enum HeartType {
         }
 
         public static boolean hasAbnormalHearts(LivingEntity entity) {
-            return getEffect(entity) != NONE ||  entity.hasStatusEffect(StatusEffects.ABSORPTION) || entity.hasStatusEffect(StatusEffects.HEALTH_BOOST);
+            return getEffect(entity) != none ||  entity.hasStatusEffect(StatusEffects.ABSORPTION) || entity.hasStatusEffect(StatusEffects.HEALTH_BOOST);
         }
 
         public static Effect getEffect(LivingEntity entity) {
             if (entity.hasStatusEffect(StatusEffects.POISON)) {
-                return POISON;
+                return poison;
             } else if (entity.hasStatusEffect(StatusEffects.WITHER)) {
-                return WITHER;
+                return wither;
             } else if (entity.isFrozen()) {
-                return FROZEN;
+                return frozen;
             } else {
-                return NONE;
+                return none;
             }
         }
     }

@@ -85,10 +85,10 @@ public class TextureBuilder {
         if (currentHeart < normalHearts) {
             isHalf = currentHeart == normalHearts -1 && lastNormalHalf;
             switch (effect) {
-                case NONE -> heartColor = normalHeart;
-                case POISON -> heartColor = poisonHeart;
-                case WITHER -> heartColor = witherHeart;
-                case FROZEN -> heartColor = frozenHeart;
+                case none -> heartColor = normalHeart;
+                case poison -> heartColor = poisonHeart;
+                case wither -> heartColor = witherHeart;
+                case frozen -> heartColor = frozenHeart;
             }
         } else if (currentHeart < maxNormalHearts) {
             heartColor = emptyTexture;

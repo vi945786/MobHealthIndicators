@@ -11,11 +11,16 @@ import net.minecraft.entity.mob.Monster;
 import net.minecraft.util.math.MathHelper;
 import net.vi.mobhealthindicators.MobHealthIndicators;
 import net.vi.mobhealthindicators.render.HeartType;
+import org.jetbrains.annotations.Range;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -28,59 +33,61 @@ import static net.vi.mobhealthindicators.config.screen.ConfigScreenHandler.Categ
 
 public class Config {
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface Range {
+        int min();
+        int max();
+    }
+
     public static Config config;
+    public static Config defaults = new Config();
 
-    public static final int heightMin = -25;
-    public static final int heightMax = 25;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY)
+    public boolean showHearts = true;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
+    public boolean dynamicBrightness = true;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY) @Range(min = -25, max = 25)
+    public int height = 0;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
+    public boolean renderOnTopOnHover = true;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
+    public boolean infiniteHoverRange = false;
 
-    public static final boolean showHeartsDefault = true;
-    public static final boolean dynamicBrightnessDefault = true;
-    public static final int heightDefault = 0;
-    public static final boolean renderOnTopOnHoverDefault = true;
-    public static final boolean infiniteHoverRangeDefault = false;
-    public static final ToggleableEntityList blackListDefault = new ToggleableEntityList(true, "minecraft:armor_stand");
-    public static final ToggleableEntityList whiteListDefault = new ToggleableEntityList(false, "minecraft:player");
-    public static final boolean showHostileDefault = true;
-    public static final boolean showPassiveDefault = true;
-    public static final boolean showSelfDefault = false;
-    public static final boolean onlyShowDamagedDefault = false;
-    public static final boolean onlyShowOnHoverDefault = false;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public ToggleableEntityList blackList = new ToggleableEntityList(true, "minecraft:armor_stand");
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public ToggleableEntityList whiteList = new ToggleableEntityList(false, "minecraft:player");
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public boolean showHostile = true;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public boolean showPassive = true;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public boolean showSelf = false;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public boolean onlyShowDamaged = false;
+    @Expose @Command @ConfigScreen(category = Category.FILTER, tooltip = true)
+    public boolean onlyShowOnHover = false;
 
-    @Expose @Command @ConfigScreen(category = Category.DISPLAY)                 public boolean showHearts = showHeartsDefault;
-    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true) public boolean dynamicBrightness = dynamicBrightnessDefault;
-    @Expose @Command @ConfigScreen(category = Category.DISPLAY)                 public int height = heightDefault;
-    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true) public boolean renderOnTopOnHover = renderOnTopOnHoverDefault;
-    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true) public boolean infiniteHoverRange = infiniteHoverRangeDefault;
-    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public ToggleableEntityList blackList = blackListDefault;
-    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public ToggleableEntityList whiteList = whiteListDefault;
-    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public boolean showHostile = showHostileDefault;
-    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public boolean showPassive = showPassiveDefault;
-    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public boolean showSelf = showSelfDefault;
-    @Expose @Command @ConfigScreen(category = Category.FILTER)                  public boolean onlyShowDamaged = onlyShowDamagedDefault;
-    @Expose @Command @ConfigScreen(category = Category.FILTER, tooltip = true)  public boolean onlyShowOnHover = onlyShowOnHoverDefault;
-
-    public void setName(String name, Object value) {
+    public static void setName(String name, Object value) {
         try {
             Field f = Config.class.getField(name);
-            f.set(this, value);
+            f.set(config, value);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public <T> T getDefault(String name) {
-        return getStatic(name + "Default");
+    public static <T> T getDefault(String name) {
+        return get(name, defaults);
     }
 
-    public <T> T getStatic(String name) {
-        return get(name, null);
+    public static <T> T getName(String name) {
+        return get(name, config);
     }
 
-    public <T> T getName(String name) {
-        return get(name, this);
-    }
-
-    private <T> T get(String name, Object instance) {
+    @SuppressWarnings("unchecked")
+    private static <T> T get(String name, Object instance) {
         try {
             Field f = Config.class.getField(name);
             return (T) f.get(instance);
@@ -159,9 +166,7 @@ public class Config {
             Config config = GSON.fromJson(reader, Config.class);
             if (config != null) {
                 for(Field f : Config.class.getFields()) {
-                    if(Modifier.isStatic(f.getModifiers())) continue;
-
-                    if(f.get(config) == null) f.set(config, Config.class.getField(f.getName() + "Default").get(null));
+                    if(f.isAnnotationPresent(Expose.class) || f.get(config) == null) f.set(config, f.get(defaults));
                 }
                 Config.config = config;
             } else {

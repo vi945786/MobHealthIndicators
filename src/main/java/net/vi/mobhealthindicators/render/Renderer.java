@@ -12,9 +12,13 @@ import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TriState;
 import net.minecraft.util.Util;
+import org.apache.commons.lang3.tuple.Triple;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL11C;
 
+import java.lang.constant.Constable;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.minecraft.client.gl.RenderPipelines.*;
@@ -22,11 +26,13 @@ import static net.minecraft.client.render.RenderPhase.*;
 import static net.vi.mobhealthindicators.MobHealthIndicators.*;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11C.GL_POLYGON_OFFSET_FACTOR;
 
 public abstract class Renderer {
     private static final RenderPipeline FULL_BRIGHT_INDICATORS_PIPELINE = register(RenderPipeline.builder(ENTITY_SNIPPET).withLocation(Identifier.of(modId, "pipeline/full_bright_indicators")).withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("NO_OVERLAY").withShaderDefine("NO_CARDINAL_LIGHTING").withSampler("Sampler1").withCull(false).build());
     public static final Function<Identifier, RenderLayer> FULL_BRIGHT_INDICATORS = Util.memoize(texture -> {
-        RenderLayer.MultiPhaseParameters multiPhaseParameters = RenderLayer.MultiPhaseParameters.builder().texture(new RenderPhase.Texture(texture, TriState.FALSE, false)).lightmap(ENABLE_LIGHTMAP).overlay(ENABLE_OVERLAY_COLOR).build(false);
+        RenderLayer.MultiPhaseParameters multiPhaseParameters = RenderLayer.MultiPhaseParameters.builder().texture(new Texture(texture, false)).lightmap(ENABLE_LIGHTMAP).overlay(ENABLE_OVERLAY_COLOR).build(false);
         return RenderLayer.of("full_bright_indicators", 1536, true, false, FULL_BRIGHT_INDICATORS_PIPELINE, multiPhaseParameters);
     });
 
@@ -39,7 +45,7 @@ public abstract class Renderer {
         matrixStack.translate(0, livingEntity.getHeight() + 0.5f + config.height/(float)heightDivisor, 0);
         if (hasLabel && distance <= 4096.0) {
             matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
-            if (distance < 100.0 && livingEntity.getEntityWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
+            if (distance < 100.0 && livingEntity.getWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
                 matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
             }
         }
@@ -71,18 +77,22 @@ public abstract class Renderer {
         if(areShadersEnabled || config.dynamicBrightness) renderLayer = RenderLayer.getEntityCutoutNoCull(texture);
         else renderLayer = Renderer.FULL_BRIGHT_INDICATORS.apply(texture);
 
+        boolean offset = GL11.glGetBoolean(GL_POLYGON_OFFSET_FILL);
+        float offset_factor = GL11.glGetFloat(GL_POLYGON_OFFSET_FACTOR);
+        float offset_units = GL11.glGetFloat(GL_POLYGON_OFFSET_UNITS);
+        boolean blend = GL11.glGetBoolean(GL_BLEND);
         if(isTargeted && config.renderOnTopOnHover) {
-            GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
+            GL11.glEnable(GL_POLYGON_OFFSET_FILL);
             GL11.glPolygonOffset(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ZERO);
+            GL11.glDisable(GL11.GL_BLEND);
         }
 
         renderLayer.draw(bufferBuilder.end());
 
         if(isTargeted && config.renderOnTopOnHover) {
-            GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
-            GL11.glDisable(GL11.GL_BLEND);
+            if(!offset) GL11.glDisable(GL_POLYGON_OFFSET_FILL);
+            GL11.glPolygonOffset(offset_factor, offset_units);
+            if(blend) GL11.glEnable(GL_BLEND);
         }
     }
 

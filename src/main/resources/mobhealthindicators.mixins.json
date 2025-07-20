@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "net.vi.mobhealthindicators.mixin.minecraft",
+  "package": "net.vi.mobhealthindicators.mixin",
   "client": [
     "EntityRendererMixin",
     "ReloadableResourceManagerImplMixin"

@@ -1,18 +1,16 @@
 package net.vi.mobhealthindicators.config.screen;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.shedaniel.clothconfig2.api.Expandable;
-import me.shedaniel.clothconfig2.gui.entries.BaseListCell;
 import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
 import me.shedaniel.math.Rectangle;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.Selectable;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
@@ -31,7 +29,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF extends ToggleableBaseListEntry<T, C, SELF>> extends TooltipListEntry<List<T>> implements Expandable {
+public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListCell, SELF extends ToggleableBetterBaseListEntry<T, C, SELF>> extends TooltipListEntry<List<T>> implements Expandable {
     protected static final Identifier CONFIG_TEX = Identifier.of("cloth-config2", "textures/gui/cloth_config.png");
     protected final @NotNull List<C> cells;
     protected final @NotNull List<Element> widgets;
@@ -51,7 +49,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
     protected AtomicBoolean toggled = new AtomicBoolean();
     protected BiConsumer<List<T>, Boolean> saveConsumer;
 
-    public ToggleableBaseListEntry(@NotNull Text fieldName, @Nullable Supplier<Optional<Text[]>> tooltipSupplier, boolean toggled, @Nullable Supplier<List<T>> defaultValue, Supplier<Boolean> defaultToggle, @NotNull Function<SELF, C> createNewInstance, @Nullable BiConsumer<List<T>, Boolean> saveConsumer, Text resetButtonKey, boolean requiresRestart, boolean deleteButtonEnabled, boolean insertInFront) {
+    public ToggleableBetterBaseListEntry(@NotNull Text fieldName, @Nullable Supplier<Optional<Text[]>> tooltipSupplier, boolean toggled, @Nullable Supplier<List<T>> defaultValue, Supplier<Boolean> defaultToggle, @NotNull Function<SELF, C> createNewInstance, @Nullable BiConsumer<List<T>, Boolean> saveConsumer, Text resetButtonKey, boolean requiresRestart, boolean deleteButtonEnabled, boolean insertInFront) {
         super(fieldName, tooltipSupplier, requiresRestart);
         this.insertButtonEnabled = true;
         this.addTooltip = Text.translatable("text.cloth-config.list.add");
@@ -102,6 +100,15 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
         this.toggled.set(toggled);
     }
 
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
+        Element focused = getFocused();
+        if(focused != null) {
+            return focused.mouseScrolled(mouseX, mouseY, amountX, amountY);
+        }
+        return false;
+    }
+
     public boolean isExpanded() {
         return this.expanded && this.isEnabled();
     }
@@ -111,7 +118,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
     }
 
     public boolean isEdited() {
-        return super.isEdited() ? true : this.cells.stream().anyMatch(BaseListCell::isEdited);
+        return super.isEdited() ? true : this.cells.stream().anyMatch(BetterBaseListCell::isEdited);
     }
 
     public boolean isMatchDefault() {
@@ -136,7 +143,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
     }
 
     public boolean isRequiresRestart() {
-        return this.cells.stream().anyMatch(BaseListCell::isRequiresRestart);
+        return this.cells.stream().anyMatch(BetterBaseListCell::isRequiresRestart);
     }
 
     public void setRequiresRestart(boolean requiresRestart) {
@@ -196,7 +203,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
         } else {
             int i = 24;
 
-            for(BaseListCell entry : this.cells) {
+            for(BetterBaseListCell entry : this.cells) {
                 i += entry.getCellHeight();
             }
 
@@ -219,7 +226,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
     }
 
     public Optional<Text> getError() {
-        List<Text> errors = (List)this.cells.stream().map(BaseListCell::getConfigError).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        List<Text> errors = this.cells.stream().map(BetterBaseListCell::getConfigError).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
         return errors.size() > 1 ? Optional.of(Text.translatable("text.cloth-config.multi_error")) : errors.stream().findFirst();
     }
 
@@ -256,18 +263,17 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
 
     public void render(DrawContext graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isHovered, float delta) {
         super.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isHovered, delta);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        BaseListCell focused = this.isExpanded() && this.getFocused() != null && this.getFocused() instanceof BaseListCell ? (BaseListCell)this.getFocused() : null;
+        BetterBaseListCell focused = this.isExpanded() && this.getFocused() != null && this.getFocused() instanceof BetterBaseListCell ? (BetterBaseListCell)this.getFocused() : null;
         boolean insideLabel = this.labelWidget.rectangle.contains(mouseX, mouseY);
-        boolean insideCreateNew = this.isInsideCreateNew((double)mouseX, (double)mouseY);
-        boolean insideDelete = this.isInsideDelete((double)mouseX, (double)mouseY);
-        graphics.drawTexture(RenderLayer::getGuiTextured, CONFIG_TEX, x - 15, y + 5, 33.0F, (float)((this.isEnabled() ? (insideLabel && !insideCreateNew && !insideDelete ? 18 : 0) : 36) + (this.isExpanded() ? 9 : 0)), 9, 9, 256, 256);
+        boolean insideCreateNew = this.isInsideCreateNew(mouseX, mouseY);
+        boolean insideDelete = this.isInsideDelete(mouseX, mouseY);
+        graphics.drawTexture(RenderPipelines.GUI_TEXTURED, CONFIG_TEX, x - 15, y + 5, 33.0F, (float)((this.isEnabled() ? (insideLabel && !insideCreateNew && !insideDelete ? 18 : 0) : 36) + (this.isExpanded() ? 9 : 0)), 9, 9, 256, 256);
         if (this.isInsertButtonEnabled()) {
-            graphics.drawTexture(RenderLayer::getGuiTextured, CONFIG_TEX, x - 15 + 13, y + 5, 42.0F, insideCreateNew ? 9.0F : 0.0F, 9, 9, 256, 256);
+            graphics.drawTexture(RenderPipelines.GUI_TEXTURED, CONFIG_TEX, x - 15 + 13, y + 5, 42.0F, insideCreateNew ? 9.0F : 0.0F, 9, 9, 256, 256);
         }
 
         if (this.isDeleteButtonEnabled()) {
-            graphics.drawTexture(RenderLayer::getGuiTextured, CONFIG_TEX, x - 15 + (this.isInsertButtonEnabled() ? 26 : 13), y + 5, 51.0F, focused == null ? 0.0F : (insideDelete ? 18.0F : 9.0F), 9, 9, 256, 256);
+            graphics.drawTexture(RenderPipelines.GUI_TEXTURED, CONFIG_TEX, x - 15 + (this.isInsertButtonEnabled() ? 26 : 13), y + 5, 51.0F, focused == null ? 0.0F : (insideDelete ? 18.0F : 9.0F), 9, 9, 256, 256);
         }
 
         this.resetWidget.setX(x + entryWidth - this.resetWidget.getWidth());
@@ -287,7 +293,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
         if (this.isExpanded()) {
             int yy = y + 24;
 
-            for(BaseListCell cell : this.cells) {
+            for(BetterBaseListCell cell : this.cells) {
                 cell.render(graphics, -1, yy, x + 14, entryWidth - 14, cell.getCellHeight(), mouseX, mouseY, this.getParent().getFocused() != null && this.getParent().getFocused().equals(this) && this.getFocused() != null && this.getFocused().equals(cell), delta);
                 cell.updateBounds(true, x + 14, yy, entryWidth - 14, cell.getCellHeight());
                 yy += cell.getCellHeight();
@@ -295,7 +301,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
         } else {
             int yy = y + 24;
 
-            for(BaseListCell cell : this.cells) {
+            for(BetterBaseListCell cell : this.cells) {
                 cell.updateBounds(false, x + 14, yy, entryWidth - 14, cell.getCellHeight());
                 yy += cell.getCellHeight();
             }
@@ -305,6 +311,21 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
 
     public Text getYesNoText(boolean bool) {
         return Text.translatable("text.cloth-config.boolean.value." + bool);
+    }
+
+    @Override
+    public void lateRender(DrawContext graphics, int mouseX, int mouseY, float delta) {
+        super.lateRender(graphics, mouseX, mouseY, delta);
+        BetterBaseListCell focused = !isExpanded() || getFocused() == null || !(getFocused() instanceof BetterBaseListCell) ? null : (BetterBaseListCell) getFocused();
+        if(focused != null) {
+        	focused.lateRender(graphics, mouseX, mouseY, delta);
+        }
+    }
+
+    @Override
+    public int getMorePossibleHeight() {
+    	BetterBaseListCell focused = !isExpanded() || getFocused() == null || !(getFocused() instanceof BetterBaseListCell) ? null : (BetterBaseListCell) getFocused();
+    	return focused != null ? focused.getMorePossibleHeight() : 0;
     }
 
     public void updateSelected(boolean isSelected) {
@@ -327,7 +348,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
             return true;
         } else {
             if (this.isExpanded()) {
-                for(BaseListCell cell : this.cells) {
+                for(BetterBaseListCell cell : this.cells) {
                     if (cell.isMouseOver(mouseX, mouseY)) {
                         return true;
                     }
@@ -345,38 +366,38 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
         }
 
         public boolean mouseClicked(double mouseX, double mouseY, int int_1) {
-            if (!ToggleableBaseListEntry.this.isEnabled()) {
+            if (!ToggleableBetterBaseListEntry.this.isEnabled()) {
                 return false;
-            } else if (ToggleableBaseListEntry.this.resetWidget.isMouseOver(mouseX, mouseY)) {
+            } else if (ToggleableBetterBaseListEntry.this.resetWidget.isMouseOver(mouseX, mouseY)) {
                 return false;
-            } else if (ToggleableBaseListEntry.this.toggleWidget.isMouseOver(mouseX, mouseY)) {
+            } else if (ToggleableBetterBaseListEntry.this.toggleWidget.isMouseOver(mouseX, mouseY)) {
                 return false;
-            } else if (ToggleableBaseListEntry.this.isInsideCreateNew(mouseX, mouseY)) {
-                ToggleableBaseListEntry.this.setExpanded(true);
+            } else if (ToggleableBetterBaseListEntry.this.isInsideCreateNew(mouseX, mouseY)) {
+                ToggleableBetterBaseListEntry.this.setExpanded(true);
                 C cell;
-                if (ToggleableBaseListEntry.this.insertInFront()) {
-                    ToggleableBaseListEntry.this.cells.add(0, cell = (ToggleableBaseListEntry.this.createNewInstance.apply(ToggleableBaseListEntry.this.self())));
-                    ToggleableBaseListEntry.this.widgets.add(0, cell);
+                if (ToggleableBetterBaseListEntry.this.insertInFront()) {
+                    ToggleableBetterBaseListEntry.this.cells.add(0, cell = (ToggleableBetterBaseListEntry.this.createNewInstance.apply(ToggleableBetterBaseListEntry.this.self())));
+                    ToggleableBetterBaseListEntry.this.widgets.add(0, cell);
                 } else {
-                    ToggleableBaseListEntry.this.cells.add(cell = (ToggleableBaseListEntry.this.createNewInstance.apply(ToggleableBaseListEntry.this.self())));
-                    ToggleableBaseListEntry.this.widgets.add(cell);
+                    ToggleableBetterBaseListEntry.this.cells.add(cell = (ToggleableBetterBaseListEntry.this.createNewInstance.apply(ToggleableBetterBaseListEntry.this.self())));
+                    ToggleableBetterBaseListEntry.this.widgets.add(cell);
                 }
 
                 cell.onAdd();
                 MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 return true;
-            } else if (ToggleableBaseListEntry.this.isDeleteButtonEnabled() && ToggleableBaseListEntry.this.isInsideDelete(mouseX, mouseY)) {
-                Element focused = ToggleableBaseListEntry.this.getFocused();
-                if (ToggleableBaseListEntry.this.isExpanded() && focused instanceof BaseListCell) {
-                    ((BaseListCell)focused).onDelete();
-                    ToggleableBaseListEntry.this.cells.remove(focused);
-                    ToggleableBaseListEntry.this.widgets.remove(focused);
+            } else if (ToggleableBetterBaseListEntry.this.isDeleteButtonEnabled() && ToggleableBetterBaseListEntry.this.isInsideDelete(mouseX, mouseY)) {
+                Element focused = ToggleableBetterBaseListEntry.this.getFocused();
+                if (ToggleableBetterBaseListEntry.this.isExpanded() && focused instanceof BetterBaseListCell) {
+                    ((BetterBaseListCell)focused).onDelete();
+                    ToggleableBetterBaseListEntry.this.cells.remove(focused);
+                    ToggleableBetterBaseListEntry.this.widgets.remove(focused);
                     MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 }
 
                 return true;
             } else if (this.rectangle.contains(mouseX, mouseY)) {
-                ToggleableBaseListEntry.this.setExpanded(!ToggleableBaseListEntry.this.expanded);
+                ToggleableBetterBaseListEntry.this.setExpanded(!ToggleableBetterBaseListEntry.this.expanded);
                 MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 return true;
             } else {
@@ -392,7 +413,7 @@ public abstract class ToggleableBaseListEntry<T, C extends BaseListCell, SELF ex
         }
 
         public boolean isMouseOver(double mouseX, double mouseY) {
-            return this.rectangle.contains(mouseX, mouseY) && !ToggleableBaseListEntry.this.resetWidget.isMouseOver(mouseX, mouseY) && !ToggleableBaseListEntry.this.toggleWidget.isMouseOver(mouseX, mouseY);
+            return this.rectangle.contains(mouseX, mouseY) && !ToggleableBetterBaseListEntry.this.resetWidget.isMouseOver(mouseX, mouseY) && !ToggleableBetterBaseListEntry.this.toggleWidget.isMouseOver(mouseX, mouseY);
         }
     }
 }
