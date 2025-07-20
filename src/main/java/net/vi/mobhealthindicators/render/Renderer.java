@@ -71,7 +71,7 @@ public abstract class Renderer {
         if(areShadersEnabled || config.dynamicBrightness) renderLayer = RenderLayer.getEntityCutoutNoCull(texture);
         else renderLayer = Renderer.FULL_BRIGHT_INDICATORS.apply(texture);
 
-        if(isTargeted) {
+        if(isTargeted && config.renderOnTopOnHover) {
             GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
             GL11.glPolygonOffset(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
             GL11.glEnable(GL11.GL_BLEND);
@@ -80,7 +80,7 @@ public abstract class Renderer {
 
         renderLayer.draw(bufferBuilder.end());
 
-        if(isTargeted) {
+        if(isTargeted && config.renderOnTopOnHover) {
             GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
             GL11.glDisable(GL11.GL_BLEND);
         }
