@@ -101,18 +101,18 @@ public class EntityTypeToEntity {
         try {
             entityType.factory.create(entityType, null);
             if(!ENTITY_TYPE_CLASS_MAP.containsKey(entityType)) throw new RuntimeException();
-        } catch (DummyWorldException _) {
-        } catch (Exception _) {
+        } catch (DummyWorldException ignored) {
+        } catch (Exception e1) {
             try {
                 entityType.factory.create(entityType, DummyWorld.INSTANCE_UNSAFE);
                 if(!ENTITY_TYPE_CLASS_MAP.containsKey(entityType)) throw new RuntimeException();
-            } catch (DummyWorldException _) {
-            } catch (Exception _) {
+            } catch (DummyWorldException ignored) {
+            } catch (Exception e2) {
                 try {
                     entityType.factory.create(entityType, DummyWorld.INSTANCE_UNSAFE);
                     if(!ENTITY_TYPE_CLASS_MAP.containsKey(entityType)) throw new RuntimeException();
-                } catch (DummyWorldException _) {
-                } catch (Exception _) {
+                } catch (DummyWorldException ignored) {
+                } catch (Exception e3) {
                     FAILED.add(entityType);
                 }
             }
@@ -229,7 +229,7 @@ public class EntityTypeToEntity {
                 accessor.setPendingBlockEntityTickers(new ArrayList<>());
                 try {
                     accessor.setDamageSources(new DamageSources(FALLBACK_REGISTRY_MANAGER));
-                } catch (Throwable _) {}
+                } catch (Throwable ignored) {}
 
             } catch (Throwable e) {
                 worldUnsafe = null;

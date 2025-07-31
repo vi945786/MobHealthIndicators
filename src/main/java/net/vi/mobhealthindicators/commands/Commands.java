@@ -42,7 +42,7 @@ public class Commands {
     }
 
     private static void registerSubCommandOfBool(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name) {
-        argumentBuilder.then(literal(name).executes(_ -> {
+        argumentBuilder.then(literal(name).executes(context -> {
             sendMessage(Text.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
@@ -56,7 +56,7 @@ public class Commands {
     }
 
     private static void registerSubCommandOfInt(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name, int min, int max) {
-        argumentBuilder.then(literal(name).executes(_ -> {
+        argumentBuilder.then(literal(name).executes(context -> {
             sendMessage(Text.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", IntegerArgumentType.integer(min, max)).executes(context -> {
@@ -71,7 +71,7 @@ public class Commands {
 
     private static void registerSubCommandOfToggleableEntityList(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name) {
         Config.ToggleableEntityList list = Config.getName(name);
-        argumentBuilder.then(literal(name).executes(_ -> {
+        argumentBuilder.then(literal(name).executes(context -> {
             sendMessage(Text.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
             return 1;
             }).then(literal("set").then(argument("value", BoolArgumentType.bool()).executes(context -> {
@@ -102,8 +102,8 @@ public class Commands {
     }
 
     private static void registerSubCommands(String mainCommand) {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
-            LiteralArgumentBuilder<FabricClientCommandSource> builder = literal(mainCommand).executes(_ -> {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            LiteralArgumentBuilder<FabricClientCommandSource> builder = literal(mainCommand).executes(context -> {
                 sendMessage(Text.literal(config.toString()));
                 return 1;
             });
