@@ -5,13 +5,11 @@
   "client": [
     "EntityMixin",
     "EntityRendererMixin",
-    "ReloadableResourceManagerImplMixin"
+    "ReferenceAccessor",
+    "ReloadableResourceManagerImplMixin",
+    "WorldAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "ReferenceAccessor",
-    "WorldAccessor"
-  ]
+  }
 }

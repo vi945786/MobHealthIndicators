@@ -33,10 +33,5 @@
     "fabric": "*",
     "minecraft": ">=1.21.6",
     "cloth-config2": "*"
-  },
-  "custom": {
-    "loom:injected_interfaces": {
-      "me/shedaniel/clothconfig2/gui/entries/BaseListCell": ["net/vi/mobhealthindicators/mixin/cloth_config/addmethods/AddedMethodsInBaseListCell"]
-    }
   }
 }
