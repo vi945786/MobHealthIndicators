@@ -10,15 +10,10 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.TriState;
 import net.minecraft.util.Util;
-import org.apache.commons.lang3.tuple.Triple;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL11C;
 
-import java.lang.constant.Constable;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.minecraft.client.gl.RenderPipelines.*;
@@ -71,6 +66,7 @@ public abstract class Renderer {
         BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
 
         NativeImage image = ((NativeImageBackedTexture) client.getTextureManager().getTexture(texture)).getImage();
+        if(image == null) return;
         drawHeart(positionMatrix, bufferBuilder, image.getWidth() / 2f, image.getHeight(), config.dynamicBrightness ? light : LightmapTextureManager.MAX_LIGHT_COORDINATE);
 
         RenderLayer renderLayer;

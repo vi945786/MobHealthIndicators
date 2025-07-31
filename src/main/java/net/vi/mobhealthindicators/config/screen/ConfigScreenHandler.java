@@ -9,9 +9,11 @@ import me.shedaniel.clothconfig2.impl.builders.BooleanToggleBuilder;
 import me.shedaniel.clothconfig2.impl.builders.IntSliderBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.entity.EntityType;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.vi.mobhealthindicators.EntityTypeToEntity;
 import net.vi.mobhealthindicators.config.Config;
 
 import java.lang.annotation.ElementType;
@@ -63,8 +65,10 @@ public class ConfigScreenHandler {
             ConfigCategory configCategory = null;
             AbstractConfigListEntry<?> entry = null;
 
-            if(annotation.category() == Category.DISPLAY) configCategory = display;
-            else if(annotation.category() == Category.FILTER) configCategory = filter;
+            switch (annotation.category()) {
+                case DISPLAY -> configCategory = display;
+                case FILTER -> configCategory = filter;
+            }
 
             if(type == int.class) {
                 Config.Range range = f.getAnnotation(Config.Range.class);
@@ -113,16 +117,9 @@ public class ConfigScreenHandler {
     }
 
     private static BetterDropdownNoRestListBuilder<String> startToggleableEntityDropdownList(Text fieldNameKey, List<String> value, boolean toggled) {
-        BetterDropdownNoRestListBuilder<String> entry = ConfigScreenHandler.<String>startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new BetterDropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new BetterDropdownBoxEntry.DefaultSelectionCellCreator<>());
-        entry.setSelections(Registries.ENTITY_TYPE.getIds().stream().filter(ConfigScreenHandler::isVanillaLivingEntity).map(Identifier::toString).sorted().toList());
+        BetterDropdownNoRestListBuilder<String> entry = ConfigScreenHandler.startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new BetterDropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new BetterDropdownBoxEntry.DefaultSelectionCellCreator<>());
+        entry.setSelections(Registries.ENTITY_TYPE.stream().filter(EntityTypeToEntity::isLivingEntity).map(EntityType::getId).map(Identifier::toString).sorted().toList());
         return entry;
-    }
-
-    private static final List<String> vanillaLivingEntities = Arrays.stream(new String[] {"allay", "armadillo", "armor_stand", "axolotl", "bat", "bee", "blaze", "bogged", "breeze", "camel", "cat", "cave_spider", "chicken", "cod", "cow", "creaking", "creeper", "dolphin", "donkey", "drowned", "elder_guardian", "enderman", "endermite", "ender_dragon", "evoker", "fox", "frog", "ghast", "giant", "glow_squid", "goat", "guardian", "hoglin", "horse", "husk", "illusioner", "iron_golem", "llama", "magma_cube", "mooshroom", "mule", "ocelot", "panda", "parrot", "phantom", "pig", "piglin", "piglin_brute", "pillager", "player", "polar_bear", "pufferfish", "rabbit", "ravager", "salmon", "sheep", "shulker", "silverfish", "skeleton", "skeleton_horse", "slime", "sniffer", "snow_golem", "spider", "squid", "stray", "strider", "tadpole", "trader_llama", "tropical_fish", "turtle", "vex", "villager", "vindicator", "wandering_trader", "warden", "witch", "wither", "wither_skeleton", "wolf", "zoglin", "zombie", "zombie_horse", "zombie_villager", "zombified_piglin"}).toList();
-    public static boolean isVanillaLivingEntity(Identifier id) {
-        if(!id.getNamespace().equals("minecraft")) return true;
-
-        return vanillaLivingEntities.contains(id.getPath());
     }
 
     public static <T> BetterDropdownNoRestListBuilder<T> startToggleableDropdownList(Text fieldNameKey, List<T> value, boolean toggled, Function<T, BetterDropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, BetterDropdownBoxEntry.SelectionCellCreator<T> cellCreator) {

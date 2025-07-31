@@ -11,7 +11,6 @@ import net.minecraft.entity.mob.Monster;
 import net.minecraft.util.math.MathHelper;
 import net.vi.mobhealthindicators.MobHealthIndicators;
 import net.vi.mobhealthindicators.render.HeartType;
-import org.jetbrains.annotations.Range;
 
 import java.io.File;
 import java.io.FileReader;
@@ -22,7 +21,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 import static net.vi.mobhealthindicators.MobHealthIndicators.client;
@@ -96,6 +94,7 @@ public class Config {
         }
     }
 
+
     public boolean shouldRender(LivingEntity livingEntity, Entity targetedEntity) {
         if(overrideFiltersKey.isPressed()) return true;
 
@@ -108,9 +107,7 @@ public class Config {
         if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return true;
         if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return false;
         if(!showHostile && livingEntity instanceof Monster) return false;
-        if(!showPassive && !(livingEntity instanceof Monster)) return false;
-
-        return true;
+        return showPassive || livingEntity instanceof Monster;
     }
 
     public static class ToggleableEntityList {
@@ -154,7 +151,9 @@ public class Config {
     static {
         if(!configFile.exists()) {
             try {
-                configFile.createNewFile();
+                if(!configFile.createNewFile()) {
+                    throw new IOException("Failed to create config file.");
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -183,7 +182,7 @@ public class Config {
         try (FileWriter writer = new FileWriter(configFile)) {
             GSON.toJson(config, writer);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Could not write to the config file.");
         }
     }
 }

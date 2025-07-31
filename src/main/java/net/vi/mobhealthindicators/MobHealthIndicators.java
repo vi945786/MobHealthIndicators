@@ -34,12 +34,15 @@ public class MobHealthIndicators implements ClientModInitializer {
             modId + ".name"
     ));
 
+
     @Override
+    @SuppressWarnings("ConstantConditions")
     public void onInitializeClient() {
         Config.load();
         Commands.registerCommands();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            EntityTypeToEntity.update();
             areShadersEnabled = FabricLoader.getInstance().isModLoaded("iris") && net.irisshaders.iris.api.v0.IrisApi.getInstance().isShaderPackInUse();
             while (toggleKey.wasPressed()) {
                 config.showHearts = !config.showHearts;

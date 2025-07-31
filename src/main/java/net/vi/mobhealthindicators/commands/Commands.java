@@ -9,13 +9,11 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.argument.RegistryEntryReferenceArgumentType;
 import net.minecraft.entity.EntityType;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.vi.mobhealthindicators.EntityTypeToEntity;
 import net.vi.mobhealthindicators.config.screen.ConfigScreenHandler;
 import net.vi.mobhealthindicators.config.Config;
 
@@ -25,6 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
@@ -43,7 +42,7 @@ public class Commands {
     }
 
     private static void registerSubCommandOfBool(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name) {
-        argumentBuilder.then(literal(name).executes(context -> {
+        argumentBuilder.then(literal(name).executes(_ -> {
             sendMessage(Text.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
@@ -57,7 +56,7 @@ public class Commands {
     }
 
     private static void registerSubCommandOfInt(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name, int min, int max) {
-        argumentBuilder.then(literal(name).executes(context -> {
+        argumentBuilder.then(literal(name).executes(_ -> {
             sendMessage(Text.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", IntegerArgumentType.integer(min, max)).executes(context -> {
@@ -70,9 +69,9 @@ public class Commands {
         );
     }
 
-    private static void registerSubCommandOfToggleableEntityList(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, CommandRegistryAccess registryAccess, String name) {
+    private static void registerSubCommandOfToggleableEntityList(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name) {
         Config.ToggleableEntityList list = Config.getName(name);
-        argumentBuilder.then(literal(name).executes(context -> {
+        argumentBuilder.then(literal(name).executes(_ -> {
             sendMessage(Text.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
             return 1;
             }).then(literal("set").then(argument("value", BoolArgumentType.bool()).executes(context -> {
@@ -82,8 +81,8 @@ public class Commands {
                 return 1;
             })))
 
-            .then(literal("add").then(argument("value", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE)).executes(context -> {
-                String value = ((RegistryKey<EntityType<?>>) context.getArgument("value", RegistryEntry.Reference.class).getKey().get()).getValue().toString();
+            .then(literal("add").then(argument("value", SpecificStringArgumentType.specificString(() -> Registries.ENTITY_TYPE.stream().filter(EntityTypeToEntity::isLivingEntity).map(EntityType::getId).map(Identifier::toString).collect(Collectors.toSet()))).executes(context -> {
+                String value = context.getArgument("value", String.class);
 
                 list.entityList.add(value);
                 Config.save();
@@ -103,8 +102,8 @@ public class Commands {
     }
 
     private static void registerSubCommands(String mainCommand) {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            LiteralArgumentBuilder<FabricClientCommandSource> builder = literal(mainCommand).executes(context -> {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
+            LiteralArgumentBuilder<FabricClientCommandSource> builder = literal(mainCommand).executes(_ -> {
                 sendMessage(Text.literal(config.toString()));
                 return 1;
             });
@@ -127,7 +126,7 @@ public class Commands {
                 } else if(type == boolean.class) {
                     registerSubCommandOfBool(builder, name);
                 } else if(type == Config.ToggleableEntityList.class) {
-                    registerSubCommandOfToggleableEntityList(builder, registryAccess, name);
+                    registerSubCommandOfToggleableEntityList(builder, name);
                 }
             }
 

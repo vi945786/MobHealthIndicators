@@ -8,12 +8,11 @@ import java.util.function.*;
 import java.util.stream.Collectors;
 
 import me.shedaniel.math.Rectangle;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
+@SuppressWarnings("unused")
 public abstract class AbstractToggleableListListEntry<T, C extends AbstractToggleableListListEntry.AbstractListCell<T, C, SELF>, SELF extends AbstractToggleableListListEntry<T, C, SELF>> extends ToggleableBetterBaseListEntry<T, C, SELF> {
     protected final BiFunction<T, SELF, C> createNewCell;
     protected Function<T, Optional<Text>> cellErrorSupplier;

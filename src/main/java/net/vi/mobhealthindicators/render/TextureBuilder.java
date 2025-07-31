@@ -54,7 +54,7 @@ public class TextureBuilder {
 
         for (int heart = totalHearts - 1; heart >= 0; heart--) {
             addHeart(graphics, emptyTexture.fullHeartTexture(), heartRows, heartDensity, heart, heartSize);
-            BufferedImage heartTexture = getHeartTexture(heart, totalHearts, maxHearts, normalHearts, lastNormalHalf, absorptionHearts, lastAbsorptionHalf, effect);
+            BufferedImage heartTexture = getHeartTexture(heart, totalHearts, maxHearts, normalHearts, lastNormalHalf, lastAbsorptionHalf, effect);
 
             if(heartTexture == null) continue;
 
@@ -79,13 +79,13 @@ public class TextureBuilder {
         }
     }
 
-    public static BufferedImage getHeartTexture(int currentHeart, int totalHearts, int maxNormalHearts, int normalHearts, boolean lastNormalHalf, int absorptionHearts, boolean lastAbsorptionHalf, HeartType.Effect effect) {
+    public static BufferedImage getHeartTexture(int currentHeart, int totalHearts, int maxNormalHearts, int normalHearts, boolean lastNormalHalf, boolean lastAbsorptionHalf, HeartType.Effect effect) {
         HeartType.HeartColor heartColor = null;
         boolean isHalf = false;
         if (currentHeart < normalHearts) {
             isHalf = currentHeart == normalHearts -1 && lastNormalHalf;
             switch (effect) {
-                case none -> heartColor = normalHeart;
+                case none, absorption -> heartColor = normalHeart;
                 case poison -> heartColor = poisonHeart;
                 case wither -> heartColor = witherHeart;
                 case frozen -> heartColor = frozenHeart;

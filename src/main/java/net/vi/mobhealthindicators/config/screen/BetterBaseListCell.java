@@ -2,13 +2,12 @@ package net.vi.mobhealthindicators.config.screen;
 
 import java.util.Optional;
 import java.util.function.Supplier;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.AbstractParentElement;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Selectable;
 import net.minecraft.text.Text;
 
+@SuppressWarnings("unused")
 public abstract class BetterBaseListCell extends AbstractParentElement implements Selectable {
     private Supplier<Optional<Text>> errorSupplier;
 

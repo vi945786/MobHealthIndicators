@@ -3,10 +3,15 @@
   "minVersion": "0.8",
   "package": "net.vi.mobhealthindicators.mixin",
   "client": [
+    "EntityMixin",
     "EntityRendererMixin",
     "ReloadableResourceManagerImplMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "mixins": [
+    "ReferenceAccessor",
+    "WorldAccessor"
+  ]
 }
