@@ -1,6 +1,7 @@
 package net.vi.mobhealthindicators;
 
 import com.mojang.serialization.Lifecycle;
+import com.sun.tools.attach.VirtualMachine;
 import io.netty.util.internal.shaded.org.jctools.util.UnsafeAccess;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import net.minecraft.block.Block;
@@ -78,48 +79,134 @@ import net.vi.mobhealthindicators.mixin.WorldAccessor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.tools.agent.MixinAgent;
 
+import java.io.File;
+import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static net.vi.mobhealthindicators.MobHealthIndicators.client;
+
 public class EntityTypeToEntity {
     public static final Map<EntityType<?>, Class<? extends Entity>> ENTITY_TYPE_CLASS_MAP = new HashMap<>();
-    public static final List<EntityType<?>> FAILED = new ArrayList<>();
+    public static boolean isUpdating = false;
+    public static boolean firstUpdate = true;
+    private static int tick = 0;
 
     public static boolean isLivingEntity(EntityType<?> type) {
         return !EntityTypeToEntity.ENTITY_TYPE_CLASS_MAP.containsKey(type) || LivingEntity.class.isAssignableFrom(EntityTypeToEntity.ENTITY_TYPE_CLASS_MAP.get(type));
     }
 
+    @SuppressWarnings("all")
+    private static void firstUpdate() {
+        List<Class<?>> classes;
+        try {
+            String location = new File(MixinAgent.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getPath();
+            String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+
+            Field allowAttachSelfField = Class.forName("sun.tools.attach.HotSpotVirtualMachine").getDeclaredField("ALLOW_ATTACH_SELF");
+            UnsafeAccess.UNSAFE.putBoolean(UnsafeAccess.UNSAFE.staticFieldBase(allowAttachSelfField), UnsafeAccess.UNSAFE.staticFieldOffset(allowAttachSelfField), true);
+
+            VirtualMachine vm = VirtualMachine.attach(pid);
+            vm.loadAgent(location);
+
+            Field agentField = MixinAgent.class.getDeclaredField("instrumentation");
+            agentField.setAccessible(true);
+            Instrumentation agent = (Instrumentation) agentField.get(null);
+            classes = Arrays.stream((Class<?>[]) agent.getAllLoadedClasses()).toList();
+        } catch (Throwable e1) {
+            try {
+                Method getFields = Class.class.getDeclaredMethod("getDeclaredFields0", boolean.class);
+                UnsafeAccess.UNSAFE.putBoolean(getFields, 12, true);
+                Field classesField = Arrays.stream((Field[]) getFields.invoke(ClassLoader.class, false)).filter(field -> field.getName().equals("classes")).findFirst().orElse(null);
+                if(classesField == null) return;
+                UnsafeAccess.UNSAFE.putBoolean(classesField, 12, true);
+                classes = new ArrayList<>(((List<Class<?>>) classesField.get(Thread.currentThread().getContextClassLoader())));
+            } catch (Throwable e2) {
+                return;
+            }
+        }
+
+        for (Class<?> c : classes) {
+            try {
+                for (Field field : c.getDeclaredFields()) {
+                    if (!EntityType.class.isAssignableFrom(field.getType())) {
+                        continue;
+                    }
+                    if (!(field.getGenericType() instanceof ParameterizedType type)) {
+                        continue;
+                    }
+                    Type[] typeArgs = type.getActualTypeArguments();
+                    if (typeArgs.length != 1) {
+                        continue;
+                    }
+                    if (!(typeArgs[0] instanceof Class<?> entityTypeClass)) {
+                        continue;
+                    }
+                    if(entityTypeClass == Entity.class) {
+                        continue;
+                    }
+
+                    EntityType<?> entityType;
+                    try {
+                        entityType = (EntityType<?>) field.get(null);
+                    } catch (ReflectiveOperationException e) {
+                        throw new AssertionError(e);
+                    }
+
+                    ENTITY_TYPE_CLASS_MAP.put(entityType, entityTypeClass.asSubclass(Entity.class));
+                }
+            } catch (Throwable ignored) {}
+        }
+    }
+
     public static void update() {
-        Registries.ENTITY_TYPE.stream().filter(entityType -> !FAILED.contains(entityType) && !ENTITY_TYPE_CLASS_MAP.containsKey(entityType)).forEach(EntityTypeToEntity::updateEntityType);
+        if(tick++ % 20 != 0) return;
+
+        if(firstUpdate) {
+            firstUpdate = false;
+            firstUpdate();
+        }
+        isUpdating = true;
+        Registries.ENTITY_TYPE.stream().filter(entityType -> !ENTITY_TYPE_CLASS_MAP.containsKey(entityType)).forEach(EntityTypeToEntity::updateEntityType);
+        isUpdating = false;
     }
 
     private static <T extends Entity> void updateEntityType(EntityType<T> entityType) {
         try {
             entityType.factory.create(entityType, null);
             if(!ENTITY_TYPE_CLASS_MAP.containsKey(entityType)) throw new RuntimeException();
-        } catch (DummyWorldException ignored) {
-        } catch (Exception e1) {
+        } catch (ReturnException ignored) {
+        } catch (Throwable e1) {
             try {
                 entityType.factory.create(entityType, DummyWorld.INSTANCE_UNSAFE);
                 if(!ENTITY_TYPE_CLASS_MAP.containsKey(entityType)) throw new RuntimeException();
-            } catch (DummyWorldException ignored) {
-            } catch (Exception e2) {
+            } catch (ReturnException ignored) {
+            } catch (Throwable e2) {
                 try {
-                    entityType.factory.create(entityType, DummyWorld.INSTANCE_UNSAFE);
+                    entityType.factory.create(entityType, DummyWorld.INSTANCE_REGULAR);
                     if(!ENTITY_TYPE_CLASS_MAP.containsKey(entityType)) throw new RuntimeException();
-                } catch (DummyWorldException ignored) {
-                } catch (Exception e3) {
-                    FAILED.add(entityType);
+                } catch (ReturnException ignored) {
+                } catch (Throwable e3) {
+                    try {
+                        if(client.world != null) {
+                            System.out.println(entityType);
+                            entityType.factory.create(entityType, client.world);
+                            if (!ENTITY_TYPE_CLASS_MAP.containsKey(entityType)) throw new RuntimeException();
+                        }
+                    } catch (Throwable ignored) {}
                 }
             }
         }
     }
 
-    public static final class DummyWorldException extends RuntimeException {}
+    public static final class ReturnException extends RuntimeException {}
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @ApiStatus.Internal
