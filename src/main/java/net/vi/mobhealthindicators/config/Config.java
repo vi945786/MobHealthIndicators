@@ -67,6 +67,9 @@ public class Config {
     @Expose @Command @ConfigScreen(category = Category.FILTER, tooltip = true)
     public boolean onlyShowOnHover = false;
 
+    @Expose
+    public HashMap<String, String> entityTypeToEntity = new HashMap<>();
+
     public static void setName(String name, Object value) {
         try {
             Field f = Config.class.getField(name);
@@ -129,7 +132,7 @@ public class Config {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (Field field : config.getClass().getFields()) {
-            if(!field.isAnnotationPresent(Expose.class)) continue;
+            if(!field.isAnnotationPresent(Command.class)) continue;
             try {
                 sb.append(field.getName())
                   .append(" = ")
@@ -165,7 +168,7 @@ public class Config {
             Config config = GSON.fromJson(reader, Config.class);
             if (config != null) {
                 for(Field f : Config.class.getFields()) {
-                    if(f.isAnnotationPresent(Expose.class) || f.get(config) == null) f.set(config, f.get(defaults));
+                    if(f.isAnnotationPresent(Expose.class) && f.get(config) == null) f.set(config, f.get(defaults));
                 }
                 Config.config = config;
             } else {

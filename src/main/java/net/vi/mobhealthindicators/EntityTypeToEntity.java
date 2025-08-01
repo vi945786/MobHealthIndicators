@@ -92,12 +92,19 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static net.vi.mobhealthindicators.MobHealthIndicators.client;
+import static net.vi.mobhealthindicators.config.Config.config;
+import static net.vi.mobhealthindicators.config.Config.save;
 
 public class EntityTypeToEntity {
-    public static final Map<EntityType<?>, Class<? extends Entity>> ENTITY_TYPE_CLASS_MAP = new HashMap<>();
+    private static final Map<EntityType<?>, Class<? extends Entity>> ENTITY_TYPE_CLASS_MAP = new HashMap<>();
+    private static int tick = 0;
     public static boolean isUpdating = false;
     public static boolean firstUpdate = true;
-    private static int tick = 0;
+
+    public static void addEntity(EntityType<?> type, Class<? extends Entity> entityClass) {
+        ENTITY_TYPE_CLASS_MAP.put(type, entityClass);
+        config.entityTypeToEntity.put(EntityType.getId(type).toString(), entityClass.getName());
+    }
 
     public static boolean isLivingEntity(EntityType<?> type) {
         return !EntityTypeToEntity.ENTITY_TYPE_CLASS_MAP.containsKey(type) || LivingEntity.class.isAssignableFrom(EntityTypeToEntity.ENTITY_TYPE_CLASS_MAP.get(type));
@@ -105,6 +112,16 @@ public class EntityTypeToEntity {
 
     @SuppressWarnings("all")
     private static void firstUpdate() {
+        config.entityTypeToEntity.forEach((typeId, entityClassName) -> {
+            try {
+                EntityType<?> type = Registries.ENTITY_TYPE.getOptionalValue(Identifier.of(typeId)).get();
+                Class<? extends Entity> entityClass = (Class<? extends Entity>) Class.forName(entityClassName);
+
+                if(type == null || entityClass == null) return;
+                addEntity(type, entityClass);
+            } catch (Throwable ignored) {}
+        });
+
         List<Class<?>> classes;
         try {
             String location = new File(MixinAgent.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getPath();
@@ -124,7 +141,7 @@ public class EntityTypeToEntity {
             try {
                 Method getFields = Class.class.getDeclaredMethod("getDeclaredFields0", boolean.class);
                 UnsafeAccess.UNSAFE.putBoolean(getFields, 12, true);
-                Field classesField = Arrays.stream((Field[]) getFields.invoke(ClassLoader.class, false)).filter(field -> field.getName().equals("classes")).findFirst().orElse(null);
+                Field classesField = Arrays.stream((Field[]) getFields.invoke(ClassLoader.class, (Object) false)).filter(field -> field.getName().equals("classes")).findFirst().orElse(null);
                 if(classesField == null) return;
                 UnsafeAccess.UNSAFE.putBoolean(classesField, 12, true);
                 classes = new ArrayList<>(((List<Class<?>>) classesField.get(Thread.currentThread().getContextClassLoader())));
@@ -160,7 +177,7 @@ public class EntityTypeToEntity {
                         throw new AssertionError(e);
                     }
 
-                    ENTITY_TYPE_CLASS_MAP.put(entityType, entityTypeClass.asSubclass(Entity.class));
+                    addEntity(entityType, entityTypeClass.asSubclass(Entity.class));
                 }
             } catch (Throwable ignored) {}
         }
@@ -169,6 +186,7 @@ public class EntityTypeToEntity {
     public static void update() {
         if(tick++ % 20 != 0) return;
 
+        int mapSize = ENTITY_TYPE_CLASS_MAP.size();
         if(firstUpdate) {
             firstUpdate = false;
             firstUpdate();
@@ -176,6 +194,7 @@ public class EntityTypeToEntity {
         isUpdating = true;
         Registries.ENTITY_TYPE.stream().filter(entityType -> !ENTITY_TYPE_CLASS_MAP.containsKey(entityType)).forEach(EntityTypeToEntity::updateEntityType);
         isUpdating = false;
+        if(mapSize != ENTITY_TYPE_CLASS_MAP.size()) save();
     }
 
     private static <T extends Entity> void updateEntityType(EntityType<T> entityType) {
