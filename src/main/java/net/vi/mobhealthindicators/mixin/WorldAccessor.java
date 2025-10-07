@@ -31,10 +31,6 @@ public interface WorldAccessor {
     void setProperties(MutableWorldProperties properties);
 
     @Mutable
-    @Accessor("border")
-    void setBorder(WorldBorder border);
-
-    @Mutable
     @Accessor("biomeAccess")
     void setBiomeAccess(BiomeAccess biomeAccess);
 

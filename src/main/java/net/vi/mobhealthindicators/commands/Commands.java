@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.vi.mobhealthindicators.EntityTypeToEntity.getLivingEntities;
 import static net.vi.mobhealthindicators.config.Config.*;
 
 public class Commands {
@@ -81,7 +82,7 @@ public class Commands {
                 return 1;
             })))
 
-            .then(literal("add").then(argument("value", SpecificStringArgumentType.specificString(() -> Registries.ENTITY_TYPE.stream().filter(EntityTypeToEntity::isLivingEntity).map(EntityType::getId).map(Identifier::toString).collect(Collectors.toSet()))).executes(context -> {
+            .then(literal("add").then(argument("value", SpecificStringArgumentType.specificString(() -> getLivingEntities().stream().map(EntityType::getId).map(Identifier::toString).collect(Collectors.toSet()))).executes(context -> {
                 String value = context.getArgument("value", String.class);
 
                 list.entityList.add(value);

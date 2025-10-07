@@ -4,8 +4,10 @@ import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.*;
 import net.minecraft.client.render.entity.state.EntityRenderState;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -38,13 +40,13 @@ public abstract class EntityRendererMixin {
     }
 
     @Inject(method = "render", at = @At("TAIL"))
-    public void renderHealth(EntityRenderState entityRenderState, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
+    public void renderHealth(EntityRenderState entityRenderState, MatrixStack matrixStack, OrderedRenderCommandQueue queue, CameraRenderState cameraState, CallbackInfo ci) {
 
         ClientPlayerEntity player = client.player;
 
         Entity entity = entities.get(entityRenderState);
 
-        EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
+        EntityRenderManager dispatcher = client.getEntityRenderDispatcher();
         if (!(entity instanceof LivingEntity livingEntity) || !config.shouldRender(livingEntity, targetedEntity) || player == null || player.getVehicle() == livingEntity || livingEntity.isInvisibleTo(player) || ((client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen) && livingEntity == player)) {
             return;
         }
@@ -55,6 +57,6 @@ public abstract class EntityRendererMixin {
         HeartType.Effect effect = HeartType.Effect.getEffect(livingEntity);
 
         double d = dispatcher.getSquaredDistanceToCamera(livingEntity);
-        Renderer.render(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), light, d, this.hasLabel(livingEntity, d), dispatcher);
+        Renderer.render(matrixStack, livingEntity, TextureBuilder.getTexture(normalHealth, maxHealth, absorptionHealth, effect), dispatcher.getLight(entity, client.getRenderTickCounter().getTickProgress(false)), d, this.hasLabel(livingEntity, d), dispatcher);
     }
 }

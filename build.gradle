@@ -15,7 +15,6 @@ sourceSets {
     stub {}
 }
 
-
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -23,7 +22,7 @@ dependencies {
 
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	include(modImplementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}")
+	modImplementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
 
 	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
 	compileOnly sourceSets.stub.output

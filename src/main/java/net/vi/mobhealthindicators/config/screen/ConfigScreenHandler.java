@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Function;
 
+import static net.vi.mobhealthindicators.EntityTypeToEntity.getLivingEntities;
 import static net.vi.mobhealthindicators.MobHealthIndicators.*;
 
 public class ConfigScreenHandler {
@@ -101,7 +102,7 @@ public class ConfigScreenHandler {
         return builder.build();
     }
 
-    private static ToggleableNestedListListEntry<?, ?> getToggleableEntityDropdownList(String name, boolean tooltip) {
+    private static ToggleableNestedListListEntry<String, ?> getToggleableEntityDropdownList(String name, boolean tooltip) {
         Config.ToggleableEntityList toggleableEntityList = Config.getName(name);
         Config.ToggleableEntityList defaultToggleableEntityList = Config.getDefault(name);
         BetterDropdownNoRestListBuilder<String> builder = startToggleableEntityDropdownList(Text.translatable("config."  + modId + ".option." + name.toLowerCase()), toggleableEntityList.entityList.stream().toList(), toggleableEntityList.toggle);
@@ -113,12 +114,12 @@ public class ConfigScreenHandler {
     }
 
     private static KeyCodeEntry getKeybindingField(ConfigEntryBuilder entryBuilder, KeyBinding keyBinding) {
-        return entryBuilder.fillKeybindingField(Text.translatable(keyBinding.getTranslationKey()), keyBinding).build();
+        return entryBuilder.fillKeybindingField(Text.translatable(keyBinding.getId()), keyBinding).build();
     }
 
     private static BetterDropdownNoRestListBuilder<String> startToggleableEntityDropdownList(Text fieldNameKey, List<String> value, boolean toggled) {
         BetterDropdownNoRestListBuilder<String> entry = ConfigScreenHandler.startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new BetterDropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Text::literal), new BetterDropdownBoxEntry.DefaultSelectionCellCreator<>());
-        entry.setSelections(Registries.ENTITY_TYPE.stream().filter(EntityTypeToEntity::isLivingEntity).map(EntityType::getId).map(Identifier::toString).sorted().toList());
+        entry.setSelections(getLivingEntities().stream().map(EntityType::getId).map(Identifier::toString).sorted().toList());
         return entry;
     }
 

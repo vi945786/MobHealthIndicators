@@ -23,6 +23,7 @@ import net.minecraft.entity.spawn.SpawnConditionSelectors;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.FuelRegistry;
 import net.minecraft.item.map.MapState;
+import net.minecraft.particle.BlockParticleEffect;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.recipe.BrewingRecipeRegistry;
 import net.minecraft.recipe.RecipeManager;
@@ -45,6 +46,7 @@ import net.minecraft.util.AssetInfo;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.ModelAndTexture;
 import net.minecraft.util.TypeFilter;
+import net.minecraft.util.collection.Pool;
 import net.minecraft.util.function.LazyIterationConsumer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -52,10 +54,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.intprovider.UniformIntProvider;
 import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.Difficulty;
-import net.minecraft.world.MutableWorldProperties;
-import net.minecraft.world.World;
+import net.minecraft.world.*;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.border.WorldBorder;
@@ -104,6 +103,10 @@ public class EntityTypeToEntity {
     public static void addEntity(EntityType<?> type, Class<? extends Entity> entityClass) {
         ENTITY_TYPE_CLASS_MAP.put(type, entityClass);
         config.entityTypeToEntity.put(EntityType.getId(type).toString(), entityClass.getName());
+    }
+
+    public static List<EntityType<?>> getLivingEntities() {
+        return Registries.ENTITY_TYPE.stream().filter(EntityTypeToEntity::isLivingEntity).toList();
     }
 
     public static boolean isLivingEntity(EntityType<?> type) {
@@ -265,12 +268,12 @@ public class EntityTypeToEntity {
                 addRegistry(new DummyRegistry<>(RegistryKeys.DAMAGE_TYPE, Identifier.of("dummy","damage"), new DamageType("", DamageScaling.NEVER, 0)));
                 addRegistry(new DummyRegistry<>(RegistryKeys.BANNER_PATTERN, Identifier.of("dummy","pattern"), new BannerPattern(Identifier.of("dummy","pattern"), "")));
                 addRegistry(new DummyRegistry<>(RegistryKeys.PAINTING_VARIANT, Identifier.of("dummy","painting"), new PaintingVariant(1, 1, Identifier.of("dummy","painting"), Optional.empty(), Optional.empty())));
-                addRegistry(new DummyRegistry<>(RegistryKeys.WOLF_VARIANT, Identifier.of("dummy","wolf"), new WolfVariant(new WolfVariant.WolfAssetInfo(new AssetInfo(Identifier.of("dummy","wolf")), new AssetInfo(Identifier.of("dummy","wolf")), new AssetInfo(Identifier.of("dummy","wolf"))), SpawnConditionSelectors.EMPTY)));
-                addRegistry(new DummyRegistry<>(RegistryKeys.COW_VARIANT, Identifier.of("dummy","cow"), new CowVariant(new ModelAndTexture<>(CowVariant.Model.NORMAL, new AssetInfo(Identifier.of("dummy", "wolf"))), SpawnConditionSelectors.EMPTY)));
-                addRegistry(new DummyRegistry<>(RegistryKeys.PIG_VARIANT, Identifier.of("dummy","pig"), new PigVariant(new ModelAndTexture<>(PigVariant.Model.NORMAL, new AssetInfo(Identifier.of("dummy", "wolf"))), SpawnConditionSelectors.EMPTY)));
-                addRegistry(new DummyRegistry<>(RegistryKeys.CHICKEN_VARIANT, Identifier.of("dummy","chicken"), new ChickenVariant(new ModelAndTexture<>(ChickenVariant.Model.NORMAL, new AssetInfo(Identifier.of("dummy", "wolf"))), SpawnConditionSelectors.EMPTY)));
-                addRegistry(new DummyRegistry<>(RegistryKeys.CAT_VARIANT, Identifier.of("dummy","cat"), new CatVariant(new AssetInfo(Identifier.of("dummy", "cat")), SpawnConditionSelectors.EMPTY)));
-                addRegistry(new DummyRegistry<>(RegistryKeys.FROG_VARIANT, Identifier.of("dummy","frog"), new FrogVariant(new AssetInfo(Identifier.of("dummy", "frog")), SpawnConditionSelectors.EMPTY)));
+                addRegistry(new DummyRegistry<>(RegistryKeys.WOLF_VARIANT, Identifier.of("dummy","wolf"), new WolfVariant(new WolfVariant.WolfAssetInfo(new AssetInfo.TextureAssetInfo(Identifier.of("dummy","wolf")), new AssetInfo.TextureAssetInfo(Identifier.of("dummy","wolf")), new AssetInfo.TextureAssetInfo(Identifier.of("dummy","wolf"))), SpawnConditionSelectors.EMPTY)));
+                addRegistry(new DummyRegistry<>(RegistryKeys.COW_VARIANT, Identifier.of("dummy","cow"), new CowVariant(new ModelAndTexture<>(CowVariant.Model.NORMAL, new AssetInfo.TextureAssetInfo(Identifier.of("dummy", "wolf"))), SpawnConditionSelectors.EMPTY)));
+                addRegistry(new DummyRegistry<>(RegistryKeys.PIG_VARIANT, Identifier.of("dummy","pig"), new PigVariant(new ModelAndTexture<>(PigVariant.Model.NORMAL, new AssetInfo.TextureAssetInfo(Identifier.of("dummy", "wolf"))), SpawnConditionSelectors.EMPTY)));
+                addRegistry(new DummyRegistry<>(RegistryKeys.CHICKEN_VARIANT, Identifier.of("dummy","chicken"), new ChickenVariant(new ModelAndTexture<>(ChickenVariant.Model.NORMAL, new AssetInfo.TextureAssetInfo(Identifier.of("dummy", "wolf"))), SpawnConditionSelectors.EMPTY)));
+                addRegistry(new DummyRegistry<>(RegistryKeys.CAT_VARIANT, Identifier.of("dummy","cat"), new CatVariant(new AssetInfo.TextureAssetInfo(Identifier.of("dummy", "cat")), SpawnConditionSelectors.EMPTY)));
+                addRegistry(new DummyRegistry<>(RegistryKeys.FROG_VARIANT, Identifier.of("dummy","frog"), new FrogVariant(new AssetInfo.TextureAssetInfo(Identifier.of("dummy", "frog")), SpawnConditionSelectors.EMPTY)));
                 addRegistry(new DummyRegistry<>(RegistryKeys.WOLF_SOUND_VARIANT, Identifier.of("dummy","wolf"), SoundEvents.WOLF_SOUNDS.get(WolfSoundVariants.Type.CLASSIC)));
             }
         };
@@ -322,7 +325,6 @@ public class EntityTypeToEntity {
                 //noinspection ConstantConditions
                 var accessor = (WorldAccessor) worldUnsafe;
                 accessor.setBiomeAccess(new BiomeAccess(worldUnsafe, 1L));
-                accessor.setBorder(new WorldBorder());
                 accessor.setDebugWorld(true);
                 accessor.setProperties(new DummyWorldProperties());
                 accessor.setRegistryKey(RegistryKey.of(RegistryKeys.WORLD, Identifier.of("dummy","world")));
@@ -364,8 +366,22 @@ public class EntityTypeToEntity {
         @Override public void updateListeners(BlockPos pos, BlockState oldState, BlockState newState, int flags) {}
         @Override public void playSound(@Nullable Entity source, double x, double y, double z, RegistryEntry<SoundEvent> sound, SoundCategory category, float volume, float pitch, long seed) {}
         @Override public void playSoundFromEntity(@Nullable Entity source, Entity entity, RegistryEntry<SoundEvent> sound, SoundCategory category, float volume, float pitch, long seed) {}
-        @Override public void createExplosion(@Nullable Entity entity, @Nullable DamageSource damageSource, @Nullable ExplosionBehavior behavior, double x, double y, double z, float power, boolean createFire, ExplosionSourceType explosionSourceType, ParticleEffect particle, ParticleEffect emitterParticle, RegistryEntry<SoundEvent> soundEvent) {}
+
+        @Override
+        public void createExplosion(@Nullable Entity entity, @Nullable DamageSource damageSource, @Nullable ExplosionBehavior behavior, double x, double y, double z, float power, boolean createFire, ExplosionSourceType explosionSourceType, ParticleEffect smallParticle, ParticleEffect largeParticle, Pool<BlockParticleEffect> blockParticles, RegistryEntry<SoundEvent> soundEvent) {}
+
         @Override public String asString() {return "DummyWorld!";}
+
+        @Override
+        public void setSpawnPoint(WorldProperties.SpawnPoint spawnPoint) {
+
+        }
+
+        @Override
+        public WorldProperties.SpawnPoint getSpawnPoint() {
+            return null;
+        }
+
         @Nullable @Override public Entity getEntityById(int id) {return null;}
         @Override public Collection<EnderDragonPart> getEnderDragonParts() {return List.of();}
         @Override public TickManager getTickManager() {return this.tickManager;}
@@ -390,9 +406,13 @@ public class EntityTypeToEntity {
         @Override public void forEachLightSource(BiConsumer<BlockPos, BlockState> callback) {}
         @Override public ChunkSkyLight getChunkSkyLight() {return null;}
 
+        @Override
+        public WorldBorder getWorldBorder() {
+            return null;
+        }
+
         static class DummyWorldProperties implements MutableWorldProperties {
-            @Override public BlockPos getSpawnPos() {return BlockPos.ORIGIN;}
-            @Override public float getSpawnAngle() {return 0;}
+            @Override public SpawnPoint getSpawnPoint() {return SpawnPoint.DEFAULT;}
             @Override public long getTime() {return 0;}
             @Override public long getTimeOfDay() {return 0;}
             @Override public boolean isThundering() {return false;}
@@ -401,7 +421,7 @@ public class EntityTypeToEntity {
             @Override public boolean isHardcore() {return false;}
             @Override public Difficulty getDifficulty() {return Difficulty.NORMAL;}
             @Override public boolean isDifficultyLocked() {return false;}
-            @Override public void setSpawnPos(BlockPos pos, float angle) {}
+            @Override public void setSpawnPoint(SpawnPoint spawnPoint) {}
         }
     }
 

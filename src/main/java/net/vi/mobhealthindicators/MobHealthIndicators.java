@@ -9,6 +9,7 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.vi.mobhealthindicators.commands.Commands;
@@ -23,15 +24,16 @@ public class MobHealthIndicators implements ClientModInitializer {
     public static boolean areShadersEnabled;
     public static Entity targetedEntity = null;
 
+    public static final KeyBinding.Category category = KeyBinding.Category.create(Identifier.of(modId + ".name"));
     public static final KeyBinding toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key." + modId + ".toggle",
             InputUtil.UNKNOWN_KEY.getCode(),
-            modId + ".name"
+            category
     ));
     public static final KeyBinding overrideFiltersKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key." + modId + ".overridefilters",
             InputUtil.UNKNOWN_KEY.getCode(),
-            modId + ".name"
+            category
     ));
 
 
@@ -50,8 +52,8 @@ public class MobHealthIndicators implements ClientModInitializer {
             }
 
             if(config.infiniteHoverRange) {
-                if (client.cameraEntity != null) {
-                    HitResult hitResult = client.gameRenderer.findCrosshairTarget(client.cameraEntity, 10000, 10000, client.getRenderTickCounter().getTickProgress(true));
+                if (client.getCameraEntity() != null) {
+                    HitResult hitResult = client.gameRenderer.findCrosshairTarget(client.getCameraEntity(), 10000, 10000, client.getRenderTickCounter().getTickProgress(true));
 
                     if (hitResult instanceof EntityHitResult entityHitResult) {
                         targetedEntity = entityHitResult.getEntity();

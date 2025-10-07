@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
-public final class ToggleableNestedListListEntry<T, INNER extends AbstractConfigListEntry<T>> extends AbstractToggleableListListEntry<T, ToggleableNestedListListEntry.NestedListCell<T, INNER>, ToggleableNestedListListEntry<T, INNER>> {
+public class ToggleableNestedListListEntry<T, INNER extends AbstractConfigListEntry<T>> extends AbstractToggleableListListEntry<T, ToggleableNestedListListEntry.NestedListCell<T, INNER>, ToggleableNestedListListEntry<T, INNER>> {
     private final List<ReferenceProvider<?>> referencableEntries = Lists.newArrayList();
 
     public ToggleableNestedListListEntry(Text fieldName, List<T> value, boolean toggled, boolean defaultExpanded, Supplier<Optional<Text[]>> tooltipSupplier, BiConsumer<List<T>, Boolean> saveConsumer, Supplier<List<T>> defaultValue, Supplier<Boolean> defaultToggle, Text resetButtonKey, boolean deleteButtonEnabled, boolean insertInFront, BiFunction<T, ToggleableNestedListListEntry<T, INNER>, INNER> createNewCell) {
@@ -71,7 +71,7 @@ public final class ToggleableNestedListListEntry<T, INNER extends AbstractConfig
 
         public void render(DrawContext graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isSelected, float delta) {
             this.nestedEntry.setParent(((ToggleableNestedListListEntry)this.listListEntry).getParent());
-            this.nestedEntry.setScreen(((ToggleableNestedListListEntry)this.listListEntry).getConfigScreen());
+            this.nestedEntry.setScreen(this.listListEntry.getConfigScreen());
             this.nestedEntry.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isSelected, delta);
         }
 
@@ -113,14 +113,14 @@ public final class ToggleableNestedListListEntry<T, INNER extends AbstractConfig
 
         public void onAdd() {
             super.onAdd();
-            ((ToggleableNestedListListEntry)this.listListEntry).referencableEntries.add(this.nestedEntry);
-            ((ToggleableNestedListListEntry)this.listListEntry).requestReferenceRebuilding();
+            this.listListEntry.referencableEntries.add(this.nestedEntry);
+            this.listListEntry.requestReferenceRebuilding();
         }
 
         public void onDelete() {
             super.onDelete();
-            ((ToggleableNestedListListEntry)this.listListEntry).referencableEntries.remove(this.nestedEntry);
-            ((ToggleableNestedListListEntry)this.listListEntry).requestReferenceRebuilding();
+            this.listListEntry.referencableEntries.remove(this.nestedEntry);
+            this.listListEntry.requestReferenceRebuilding();
         }
 
         public Selectable.SelectionType getType() {

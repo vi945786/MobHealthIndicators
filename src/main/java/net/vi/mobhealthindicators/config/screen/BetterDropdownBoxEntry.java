@@ -18,15 +18,13 @@ import me.shedaniel.math.Rectangle;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.AbstractParentElement;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.navigation.GuiNavigation;
 import net.minecraft.client.gui.navigation.GuiNavigationPath;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.Window;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
@@ -136,8 +134,8 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
     }
 
     @Override
-    public boolean mouseClicked(double double_1, double double_2, int int_1) {
-        boolean b = super.mouseClicked(double_1, double_2, int_1);
+    public boolean mouseClicked(Click event, boolean doubleClick) {
+        boolean b = super.mouseClicked(event, doubleClick);
         if (dontReFocus) {
             setFocused(null);
             dontReFocus = false;
@@ -211,8 +209,8 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             return bounds.width;
         }
 
-        public boolean mouseClicked(double double_1, double double_2, int int_1) {
-            return super.mouseClicked(double_1, double_2, int_1);
+        public boolean mouseClicked(Click event, boolean doubleClick) {
+            return super.mouseClicked(event, doubleClick);
         }
     }
 
@@ -479,18 +477,18 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             this.scrolling = isExpanded() && lastRectangle != null && int_1 == 0 && double_1 >= (double) lastRectangle.x + getCellWidth() - 6 && double_1 < (double) (lastRectangle.x + getCellWidth());
         }
 
-        public boolean mouseClicked(double double_1, double double_2, int int_1) {
+        public boolean mouseClicked(Click event, boolean doubleClick) {
             if (!this.isExpanded()) {
                 return false;
             } else {
-                this.updateScrollingState(double_1, double_2, int_1);
+                this.updateScrollingState(event.x(), event.y(), event.button());
 
-                if(!isMouseOver(double_1, double_2)) {
+                if(!isMouseOver(event.x(), event.y())) {
                     getEntry().dontReFocus = true;
                     getEntry().setFocused(null);
                     return true;
                 } else {
-                    boolean elementClicked = super.mouseClicked(double_1, double_2, int_1);
+                    boolean elementClicked = super.mouseClicked(event, doubleClick);
                     if(elementClicked) {
                         getEntry().dontReFocus = true;
                         getEntry().setFocused(null);
@@ -740,17 +738,17 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
                     super.renderWidget(graphics, mouseX, mouseY, delta);
                 }
 
-                public boolean keyPressed(int int_1, int int_2, int int_3) {
-                    if (int_1 != 257 && int_1 != 335) {
-                        return BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.isSuggestionMode() && super.keyPressed(int_1, int_2, int_3);
+                public boolean keyPressed(KeyInput input) {
+                    if (input.key() != 257 && input.key() != 335) {
+                        return BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.isSuggestionMode() && super.keyPressed(input);
                     } else {
                         BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.selectFirstRecommendation();
                         return true;
                     }
                 }
 
-                public boolean charTyped(char chr, int keyCode) {
-                    return BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.isSuggestionMode() && super.charTyped(chr, keyCode);
+                public boolean charTyped(CharInput input) {
+                    return BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.isSuggestionMode() && super.charTyped(input);
                 }
             };
             this.textFieldWidget.setDrawsBackground(false);

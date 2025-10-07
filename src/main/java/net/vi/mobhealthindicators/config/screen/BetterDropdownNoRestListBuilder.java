@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, ToggleableNestedListListEntry<T, BtterDropdownBoxEntryNoReset<T>>, BetterDropdownNoRestListBuilder<T>> {
+public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, ToggleableNestedListListEntry<T, BetterDropdownBoxEntryNoReset<T>>, BetterDropdownNoRestListBuilder<T>> {
     protected List<T> value;
     protected Supplier<T> defaultEntryValue = null;
     protected Function<T, BetterDropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator;
@@ -108,8 +108,8 @@ public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, To
 
     @NotNull
     @Override
-    public ToggleableNestedListListEntry<T, BtterDropdownBoxEntryNoReset<T>> build() {
-        ToggleableNestedListListEntry<T, BtterDropdownBoxEntryNoReset<T>> listEntry = new ToggleableNestedListListEntry<>(
+    public ToggleableNestedListListEntry<T, BetterDropdownBoxEntryNoReset<T>> build() {
+        ToggleableNestedListListEntry<T, BetterDropdownBoxEntryNoReset<T>> listEntry = new ToggleableNestedListListEntry<>(
                 getFieldNameKey(),
                 value,
                 toggled,
@@ -124,7 +124,7 @@ public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, To
                 (entryValue, list) -> {
                     Supplier<T> defaultValue = () -> entryValue;
                     if (entryValue == null) defaultValue = defaultEntryValue;
-                    BtterDropdownBoxEntryNoReset<T> entry = new BtterDropdownBoxEntryNoReset<>(Text.empty(), null, isRequireRestart(), defaultValue, null, selections, topCellCreator.apply(entryValue), cellCreator);
+                    BetterDropdownBoxEntryNoReset<T> entry = new BetterDropdownBoxEntryNoReset<>(Text.empty(), null, isRequireRestart(), defaultValue, null, selections, topCellCreator.apply(entryValue), cellCreator);
                     entry.setSuggestionMode(suggestionMode);
                     return entry;
                 });

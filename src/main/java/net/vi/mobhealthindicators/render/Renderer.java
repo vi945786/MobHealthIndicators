@@ -3,7 +3,7 @@ package net.vi.mobhealthindicators.render;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
+import net.minecraft.client.render.entity.EntityRenderManager;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
@@ -35,12 +35,12 @@ public abstract class Renderer {
     public static float pixelSize = defaultPixelSize;
     public static final int heightDivisor = 50;
 
-    public static void render(MatrixStack matrixStack, LivingEntity livingEntity, Identifier texture, int light, double distance, boolean hasLabel, EntityRenderDispatcher dispatcher) {
+    public static void render(MatrixStack matrixStack, LivingEntity livingEntity, Identifier texture, int light, double distance, boolean hasLabel, EntityRenderManager dispatcher) {
         matrixStack.push();
         matrixStack.translate(0, livingEntity.getHeight() + 0.5f + config.height/(float)heightDivisor, 0);
         if (hasLabel && distance <= 4096.0) {
             matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
-            if (distance < 100.0 && livingEntity.getWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
+            if (distance < 100.0 && livingEntity.getEntityWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
                 matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
             }
         }
