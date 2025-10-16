@@ -7,7 +7,6 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.BlockEntityTickInvoker;
 import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;

@@ -10,10 +10,8 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EntityType;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.vi.mobhealthindicators.EntityTypeToEntity;
 import net.vi.mobhealthindicators.config.screen.ConfigScreenHandler;
 import net.vi.mobhealthindicators.config.Config;
 

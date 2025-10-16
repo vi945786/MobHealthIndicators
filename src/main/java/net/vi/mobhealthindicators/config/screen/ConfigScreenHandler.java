@@ -10,10 +10,8 @@ import me.shedaniel.clothconfig2.impl.builders.IntSliderBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.entity.EntityType;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.vi.mobhealthindicators.EntityTypeToEntity;
 import net.vi.mobhealthindicators.config.Config;
 
 import java.lang.annotation.ElementType;

@@ -35,6 +35,6 @@ public class ReloadableResourceManagerImplMixin {
 
         heartSize = emptyTexture.fullHeartTexture().getWidth();
 
-        pixelSize = defaultPixelSize / (heartSize / defaultHeartSize);
+        pixelSize = defaultPixelSize / ((float) heartSize / defaultHeartSize);
     }
 }

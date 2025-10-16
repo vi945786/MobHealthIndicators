@@ -49,6 +49,7 @@ public class MobHealthIndicators implements ClientModInitializer {
             while (toggleKey.wasPressed()) {
                 config.showHearts = !config.showHearts;
                 sendMessage((config.showHearts ? "enabled" : "disabled") + "rendering");
+                Config.save();
             }
 
             if(config.infiniteHoverRange) {

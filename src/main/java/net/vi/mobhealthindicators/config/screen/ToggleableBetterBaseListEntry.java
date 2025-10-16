@@ -6,6 +6,7 @@ import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
 import me.shedaniel.math.Rectangle;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.Selectable;
@@ -365,14 +366,14 @@ public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListC
         public ListLabelWidget() {
         }
 
-        public boolean mouseClicked(double mouseX, double mouseY, int int_1) {
+        public boolean mouseClicked(Click click, boolean doubled) {
             if (!ToggleableBetterBaseListEntry.this.isEnabled()) {
                 return false;
-            } else if (ToggleableBetterBaseListEntry.this.resetWidget.isMouseOver(mouseX, mouseY)) {
+            } else if (ToggleableBetterBaseListEntry.this.resetWidget.isMouseOver(click.x(), click.y())) {
                 return false;
-            } else if (ToggleableBetterBaseListEntry.this.toggleWidget.isMouseOver(mouseX, mouseY)) {
+            } else if (ToggleableBetterBaseListEntry.this.toggleWidget.isMouseOver(click.x(), click.y())) {
                 return false;
-            } else if (ToggleableBetterBaseListEntry.this.isInsideCreateNew(mouseX, mouseY)) {
+            } else if (ToggleableBetterBaseListEntry.this.isInsideCreateNew(click.x(), click.y())) {
                 ToggleableBetterBaseListEntry.this.setExpanded(true);
                 C cell;
                 if (ToggleableBetterBaseListEntry.this.insertInFront()) {
@@ -386,7 +387,7 @@ public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListC
                 cell.onAdd();
                 MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 return true;
-            } else if (ToggleableBetterBaseListEntry.this.isDeleteButtonEnabled() && ToggleableBetterBaseListEntry.this.isInsideDelete(mouseX, mouseY)) {
+            } else if (ToggleableBetterBaseListEntry.this.isDeleteButtonEnabled() && ToggleableBetterBaseListEntry.this.isInsideDelete(click.x(), click.y())) {
                 Element focused = ToggleableBetterBaseListEntry.this.getFocused();
                 if (ToggleableBetterBaseListEntry.this.isExpanded() && focused instanceof BetterBaseListCell) {
                     ((BetterBaseListCell)focused).onDelete();
@@ -396,7 +397,7 @@ public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListC
                 }
 
                 return true;
-            } else if (this.rectangle.contains(mouseX, mouseY)) {
+            } else if (this.rectangle.contains(click.x(), click.y())) {
                 ToggleableBetterBaseListEntry.this.setExpanded(!ToggleableBetterBaseListEntry.this.expanded);
                 MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 return true;
