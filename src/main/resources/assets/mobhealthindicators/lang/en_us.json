@@ -14,8 +14,6 @@
   "config.mobhealthindicators.category.filter": "Filter",
   "config.mobhealthindicators.option.blacklist": "Black List",
   "config.mobhealthindicators.option.whitelist": "White List",
-
-  "config.mobhealthindicators.subcategory.showfor": "Show For",
   "config.mobhealthindicators.option.showhostile": "Hostile Mobs",
   "config.mobhealthindicators.option.showpassive": "Passive Mobs",
   "config.mobhealthindicators.option.showself": "Yourself",
