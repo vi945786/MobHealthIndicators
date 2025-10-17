@@ -8,6 +8,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.Monster;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import net.vi.mobhealthindicators.MobHealthIndicators;
 import net.vi.mobhealthindicators.render.HeartType;
@@ -103,14 +104,16 @@ public class Config {
 
         if(!showHearts) return false;
 
-        if(!showSelf && livingEntity == client.player) return false;
+        if(livingEntity == client.player) return showSelf;
         if(onlyShowOnHover && targetedEntity != livingEntity) return false;
         if(onlyShowDamaged && MathHelper.ceil(livingEntity.getHealth()) >= MathHelper.ceil(livingEntity.getMaxHealth()) && !HeartType.Effect.hasAbnormalHearts(livingEntity)) return false;
 
         if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return true;
         if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return false;
         if(!showHostile && livingEntity instanceof Monster) return false;
-        return showPassive || livingEntity instanceof Monster;
+        if(!showPassive && !(livingEntity instanceof Monster) && !(livingEntity instanceof PlayerEntity)) return false;
+
+        return true;
     }
 
     public static class ToggleableEntityList {

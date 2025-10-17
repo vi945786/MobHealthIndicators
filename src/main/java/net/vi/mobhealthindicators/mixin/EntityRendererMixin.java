@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.WeakHashMap;
 
@@ -32,10 +33,10 @@ public abstract class EntityRendererMixin {
 
     @Shadow protected abstract boolean hasLabel(Entity livingEntity, double d);
 
-    @Unique WeakHashMap<EntityRenderState, Entity> entities = new WeakHashMap<>();
-    @Inject(method = "updateRenderState", at = @At("TAIL"))
-    public void updateRenderState(Entity entity, EntityRenderState entityRenderState, float f, CallbackInfo ci){
-        entities.put(entityRenderState, entity);
+    @Unique private static WeakHashMap<EntityRenderState, Entity> entities = new WeakHashMap<>();
+    @Inject(method = "getAndUpdateRenderState", at = @At("RETURN"))
+    public void getAndUpdateRenderState(Entity entity, float tickProgress, CallbackInfoReturnable<EntityRenderState> cir){
+        entities.put(cir.getReturnValue(), entity);
     }
 
     @Inject(method = "render", at = @At("TAIL"))
