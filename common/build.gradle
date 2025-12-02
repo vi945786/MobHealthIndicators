@@ -1,0 +1,49 @@
+plugins {
+    id 'java-library'
+	id 'fabric-loom' version "${loom_version}"
+}
+
+sourceSets {
+    stub {
+        java.srcDir("src/stub/java")
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://maven.shedaniel.me/" }
+    maven { url "https://maven.parchmentmc.org/"; name "ParchmentMC" }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
+    }
+
+    modCompileOnly "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
+    implementation sourceSets.stub.output
+}
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    stub {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+    stub sourceSets.stub.output.toSet()
+}
+

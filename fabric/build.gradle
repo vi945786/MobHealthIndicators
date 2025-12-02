@@ -1,0 +1,27 @@
+plugins {
+	id 'java'
+	id 'fabric-loom' version "${loom_version}"
+}
+
+repositories {
+	maven { url "https://maven.terraformersmc.com/releases/" }
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
+    }
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
+	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+    modRuntimeOnly "maven.modrinth:sodium:mc1.21.9-0.7.0-fabric"
+    modRuntimeOnly "maven.modrinth:iris:1.9.4+1.21.10-fabric"
+    modRuntimeOnly "org.anarres:jcpp:1.4.14"
+    modRuntimeOnly "io.github.douira:glsl-transformer:2.0.1"
+    modRuntimeOnly "io.github.douira:glsl-preprocessor:1.0.0"
+}

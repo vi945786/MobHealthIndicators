@@ -1,0 +1,193 @@
+package net.vi.mobhealthindicators.config;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.vi.mobhealthindicators.ModInit;
+import net.vi.mobhealthindicators.Platform;
+import net.vi.mobhealthindicators.commands.Command;
+import net.vi.mobhealthindicators.render.HeartType;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.util.*;
+
+import static net.vi.mobhealthindicators.ModInit.client;
+import static net.vi.mobhealthindicators.ModInit.overrideFiltersKey;
+import static net.vi.mobhealthindicators.config.screen.ConfigScreenHandler.ConfigScreen;
+import static net.vi.mobhealthindicators.config.screen.ConfigScreenHandler.Category;
+
+public class Config {
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface Range {
+        int min();
+        int max();
+    }
+
+    public static Config config;
+    public static Config defaults = new Config();
+
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY)
+    public boolean showHearts = true;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
+    public boolean dynamicBrightness = true;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY) @Range(min = -25, max = 25)
+    public int height = 0;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
+    public boolean renderOnTopOnHover = true;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
+    public boolean infiniteHoverRange = false;
+
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public ToggleableEntityList blackList = new ToggleableEntityList(true, "minecraft:armor_stand");
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public ToggleableEntityList whiteList = new ToggleableEntityList(false, "minecraft:player");
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public boolean showHostile = true;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public boolean showPassive = true;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public boolean showSelf = false;
+    @Expose @Command @ConfigScreen(category = Category.FILTER)
+    public boolean onlyShowDamaged = false;
+    @Expose @Command @ConfigScreen(category = Category.FILTER, tooltip = true)
+    public boolean onlyShowOnHover = false;
+
+    @Expose
+    public HashMap<String, String> entityTypeToEntity = new HashMap<>();
+
+    public static void setName(String name, Object value) {
+        try {
+            Field f = Config.class.getField(name);
+            f.set(config, value);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> T getDefault(String name) {
+        return get(name, defaults);
+    }
+
+    public static <T> T getName(String name) {
+        return get(name, config);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T get(String name, Object instance) {
+        try {
+            Field f = Config.class.getField(name);
+            return (T) f.get(instance);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public boolean shouldRender(LivingEntity livingEntity, Entity targetedEntity) {
+        if(overrideFiltersKey.isDown()) return true;
+
+        if(!showHearts) return false;
+
+        if(livingEntity == client.player) return showSelf;
+        if(onlyShowOnHover && targetedEntity != livingEntity) return false;
+        if(onlyShowDamaged && Mth.ceil(livingEntity.getHealth()) >= Mth.ceil(livingEntity.getMaxHealth()) && !HeartType.Effect.hasAbnormalHearts(livingEntity)) return false;
+
+        if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getKey(livingEntity.getType()).toString()))) return true;
+        if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getKey(livingEntity.getType()).toString()))) return false;
+        if(!showHostile && livingEntity instanceof Monster) return false;
+        if(!showPassive && !(livingEntity instanceof Monster) && !(livingEntity instanceof Player)) return false;
+
+        return true;
+    }
+
+    public static class ToggleableEntityList {
+        @Expose public List<String> entityList;
+        @Expose public boolean toggle;
+
+        public ToggleableEntityList(boolean toggle, String... entityList) {
+            this.entityList = new ArrayList<>(Arrays.stream(entityList).toList());
+            this.toggle = toggle;
+        }
+
+        @Override
+        public String toString() {
+            return entityList.toString() + ", " + toggle;
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Field field : config.getClass().getFields()) {
+            if(!field.isAnnotationPresent(Command.class)) continue;
+            try {
+                sb.append(field.getName())
+                  .append(" = ")
+                  .append(field.get(config));
+            } catch (IllegalAccessException e) {
+                sb.append(field.getName()).append("=N/A, ");
+            }
+            sb.append(", \n");
+        }
+        if (sb.lastIndexOf(", \n") == sb.length() - 3) {
+            sb.setLength(sb.length() - 3);
+        }
+        return sb.toString();
+    }
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    private static File configFile;
+
+    public static void load(Platform platform) {
+        configFile = platform.getConfigDir().resolve(ModInit.modId + ".json").toFile();
+        if(!configFile.exists()) {
+            try {
+                if(!configFile.createNewFile()) {
+                    throw new IOException("Failed to create config file.");
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        try (FileReader reader = new FileReader(configFile)) {
+            Config config = GSON.fromJson(reader, Config.class);
+            if (config != null) {
+                for(Field f : Config.class.getFields()) {
+                    if(f.isAnnotationPresent(Expose.class) && f.get(config) == null) f.set(config, f.get(defaults));
+                }
+                Config.config = config;
+            } else {
+                Config.config = new Config();
+                save();
+            }
+        } catch (Exception e) {
+            Config.config = new Config();
+            save();
+        }
+    }
+
+    public static void save() {
+        try (FileWriter writer = new FileWriter(configFile)) {
+            GSON.toJson(config, writer);
+        } catch (Exception e) {
+            System.err.println("Could not write to the config file.");
+        }
+    }
+}
