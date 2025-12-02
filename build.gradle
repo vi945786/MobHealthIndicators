@@ -49,9 +49,7 @@ configure(subprojects.findAll { it.name != "common" }) {
     }
 
     jar {
-        from(configurations.commonResources)
-
-        from("LICENSE") {
+        from(rootProject.file("LICENSE")) {
             rename { "${it}_${project.archivesBaseName}"}
         }
     }
