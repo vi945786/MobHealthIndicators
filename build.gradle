@@ -9,6 +9,7 @@ repositories {
 	mavenCentral()
 	maven { url "https://maven.shedaniel.me/" }
 	maven { url "https://maven.terraformersmc.com/releases/" }
+    maven { url "https://maven.parchmentmc.org/"; name "ParchmentMC" }
 }
 
 sourceSets {
@@ -17,7 +18,10 @@ sourceSets {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    mappings loom.layered() {
+         officialMojangMappings()
+         parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
+     }
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"

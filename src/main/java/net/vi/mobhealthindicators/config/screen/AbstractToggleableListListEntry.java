@@ -8,19 +8,19 @@ import java.util.function.*;
 import java.util.stream.Collectors;
 
 import me.shedaniel.math.Rectangle;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @SuppressWarnings("unused")
 public abstract class AbstractToggleableListListEntry<T, C extends AbstractToggleableListListEntry.AbstractListCell<T, C, SELF>, SELF extends AbstractToggleableListListEntry<T, C, SELF>> extends ToggleableBetterBaseListEntry<T, C, SELF> {
     protected final BiFunction<T, SELF, C> createNewCell;
-    protected Function<T, Optional<Text>> cellErrorSupplier;
+    protected Function<T, Optional<Component>> cellErrorSupplier;
     protected List<T> original;
     protected boolean originalToggled;
 
     @Internal
-    public AbstractToggleableListListEntry(Text fieldName, List<T> value, boolean toggled, boolean defaultExpanded, Supplier<Optional<Text[]>> tooltipSupplier, BiConsumer<List<T>, Boolean> saveConsumer, Supplier<List<T>> defaultValue, Supplier<Boolean> defaultToggle, Text resetButtonKey, boolean requiresRestart, boolean deleteButtonEnabled, boolean insertInFront, BiFunction<T, SELF, C> createNewCell) {
+    public AbstractToggleableListListEntry(Component fieldName, List<T> value, boolean toggled, boolean defaultExpanded, Supplier<Optional<Component[]>> tooltipSupplier, BiConsumer<List<T>, Boolean> saveConsumer, Supplier<List<T>> defaultValue, Supplier<Boolean> defaultToggle, Component resetButtonKey, boolean requiresRestart, boolean deleteButtonEnabled, boolean insertInFront, BiFunction<T, SELF, C> createNewCell) {
         super(fieldName, tooltipSupplier, toggled, defaultValue, defaultToggle, (abstractListListEntry) -> createNewCell.apply(null, abstractListListEntry), saveConsumer, resetButtonKey, requiresRestart, deleteButtonEnabled, insertInFront);
         this.createNewCell = createNewCell;
         this.original = new ArrayList<>(value);
@@ -34,11 +34,11 @@ public abstract class AbstractToggleableListListEntry<T, C extends AbstractToggl
         this.setExpanded(defaultExpanded);
     }
 
-    public Function<T, Optional<Text>> getCellErrorSupplier() {
+    public Function<T, Optional<Component>> getCellErrorSupplier() {
         return this.cellErrorSupplier;
     }
 
-    public void setCellErrorSupplier(Function<T, Optional<Text>> cellErrorSupplier) {
+    public void setCellErrorSupplier(Function<T, Optional<Component>> cellErrorSupplier) {
         this.cellErrorSupplier = cellErrorSupplier;
     }
 

@@ -1,17 +1,17 @@
 package net.vi.mobhealthindicators;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.vi.mobhealthindicators.commands.Commands;
 import net.vi.mobhealthindicators.config.Config;
 
@@ -20,19 +20,18 @@ import static net.vi.mobhealthindicators.config.Config.config;
 public class MobHealthIndicators implements ClientModInitializer {
 
     public static final String modId = "mobhealthindicators";
-    public static final MinecraftClient client = MinecraftClient.getInstance();
     public static boolean areShadersEnabled;
     public static Entity targetedEntity = null;
 
-    public static final KeyBinding.Category category = KeyBinding.Category.create(Identifier.of(modId + ".name"));
-    public static final KeyBinding toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+    public static final KeyMapping.Category category = KeyMapping.Category.register(ResourceLocation.fromNamespaceAndPath(modId, "name"));
+    public static final KeyMapping toggleKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key." + modId + ".toggle",
-            InputUtil.UNKNOWN_KEY.getCode(),
+            InputConstants.UNKNOWN.getValue(),
             category
     ));
-    public static final KeyBinding overrideFiltersKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+    public static final KeyMapping overrideFiltersKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key." + modId + ".overridefilters",
-            InputUtil.UNKNOWN_KEY.getCode(),
+            InputConstants.UNKNOWN.getValue(),
             category
     ));
 
@@ -46,7 +45,7 @@ public class MobHealthIndicators implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             EntityTypeToEntity.update();
             areShadersEnabled = FabricLoader.getInstance().isModLoaded("iris") && net.irisshaders.iris.api.v0.IrisApi.getInstance().isShaderPackInUse();
-            while (toggleKey.wasPressed()) {
+            while (toggleKey.consumeClick()) {
                 config.showHearts = !config.showHearts;
                 sendMessage((config.showHearts ? "enabled" : "disabled") + "rendering");
                 Config.save();
@@ -54,7 +53,7 @@ public class MobHealthIndicators implements ClientModInitializer {
 
             if(config.infiniteHoverRange) {
                 if (client.getCameraEntity() != null) {
-                    HitResult hitResult = client.gameRenderer.findCrosshairTarget(client.getCameraEntity(), 10000, 10000, client.getRenderTickCounter().getTickProgress(true));
+                    HitResult hitResult = client.gameRenderer.pick(client.getCameraEntity(), 10000, 10000, client.getFrameTimeNs());
 
                     if (hitResult instanceof EntityHitResult entityHitResult) {
                         targetedEntity = entityHitResult.getEntity();
@@ -63,14 +62,14 @@ public class MobHealthIndicators implements ClientModInitializer {
                     }
                 }
             } else {
-                targetedEntity = client.targetedEntity;
+                targetedEntity = client.crosshairPickEntity;
             }
         });
     }
 
     public static void sendMessage(String message, Object... args) {
-        if(client.player != null) {
-            client.player.sendMessage(Text.translatable("message." + modId + "." + message, args), true);
+        if(Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.displayClientMessage(Component.translatable("message." + modId + "." + message, args), true);
         }
     }
 }

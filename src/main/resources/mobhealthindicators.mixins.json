@@ -5,9 +5,8 @@
   "client": [
     "EntityMixin",
     "EntityRendererMixin",
-    "ReferenceAccessor",
-    "ReloadableResourceManagerImplMixin",
-    "WorldAccessor"
+    "LevelAccessor",
+    "ReloadableResourceManagerImplMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,7 +1,7 @@
 package net.vi.mobhealthindicators.config.screen;
 
 import me.shedaniel.clothconfig2.impl.builders.FieldBuilder;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -17,14 +17,14 @@ public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, To
     protected Supplier<T> defaultEntryValue = null;
     protected Function<T, BetterDropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator;
     protected BetterDropdownBoxEntry.SelectionCellCreator<T> cellCreator;
-    protected Supplier<Optional<Text[]>> tooltipSupplier = Optional::empty;
+    protected Supplier<Optional<Component[]>> tooltipSupplier = Optional::empty;
     protected BiConsumer<List<T>, Boolean> saveConsumer = null;
     protected Iterable<T> selections = Collections.emptyList();
     protected boolean suggestionMode = true;
     protected boolean toggled;
     protected Supplier<Boolean> defaultToggled = null;
 
-    public BetterDropdownNoRestListBuilder(Text resetButtonKey, Text fieldNameKey, List<T> value, boolean toggled, Function<T, BetterDropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, BetterDropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
+    public BetterDropdownNoRestListBuilder(Component resetButtonKey, Component fieldNameKey, List<T> value, boolean toggled, Function<T, BetterDropdownBoxEntry.SelectionTopCellElement<T>> topCellCreator, BetterDropdownBoxEntry.SelectionCellCreator<T> cellCreator) {
         super(resetButtonKey, fieldNameKey);
         this.value = value;
         this.toggled = toggled;
@@ -72,17 +72,17 @@ public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, To
         return this;
     }
 
-    public BetterDropdownNoRestListBuilder<T> setTooltipSupplier(Supplier<Optional<Text[]>> tooltipSupplier) {
+    public BetterDropdownNoRestListBuilder<T> setTooltipSupplier(Supplier<Optional<Component[]>> tooltipSupplier) {
         this.tooltipSupplier = tooltipSupplier;
         return this;
     }
 
-    public BetterDropdownNoRestListBuilder<T> setTooltip(Optional<Text[]> tooltip) {
+    public BetterDropdownNoRestListBuilder<T> setTooltip(Optional<Component[]> tooltip) {
         this.tooltipSupplier = () -> tooltip;
         return this;
     }
 
-    public BetterDropdownNoRestListBuilder<T> setTooltip(Text... tooltip) {
+    public BetterDropdownNoRestListBuilder<T> setTooltip(Component... tooltip) {
         this.tooltipSupplier = () -> Optional.ofNullable(tooltip);
         return this;
     }
@@ -92,7 +92,7 @@ public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, To
         return this;
     }
 
-    public BetterDropdownNoRestListBuilder<T> setErrorSupplier(Function<List<T>, Optional<Text>> errorSupplier) {
+    public BetterDropdownNoRestListBuilder<T> setErrorSupplier(Function<List<T>, Optional<Component>> errorSupplier) {
         this.errorSupplier = errorSupplier;
         return this;
     }
@@ -124,7 +124,7 @@ public class BetterDropdownNoRestListBuilder<T> extends FieldBuilder<List<T>, To
                 (entryValue, list) -> {
                     Supplier<T> defaultValue = () -> entryValue;
                     if (entryValue == null) defaultValue = defaultEntryValue;
-                    BetterDropdownBoxEntryNoReset<T> entry = new BetterDropdownBoxEntryNoReset<>(Text.empty(), null, isRequireRestart(), defaultValue, null, selections, topCellCreator.apply(entryValue), cellCreator);
+                    BetterDropdownBoxEntryNoReset<T> entry = new BetterDropdownBoxEntryNoReset<>(Component.empty(), null, isRequireRestart(), defaultValue, null, selections, topCellCreator.apply(entryValue), cellCreator);
                     entry.setSuggestionMode(suggestionMode);
                     return entry;
                 });

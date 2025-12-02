@@ -8,10 +8,10 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.EntityType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.vi.mobhealthindicators.config.screen.ConfigScreenHandler;
 import net.vi.mobhealthindicators.config.Config;
 
@@ -42,13 +42,13 @@ public class Commands {
 
     private static void registerSubCommandOfBool(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name) {
         argumentBuilder.then(literal(name).executes(context -> {
-            sendMessage(Text.literal(name + " is currently set to: " + Config.getName(name)));
+            sendMessage(Component.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
                 boolean value = context.getArgument("value", boolean.class);
                 Config.setName(name, value);
                 Config.save();
-                sendMessage(Text.literal("set " + name + " to " + value));
+                sendMessage(Component.literal("set " + name + " to " + value));
                 return 1;
             }))
         );
@@ -56,13 +56,13 @@ public class Commands {
 
     private static void registerSubCommandOfInt(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name, int min, int max) {
         argumentBuilder.then(literal(name).executes(context -> {
-            sendMessage(Text.literal(name + " is currently set to: " + Config.getName(name)));
+            sendMessage(Component.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", IntegerArgumentType.integer(min, max)).executes(context -> {
                 int value = context.getArgument("value", int.class);
                 Config.setName(name, value);
                 Config.save();
-                sendMessage(Text.literal("set " + name + " to " + value));
+                sendMessage(Component.literal("set " + name + " to " + value));
                 return 1;
             }))
         );
@@ -71,21 +71,21 @@ public class Commands {
     private static void registerSubCommandOfToggleableEntityList(ArgumentBuilder<FabricClientCommandSource, ?> argumentBuilder, String name) {
         Config.ToggleableEntityList list = Config.getName(name);
         argumentBuilder.then(literal(name).executes(context -> {
-            sendMessage(Text.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
+            sendMessage(Component.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
             return 1;
             }).then(literal("set").then(argument("value", BoolArgumentType.bool()).executes(context -> {
                 list.toggle = context.getArgument("value", boolean.class);
                 Config.save();
-                sendMessage(Text.literal("toggled blackList to " + list.toggle));
+                sendMessage(Component.literal("toggled blackList to " + list.toggle));
                 return 1;
             })))
 
-            .then(literal("add").then(argument("value", SpecificStringArgumentType.specificString(() -> getLivingEntities().stream().map(EntityType::getId).map(Identifier::toString).collect(Collectors.toSet()))).executes(context -> {
+            .then(literal("add").then(argument("value", SpecificStringArgumentType.specificString(() -> getLivingEntities().stream().map(EntityType::getKey).map(ResourceLocation::toString).collect(Collectors.toSet()))).executes(context -> {
                 String value = context.getArgument("value", String.class);
 
                 list.entityList.add(value);
                 Config.save();
-                sendMessage(Text.literal(value + " added to blackList"));
+                sendMessage(Component.literal(value + " added to blackList"));
                 return 1;
             })))
 
@@ -94,7 +94,7 @@ public class Commands {
 
                 list.entityList.remove(value);
                 Config.save();
-                sendMessage(Text.literal(value + " removed from blackList"));
+                sendMessage(Component.literal(value + " removed from blackList"));
                 return 1;
             })))
         );
@@ -103,13 +103,13 @@ public class Commands {
     private static void registerSubCommands(String mainCommand) {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             LiteralArgumentBuilder<FabricClientCommandSource> builder = literal(mainCommand).executes(context -> {
-                sendMessage(Text.literal(config.toString()));
+                sendMessage(Component.literal(config.toString()));
                 return 1;
             });
 
             builder.then(literal("config").executes(context -> {
-                MinecraftClient client = context.getSource().getClient();
-                client.send(() -> client.setScreen(ConfigScreenHandler.getConfigScreen(client.currentScreen)));
+                Minecraft client = context.getSource().getClient();
+                client.execute(() -> client.setScreen(ConfigScreenHandler.getConfigScreen(client.screen)));
                 return 1;
             }));
 
@@ -133,8 +133,8 @@ public class Commands {
         });
     }
 
-    private static void sendMessage(Text message) {
-        assert MinecraftClient.getInstance().player != null;
-        MinecraftClient.getInstance().player.sendMessage(message, false);
+    private static void sendMessage(Component message) {
+        assert Minecraft.getInstance().player != null;
+        Minecraft.getInstance().player.displayClientMessage(message, false);
     }
 }

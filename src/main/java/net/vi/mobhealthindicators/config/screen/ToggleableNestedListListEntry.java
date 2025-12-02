@@ -14,11 +14,11 @@ import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ReferenceProvider;
 import me.shedaniel.clothconfig2.gui.widget.DynamicEntryListWidget;
 import me.shedaniel.math.Rectangle;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 public class ToggleableNestedListListEntry<T, INNER extends AbstractConfigListEntry<T>> extends AbstractToggleableListListEntry<T, ToggleableNestedListListEntry.NestedListCell<T, INNER>, ToggleableNestedListListEntry<T, INNER>> {
     private final List<ReferenceProvider<?>> referencableEntries = Lists.newArrayList();
 
-    public ToggleableNestedListListEntry(Text fieldName, List<T> value, boolean toggled, boolean defaultExpanded, Supplier<Optional<Text[]>> tooltipSupplier, BiConsumer<List<T>, Boolean> saveConsumer, Supplier<List<T>> defaultValue, Supplier<Boolean> defaultToggle, Text resetButtonKey, boolean deleteButtonEnabled, boolean insertInFront, BiFunction<T, ToggleableNestedListListEntry<T, INNER>, INNER> createNewCell) {
+    public ToggleableNestedListListEntry(Component fieldName, List<T> value, boolean toggled, boolean defaultExpanded, Supplier<Optional<Component[]>> tooltipSupplier, BiConsumer<List<T>, Boolean> saveConsumer, Supplier<List<T>> defaultValue, Supplier<Boolean> defaultToggle, Component resetButtonKey, boolean deleteButtonEnabled, boolean insertInFront, BiFunction<T, ToggleableNestedListListEntry<T, INNER>, INNER> createNewCell) {
         super(fieldName, value, toggled, defaultExpanded, tooltipSupplier, saveConsumer, defaultValue, defaultToggle, resetButtonKey, false, deleteButtonEnabled, insertInFront, (t, nestedListListEntry) -> new NestedListCell(t, nestedListListEntry, createNewCell.apply(t, nestedListListEntry)));
 
         for(NestedListCell<T, INNER> cell : this.cells) {
@@ -61,7 +61,7 @@ public class ToggleableNestedListListEntry<T, INNER extends AbstractConfigListEn
             return (T)this.nestedEntry.getValue();
         }
 
-        public Optional<Text> getError() {
+        public Optional<Component> getError() {
             return this.nestedEntry.getError();
         }
 
@@ -69,13 +69,13 @@ public class ToggleableNestedListListEntry<T, INNER extends AbstractConfigListEn
             return this.nestedEntry.getItemHeight();
         }
 
-        public void render(DrawContext graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isSelected, float delta) {
+        public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isSelected, float delta) {
             this.nestedEntry.setParent(((ToggleableNestedListListEntry)this.listListEntry).getParent());
             this.nestedEntry.setScreen(this.listListEntry.getConfigScreen());
             this.nestedEntry.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isSelected, delta);
         }
 
-        public void lateRender(DrawContext graphics, int mouseX, int mouseY, float delta) {
+        public void lateRender(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         	nestedEntry.setParent((DynamicEntryListWidget) listListEntry.getParent());
             nestedEntry.setScreen(listListEntry.getConfigScreen());
             nestedEntry.lateRender(graphics, mouseX, mouseY, delta);
@@ -95,7 +95,7 @@ public class ToggleableNestedListListEntry<T, INNER extends AbstractConfigListEn
 
         }
 
-        public List<? extends Element> children() {
+        public List<? extends GuiEventListener> children() {
             return Collections.singletonList(this.nestedEntry);
         }
 
@@ -123,15 +123,16 @@ public class ToggleableNestedListListEntry<T, INNER extends AbstractConfigListEn
             this.listListEntry.requestReferenceRebuilding();
         }
 
-        public Selectable.SelectionType getType() {
-            return SelectionType.NONE;
-        }
-
-        public void appendNarrations(NarrationMessageBuilder narrationElementOutput) {
+        public NarratableEntry.NarrationPriority narrationPriority() {
+            return NarratableEntry.NarrationPriority.NONE;
         }
 
         public boolean isMouseOver(double mouseX, double mouseY) {
             return super.isMouseOver(mouseX, mouseY) || this.nestedEntry.isMouseOver(mouseX, mouseY);
+        }
+
+        @Override
+        public void updateNarration(NarrationElementOutput narrationElementOutput) {
         }
     }
 }

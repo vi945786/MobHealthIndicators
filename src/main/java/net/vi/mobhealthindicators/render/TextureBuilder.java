@@ -1,9 +1,10 @@
 package net.vi.mobhealthindicators.render;
 
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -13,7 +14,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.MobHealthIndicators.modId;
 
 public class TextureBuilder {
@@ -28,16 +28,16 @@ public class TextureBuilder {
     public static final int defaultHeartSize = 9;
     public static int heartSize;
 
-    public static final Map<String, Identifier> textures = new HashMap<>();
+    public static final Map<String, ResourceLocation> textures = new HashMap<>();
     private static final int heartsPerRow = 10;
 
-    public static Identifier getTexture(int normalHealth, int maxHealth, int absorptionHealth, HeartType.Effect effect) {
+    public static ResourceLocation getTexture(int normalHealth, int maxHealth, int absorptionHealth, HeartType.Effect effect) {
         String healthId = normalHealth + "_" + (maxHealth - normalHealth) + "_" + absorptionHealth + "_" + effect;
         if (textures.containsKey(healthId)) return textures.get(healthId);
 
-        int normalHearts = MathHelper.ceil(normalHealth / 2.0F);
-        int maxHearts = MathHelper.ceil(maxHealth / 2.0F);
-        int absorptionHearts = MathHelper.ceil(absorptionHealth / 2.0F);
+        int normalHearts = Mth.ceil(normalHealth / 2.0F);
+        int maxHearts = Mth.ceil(maxHealth / 2.0F);
+        int absorptionHearts = Mth.ceil(absorptionHealth / 2.0F);
         int totalHearts = maxHearts + absorptionHearts;
         int heartRows = (int) Math.ceil(totalHearts / (float) heartsPerRow);
 
@@ -65,13 +65,13 @@ public class TextureBuilder {
 
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             ImageIO.write(healthBar, "png", byteArrayOutputStream);
-            NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> "hearts", NativeImage.read(byteArrayOutputStream.toByteArray()));
+            DynamicTexture texture = new DynamicTexture(() -> "hearts", NativeImage.read(byteArrayOutputStream.toByteArray()));
             texture.setFilter(false, false);
             texture.upload();
 
-            Identifier identifier = Identifier.of(modId, healthId);
+            ResourceLocation identifier = ResourceLocation.fromNamespaceAndPath(modId, healthId);
             textures.put(healthId, identifier);
-            client.getTextureManager().registerTexture(identifier, texture);
+            Minecraft.getInstance().getTextureManager().register(identifier, texture);
 
             return identifier;
         } catch (IOException e) {

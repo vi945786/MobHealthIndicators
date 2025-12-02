@@ -1,23 +1,28 @@
 package net.vi.mobhealthindicators.render;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.EntityRenderManager;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.vertex.*;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.scores.DisplaySlot;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
 import java.util.function.Function;
 
-import static net.minecraft.client.gl.RenderPipelines.*;
-import static net.minecraft.client.render.RenderPhase.*;
+import static net.minecraft.client.renderer.RenderPipelines.ENTITY_SNIPPET;
+import static net.minecraft.client.renderer.RenderStateShard.LIGHTMAP;
+import static net.minecraft.client.renderer.RenderStateShard.OVERLAY;
 import static net.vi.mobhealthindicators.MobHealthIndicators.*;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
@@ -25,31 +30,31 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL11C.GL_POLYGON_OFFSET_FACTOR;
 
 public abstract class Renderer {
-    private static final RenderPipeline FULL_BRIGHT_INDICATORS_PIPELINE = register(RenderPipeline.builder(ENTITY_SNIPPET).withLocation(Identifier.of(modId, "pipeline/full_bright_indicators")).withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("NO_OVERLAY").withShaderDefine("NO_CARDINAL_LIGHTING").withSampler("Sampler1").withCull(false).build());
-    public static final Function<Identifier, RenderLayer> FULL_BRIGHT_INDICATORS = Util.memoize(texture -> {
-        RenderLayer.MultiPhaseParameters multiPhaseParameters = RenderLayer.MultiPhaseParameters.builder().texture(new Texture(texture, false)).lightmap(ENABLE_LIGHTMAP).overlay(ENABLE_OVERLAY_COLOR).build(false);
-        return RenderLayer.of("full_bright_indicators", 1536, true, false, FULL_BRIGHT_INDICATORS_PIPELINE, multiPhaseParameters);
+    private static final RenderPipeline FULL_BRIGHT_INDICATORS_PIPELINE = RenderPipelines.register(RenderPipeline.builder(ENTITY_SNIPPET).withLocation(ResourceLocation.fromNamespaceAndPath(modId, "pipeline/full_bright_indicators")).withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("NO_OVERLAY").withShaderDefine("NO_CARDINAL_LIGHTING").withSampler("Sampler1").withCull(false).build());
+    public static final Function<ResourceLocation, RenderType> FULL_BRIGHT_INDICATORS = Util.memoize(texture -> {
+        RenderType.CompositeState state = RenderType.CompositeState.builder().setTextureState(new RenderStateShard.TextureStateShard(texture, false)).setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false);
+        return RenderType.create("full_bright_indicators", 1536, true, false, FULL_BRIGHT_INDICATORS_PIPELINE, state);
     });
 
     public static final float defaultPixelSize = 0.025f;
     public static float pixelSize = defaultPixelSize;
     public static final int heightDivisor = 50;
 
-    public static void render(MatrixStack matrixStack, LivingEntity livingEntity, Identifier texture, int light, double distance, boolean hasLabel, EntityRenderManager dispatcher) {
-        matrixStack.push();
-        matrixStack.translate(0, livingEntity.getHeight() + 0.5f + config.height/(float)heightDivisor, 0);
-        if (hasLabel && distance <= 4096.0) {
-            matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
-            if (distance < 100.0 && livingEntity.getEntityWorld().getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.BELOW_NAME) != null) {
-                matrixStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
+    public static void render(PoseStack poseStack, LivingEntity livingEntity, ResourceLocation texture, int light, double distance, boolean shouldShowName, EntityRenderDispatcher dispatcher) {
+        poseStack.pushPose();
+        poseStack.translate(0, livingEntity.getBbHeight() + 0.5f + config.height/(float)heightDivisor, 0);
+        if (shouldShowName && distance <= 4096.0) {
+            poseStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
+            if (distance < 100.0 && livingEntity.level().getScoreboard().getDisplayObjective(DisplaySlot.BELOW_NAME) != null) {
+                poseStack.translate(0.0D, 9.0F * 1.15F * pixelSize, 0.0D);
             }
         }
 
-        matrixStack.scale(pixelSize, pixelSize, pixelSize);
-        matrixStack.peek().getPositionMatrix().rotateY(getYaw(dispatcher.camera.getYaw()));
+        poseStack.scale(pixelSize, pixelSize, pixelSize);
+        poseStack.last().pose().rotateY(getYaw(dispatcher.camera.yaw()));
 
-        draw(matrixStack.peek().getPositionMatrix(), texture, light, targetedEntity == livingEntity);
-        matrixStack.pop();
+        draw(poseStack.last().pose(), texture, light, targetedEntity == livingEntity);
+        poseStack.popPose();
     }
 
     private static float getYaw(double yaw) {
@@ -62,16 +67,16 @@ public abstract class Renderer {
         return (float) yaw;
     }
 
-    public static void draw(Matrix4f positionMatrix, Identifier texture, int light, boolean isTargeted) {
-        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
+    public static void draw(Matrix4f positionMatrix, ResourceLocation texture, int light, boolean isTargeted) {
+        BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
 
-        NativeImage image = ((NativeImageBackedTexture) client.getTextureManager().getTexture(texture)).getImage();
+        NativeImage image = ((DynamicTexture) Minecraft.getInstance().getTextureManager().getTexture(texture)).getPixels();
         if(image == null) return;
-        drawHeart(positionMatrix, bufferBuilder, image.getWidth() / 2f, image.getHeight(), config.dynamicBrightness ? light : LightmapTextureManager.MAX_LIGHT_COORDINATE);
+        drawHeart(positionMatrix, bufferBuilder, image.getWidth() / 2f, image.getHeight(), config.dynamicBrightness ? light : LightTexture.FULL_BRIGHT);
 
-        RenderLayer renderLayer;
-        if(areShadersEnabled || config.dynamicBrightness) renderLayer = RenderLayer.getEntityCutoutNoCull(texture);
-        else renderLayer = Renderer.FULL_BRIGHT_INDICATORS.apply(texture);
+        RenderType renderType;
+        if(areShadersEnabled || config.dynamicBrightness) renderType = RenderType.entityCutoutNoCull(texture);
+        else renderType = Renderer.FULL_BRIGHT_INDICATORS.apply(texture);
 
         boolean offset = GL11.glGetBoolean(GL_POLYGON_OFFSET_FILL);
         float offset_factor = GL11.glGetFloat(GL_POLYGON_OFFSET_FACTOR);
@@ -83,7 +88,7 @@ public abstract class Renderer {
             GL11.glDisable(GL11.GL_BLEND);
         }
 
-        renderLayer.draw(bufferBuilder.end());
+        renderType.draw(bufferBuilder.build());
 
         if(isTargeted && config.renderOnTopOnHover) {
             if(!offset) GL11.glDisable(GL_POLYGON_OFFSET_FILL);
@@ -100,6 +105,6 @@ public abstract class Renderer {
     }
 
     private static void drawVertex(Matrix4f model, VertexConsumer bufferBuilder, float x, float y, float u, float v, int light) {
-        bufferBuilder.vertex(model, x, y, 0).color(1F, 1F, 1F, 1F).texture(u, v).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 0, 0);
+        bufferBuilder.addVertex(model, x, y, 0).setColor(1F, 1F, 1F, 1F).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 0, 0);
     }
 }

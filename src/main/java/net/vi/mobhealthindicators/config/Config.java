@@ -4,12 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.mob.Monster;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
 import net.vi.mobhealthindicators.MobHealthIndicators;
 import net.vi.mobhealthindicators.render.HeartType;
 
@@ -24,7 +25,6 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.*;
 
-import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 import static net.vi.mobhealthindicators.MobHealthIndicators.overrideFiltersKey;
 import static net.vi.mobhealthindicators.commands.Commands.Command;
 import static net.vi.mobhealthindicators.config.screen.ConfigScreenHandler.ConfigScreen;
@@ -100,18 +100,18 @@ public class Config {
 
 
     public boolean shouldRender(LivingEntity livingEntity, Entity targetedEntity) {
-        if(overrideFiltersKey.isPressed()) return true;
+        if(overrideFiltersKey.isDown()) return true;
 
         if(!showHearts) return false;
 
-        if(livingEntity == client.player) return showSelf;
+        if(livingEntity == Minecraft.getInstance().player) return showSelf;
         if(onlyShowOnHover && targetedEntity != livingEntity) return false;
-        if(onlyShowDamaged && MathHelper.ceil(livingEntity.getHealth()) >= MathHelper.ceil(livingEntity.getMaxHealth()) && !HeartType.Effect.hasAbnormalHearts(livingEntity)) return false;
+        if(onlyShowDamaged && Mth.ceil(livingEntity.getHealth()) >= Mth.ceil(livingEntity.getMaxHealth()) && !HeartType.Effect.hasAbnormalHearts(livingEntity)) return false;
 
-        if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return true;
-        if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getId(livingEntity.getType()).toString()))) return false;
+        if(whiteList.toggle && whiteList.entityList.stream().anyMatch(s -> s.equals(EntityType.getKey(livingEntity.getType()).toString()))) return true;
+        if(blackList.toggle && blackList.entityList.stream().anyMatch(s -> s.equals(EntityType.getKey(livingEntity.getType()).toString()))) return false;
         if(!showHostile && livingEntity instanceof Monster) return false;
-        if(!showPassive && !(livingEntity instanceof Monster) && !(livingEntity instanceof PlayerEntity)) return false;
+        if(!showPassive && !(livingEntity instanceof Monster) && !(livingEntity instanceof Player)) return false;
 
         return true;
     }

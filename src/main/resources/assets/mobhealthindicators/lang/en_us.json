@@ -23,6 +23,7 @@
 
   "config.mobhealthindicators.category.keybinds": "Keybinds",
 
+  "key.category.mobhealthindicators.name": "Mob Health Indicator",
   "key.mobhealthindicators.toggle": "Toggle Rendering",
   "key.mobhealthindicators.overridefilters": "Override Filters",
 

@@ -1,14 +1,13 @@
 package net.vi.mobhealthindicators.render;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-
-import static net.vi.mobhealthindicators.MobHealthIndicators.client;
 
 public enum HeartType {
     EMPTY("container"),
@@ -37,15 +36,15 @@ public enum HeartType {
         }
 
         public static boolean hasAbnormalHearts(LivingEntity entity) {
-            return getEffect(entity) != none ||  entity.hasStatusEffect(StatusEffects.ABSORPTION) || entity.hasStatusEffect(StatusEffects.HEALTH_BOOST);
+            return getEffect(entity) != none ||  entity.hasEffect(MobEffects.ABSORPTION) || entity.hasEffect(MobEffects.HEALTH_BOOST);
         }
 
         public static Effect getEffect(LivingEntity entity) {
-            if (entity.hasStatusEffect(StatusEffects.POISON)) {
+            if (entity.hasEffect(MobEffects.POISON)) {
                 return poison;
-            } else if (entity.hasStatusEffect(StatusEffects.WITHER)) {
+            } else if (entity.hasEffect(MobEffects.WITHER)) {
                 return wither;
-            } else if (entity.isFrozen()) {
+            } else if (entity.isFullyFrozen()) {
                 return frozen;
             } else {
                 return none;
@@ -55,7 +54,7 @@ public enum HeartType {
 
     public BufferedImage getTexture(Effect effect) {
         try {
-            return ImageIO.read(client.getResourceManager().getResourceOrThrow(Identifier.of("minecraft", "textures/gui/sprites/hud/heart/" + effect.prefix + heartIcon + ".png")).getInputStream());
+            return ImageIO.read(Minecraft.getInstance().getResourceManager().getResourceOrThrow(ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/sprites/hud/heart/" + effect.prefix + heartIcon + ".png")).open());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
