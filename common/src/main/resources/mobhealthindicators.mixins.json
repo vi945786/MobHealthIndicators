@@ -13,5 +13,6 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "refmap": "MobHealthIndicators-refmap.json"
 }

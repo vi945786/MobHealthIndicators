@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'fabric-loom' version "${loom_version}"
+	id 'fabric-loom' version "${fabric_loom_version}"
 }
 
 repositories {
@@ -13,8 +13,8 @@ dependencies {
         officialMojangMappings()
         parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
     }
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
     modImplementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
 	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"

@@ -5,7 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.loader.impl.FabricLoaderImpl;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.Util;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -30,7 +30,7 @@ public class Fabric extends Platform {
 
     @Override
     public Path getConfigDir() {
-        return FabricLoaderImpl.INSTANCE.getConfigDir();
+        return FabricLoader.getInstance().getConfigDir();
     }
 
     @Override
@@ -52,7 +52,7 @@ public class Fabric extends Platform {
 
     @Override
     public boolean isModLoaded(String modId) {
-        return FabricLoaderImpl.INSTANCE.isModLoaded(modId);
+        return FabricLoader.getInstance().isModLoaded(modId);
     }
 
     @Override

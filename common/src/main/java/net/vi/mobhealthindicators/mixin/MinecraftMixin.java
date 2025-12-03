@@ -7,7 +7,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.vi.mobhealthindicators.EntityTypeToEntity;
-import net.vi.mobhealthindicators.ModInit;
 import net.vi.mobhealthindicators.config.Config;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -43,7 +42,7 @@ public abstract class MinecraftMixin {
         if(config == null) return;
 
         EntityTypeToEntity.update();
-        ModInit.areShadersEnabled = isIrisLoaded && net.irisshaders.iris.api.v0.IrisApi.getInstance().isShaderPackInUse();
+        updateAreShadersEnabled();
         while (toggleKey.consumeClick()) {
             config.showHearts = !config.showHearts;
             sendMessage((config.showHearts ? "enabled" : "disabled") + "rendering");

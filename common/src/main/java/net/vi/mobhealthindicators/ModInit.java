@@ -25,6 +25,10 @@ public class ModInit {
     public static KeyMapping toggleKey;
     public static KeyMapping overrideFiltersKey;
 
+    public static void updateAreShadersEnabled() {
+        ModInit.areShadersEnabled = isIrisLoaded && net.irisshaders.iris.api.v0.IrisApi.getInstance().isShaderPackInUse();
+    }
+
     public static void init() {
         Platform platform = Platform.getInstance();
 
