@@ -18,10 +18,10 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "net.vi.mobhealthindicators.MobHealthIndicators"
+      "net.vi.mobhealthindicators.fabric.MobHealthIndicators"
     ],
     "modmenu": [
-      "net.vi.mobhealthindicators.config.screen.ModMenuScreen"
+      "net.vi.mobhealthindicators.fabric.config.screen.ModMenuScreen"
     ]
   },
   "mixins": [

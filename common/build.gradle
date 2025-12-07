@@ -1,29 +1,39 @@
 plugins {
-    id 'java-library'
-	id 'fabric-loom' version "${fabric_loom_version}"
+    id 'java'
+	id 'net.neoforged.moddev' version "${neoforge_gradle_version}"
 }
 
 sourceSets {
-    stub {
-        java.srcDir("src/stub/java")
+    stub
+}
+
+neoForge {
+    neoFormVersion = neo_form_version
+
+    def at = file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
+    parchment {
+        minecraftVersion = project.minecraft_version
+        mappingsVersion = project.parchment_version
     }
 }
 
 repositories {
-    mavenCentral()
-    maven { url "https://maven.shedaniel.me/" }
-    maven { url "https://maven.parchmentmc.org/"; name "ParchmentMC" }
+    maven {
+        name = 'Sponge'
+        url = 'https://repo.spongepowered.org/repository/maven-public'
+    }
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
-    }
+    compileOnly "org.spongepowered:mixin:0.8.7"
+    compileOnly "io.github.llamalad7:mixinextras-common:0.5.0"
+    annotationProcessor "io.github.llamalad7:mixinextras-common:0.5.0"
 
-    modCompileOnly "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
-    implementation sourceSets.stub.output
+    implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
+    compileOnly sourceSets.stub.output
 }
 
 configurations {
@@ -35,10 +45,7 @@ configurations {
         canBeResolved = false
         canBeConsumed = true
     }
-    stub {
-        canBeResolved = false
-        canBeConsumed = true
-    }
+    stub
 }
 
 artifacts {
@@ -46,4 +53,3 @@ artifacts {
     commonResources sourceSets.main.resources.sourceDirectories.singleFile
     stub sourceSets.stub.output.toSet()
 }
-

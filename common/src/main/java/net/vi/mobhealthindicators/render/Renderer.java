@@ -3,7 +3,10 @@ package net.vi.mobhealthindicators.render;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.*;
+import net.minecraft.Util;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -16,6 +19,9 @@ import org.lwjgl.opengl.GL11;
 
 import java.util.function.Function;
 
+import static net.minecraft.client.renderer.RenderPipelines.ENTITY_SNIPPET;
+import static net.minecraft.client.renderer.RenderStateShard.LIGHTMAP;
+import static net.minecraft.client.renderer.RenderStateShard.OVERLAY;
 import static net.vi.mobhealthindicators.ModInit.*;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
@@ -23,8 +29,11 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL11C.GL_POLYGON_OFFSET_FACTOR;
 
 public abstract class Renderer {
-    public static RenderPipeline FULL_BRIGHT_INDICATORS_PIPELINE;
-    public static Function<ResourceLocation, RenderType> FULL_BRIGHT_INDICATORS;
+    private static final RenderPipeline FULL_BRIGHT_INDICATORS_PIPELINE = RenderPipelines.register(RenderPipeline.builder(ENTITY_SNIPPET).withLocation(ResourceLocation.fromNamespaceAndPath(modId, "pipeline/full_bright_indicators")).withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("NO_OVERLAY").withShaderDefine("NO_CARDINAL_LIGHTING").withSampler("Sampler1").withCull(false).build());
+    private static final Function<ResourceLocation, RenderType> FULL_BRIGHT_INDICATORS = Util.memoize(texture -> {
+        RenderType.CompositeState state = RenderType.CompositeState.builder().setTextureState(new RenderStateShard.TextureStateShard(texture, false)).setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false);
+        return RenderType.create("full_bright_indicators", 1536, true, false, FULL_BRIGHT_INDICATORS_PIPELINE, state);
+    });;
 
     public static final float defaultPixelSize = 0.025f;
     public static float pixelSize = defaultPixelSize;

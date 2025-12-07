@@ -27,6 +27,6 @@
   "key.mobhealthindicators.toggle": "Toggle Rendering",
   "key.mobhealthindicators.overridefilters": "Override Filters",
 
-  "message.mobhealthindicators.enabledrendering": "Enabled Health Bars",
-  "message.mobhealthindicators.disabledrendering": "Disabled Health Bars"
+  "message.mobhealthindicators.rendering.enabled": "Enabled Health Bars",
+  "message.mobhealthindicators.rendering.disabled": "Disabled Health Bars"
 }

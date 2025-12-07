@@ -14,7 +14,7 @@ import static net.vi.mobhealthindicators.EntityTypeToEntity.isUpdating;
 @Mixin(Entity.class)
 public abstract class EntityMixin {
 
-    @Inject(method = "<init>", at = @At("CTOR_HEAD"))
+    @Inject(method = "<init>", at = @At(value = "CTOR_HEAD", unsafe = true))
     @SuppressWarnings("unchecked")
     private void saveType(EntityType<?> type, Level world, CallbackInfo ci) {
         if(isUpdating) {

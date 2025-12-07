@@ -1,5 +1,6 @@
 package net.vi.mobhealthindicators.mixin;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.resources.ReloadInstance;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
@@ -14,7 +15,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import static net.vi.mobhealthindicators.ModInit.client;
 import static net.vi.mobhealthindicators.render.Renderer.defaultPixelSize;
 import static net.vi.mobhealthindicators.render.Renderer.pixelSize;
 import static net.vi.mobhealthindicators.render.TextureBuilder.*;
@@ -24,15 +24,16 @@ public class ReloadableResourceManagerImplMixin {
 
     @Inject(method = "createReload", at = @At("TAIL"))
     public void onCreateReload(Executor backgroundExecutor, Executor gameExecutor, CompletableFuture<Unit> waitingFor, List<PackResources> resourcePacks, CallbackInfoReturnable<ReloadInstance> cir) {
+        Minecraft client = Minecraft.getInstance();
         textures.values().forEach(client.getTextureManager()::release);
         textures.clear();
 
-        emptyTexture = new HeartType.HeartColor(HeartType.EMPTY.getTexture(HeartType.Effect.none), HeartType.EMPTY.getTexture(HeartType.Effect.none));
-        normalHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.none), HeartType.HALF.getTexture(HeartType.Effect.none));
-        poisonHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.poison), HeartType.HALF.getTexture(HeartType.Effect.poison));
-        witherHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.wither), HeartType.HALF.getTexture(HeartType.Effect.wither));
-        absorptionHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.absorption), HeartType.HALF.getTexture(HeartType.Effect.absorption));
-        frozenHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.frozen), HeartType.HALF.getTexture(HeartType.Effect.frozen));
+        emptyTexture = new HeartType.HeartColor(HeartType.EMPTY.getTexture(HeartType.Effect.none, client), HeartType.EMPTY.getTexture(HeartType.Effect.none, client));
+        normalHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.none, client), HeartType.HALF.getTexture(HeartType.Effect.none, client));
+        poisonHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.poison, client), HeartType.HALF.getTexture(HeartType.Effect.poison, client));
+        witherHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.wither, client), HeartType.HALF.getTexture(HeartType.Effect.wither, client));
+        absorptionHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.absorption, client), HeartType.HALF.getTexture(HeartType.Effect.absorption, client));
+        frozenHeart = new HeartType.HeartColor(HeartType.FULL.getTexture(HeartType.Effect.frozen, client), HeartType.HALF.getTexture(HeartType.Effect.frozen, client));
 
         heartSize = emptyTexture.fullHeartTexture().getWidth();
 

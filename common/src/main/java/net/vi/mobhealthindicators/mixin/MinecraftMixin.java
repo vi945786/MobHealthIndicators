@@ -1,5 +1,6 @@
 package net.vi.mobhealthindicators.mixin;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -45,7 +46,7 @@ public abstract class MinecraftMixin {
         updateAreShadersEnabled();
         while (toggleKey.consumeClick()) {
             config.showHearts = !config.showHearts;
-            sendMessage((config.showHearts ? "enabled" : "disabled") + "rendering");
+            sendMessage("rendering." + (config.showHearts ? "enabled" : "disabled"), (config.showHearts ? ChatFormatting.GREEN : ChatFormatting.RED));
             Config.save();
         }
 

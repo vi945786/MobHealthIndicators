@@ -367,7 +367,7 @@ public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListC
         public ListLabelWidget() {
         }
 
-        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
             if (!ToggleableBetterBaseListEntry.this.isEnabled()) {
                 return false;
             } else if (ToggleableBetterBaseListEntry.this.resetWidget.isMouseOver(event.x(), event.y())) {

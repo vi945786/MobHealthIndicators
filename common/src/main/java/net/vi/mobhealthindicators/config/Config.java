@@ -45,7 +45,7 @@ public class Config {
     @Expose @Command @ConfigScreen(category = Category.DISPLAY)
     public boolean showHearts = true;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
-    public boolean dynamicBrightness = true;
+    public boolean dynamicBrightness = false;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY) @Range(min = -25, max = 25)
     public int height = 0;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
@@ -141,7 +141,7 @@ public class Config {
                   .append(" = ")
                   .append(field.get(config));
             } catch (IllegalAccessException e) {
-                sb.append(field.getName()).append("=N/A, ");
+                sb.append(field.getName()).append(" = N/A, ");
             }
             sb.append(", \n");
         }

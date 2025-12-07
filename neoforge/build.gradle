@@ -1,0 +1,29 @@
+plugins {
+	id 'java'
+	id 'net.neoforged.moddev' version "${neoforge_gradle_version}"
+}
+
+neoForge {
+    version = project.neoforge_loader_version
+
+    def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformers.from(at.absolutePath)
+    }
+    parchment {
+        minecraftVersion = "${project.minecraft_version}"
+        mappingsVersion = "${project.parchment_version}"
+    }
+}
+
+repositories {
+    maven {
+        name = "NeoForged"
+        url = uri("https://maven.neoforged.net/releases")
+    }
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:${project.neoforge_loader_version}"
+    implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
+}

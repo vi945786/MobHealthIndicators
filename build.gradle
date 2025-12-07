@@ -2,13 +2,8 @@ plugins {
 	id 'java'
 }
 
-configure(subprojects.findAll { it.name != "common" }) {
-    if (name == "common") return
-
+subprojects {
     apply plugin: 'java'
-
-    version = "${project.mod_version}-${project.minecraft_version}-${project.name}"
-    base.archivesName = project.archives_base_name
 
     java {
         toolchain {
@@ -17,6 +12,7 @@ configure(subprojects.findAll { it.name != "common" }) {
     }
 
     repositories {
+        mavenCentral()
         maven {
             name = "Modrinth"
             url = "https://api.modrinth.com/maven"
@@ -28,6 +24,8 @@ configure(subprojects.findAll { it.name != "common" }) {
         maven { url "https://maven.shedaniel.me/" }
     }
 
+    if (name == "common") return
+
     configurations {
         commonJava {
             canBeResolved = true
@@ -38,28 +36,34 @@ configure(subprojects.findAll { it.name != "common" }) {
     }
 
     dependencies {
-        implementation(project(':common'))
+        compileOnly project(':common')
         commonJava project(path: ':common', configuration: 'commonJava')
         commonResources project(path: ':common', configuration: 'commonResources')
         compileOnly project(path: ':common', configuration: 'stub')
     }
 
     tasks.named('compileJava', JavaCompile) {
+        dependsOn(configurations.commonJava)
         source(configurations.commonJava)
     }
 
+    base {
+        archivesName = "${project.archives_base_name}-${project.mod_version}-${project.minecraft_version}-${project.name}"
+    }
+
     jar {
-        from(rootProject.file("LICENSE")) {
-            rename { "${it}_${project.archivesBaseName}"}
+         from(rootProject.file("LICENSE")) {
+            rename { "${it}_${project.archives_base_name}"}
         }
     }
 
     processResources {
+        dependsOn(configurations.commonResources)
         from(configurations.commonResources)
 
         inputs.property "version", project.mod_version
 
-        filesMatching("fabric.mod.json") {
+        filesMatching(["fabric.mod.json", "META-INF/neoforge.mods.toml"]) {
             expand "version": project.mod_version
         }
     }

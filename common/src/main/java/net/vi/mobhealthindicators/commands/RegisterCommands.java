@@ -4,17 +4,17 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
-import net.vi.mobhealthindicators.Platform;
 import net.vi.mobhealthindicators.config.screen.ConfigScreenHandler;
 import net.vi.mobhealthindicators.config.Config;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
@@ -25,10 +25,13 @@ import static net.vi.mobhealthindicators.config.Config.config;
 
 public class RegisterCommands {
 
-    @Environment(EnvType.CLIENT)
-    public static void registerCommands(Platform platform) {
-        platform.registerCommand(registerSubCommands(platform.getCommandBuilder("MobHealthIndicators")));
-        platform.registerCommand(registerSubCommands(platform.getCommandBuilder("mhi")));
+    public static <T> List<LiteralArgumentBuilder<T>> registerCommands(Function<String, LiteralArgumentBuilder<T>> builderFunction) {
+        List<LiteralArgumentBuilder<T>> builders = new ArrayList<>();
+
+        builders.add(registerSubCommands(builderFunction.apply("MobHealthIndicators")));
+        builders.add(registerSubCommands(builderFunction.apply("mhi")));
+
+        return builders;
     }
 
     @SuppressWarnings("unchecked")
@@ -67,19 +70,26 @@ public class RegisterCommands {
         builder.then((ArgumentBuilder<T, ?>) literal(name).executes(context -> {
             sendMessage(Component.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
             return 1;
-            }).then(literal("set").then(argument("value", BoolArgumentType.bool()).executes(context -> {
-                list.toggle = context.getArgument("value", boolean.class);
+            }).then(literal("enable").executes(context -> {
+                list.toggle = true;
                 Config.save();
-                sendMessage(Component.literal("toggled blackList to " + list.toggle));
+                sendMessage(Component.literal("enabled " + name));
                 return 1;
-            })))
+            }))
+
+            .then(literal("disable").executes(context -> {
+                list.toggle = false;
+                Config.save();
+                sendMessage(Component.literal("disabled " + name));
+                return 1;
+            }))
 
             .then(literal("add").then(argument("value", SpecificStringArgumentType.specificString(() -> getLivingEntities().stream().map(EntityType::getKey).map(ResourceLocation::toString).collect(Collectors.toSet()))).executes(context -> {
                 String value = context.getArgument("value", String.class);
 
                 list.entityList.add(value);
                 Config.save();
-                sendMessage(Component.literal(value + " added to blackList"));
+                sendMessage(Component.literal(value + " added to " + name));
                 return 1;
             })))
 
@@ -88,7 +98,7 @@ public class RegisterCommands {
 
                 list.entityList.remove(value);
                 Config.save();
-                sendMessage(Component.literal(value + " removed from blackList"));
+                sendMessage(Component.literal(value + " removed from " + name));
                 return 1;
             })))
         );

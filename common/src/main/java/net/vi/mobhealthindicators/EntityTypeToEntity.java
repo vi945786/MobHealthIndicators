@@ -22,7 +22,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.wolf.WolfVariant;
-import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.decoration.PaintingVariant;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.variant.SpawnPrioritySelectors;
@@ -235,7 +234,14 @@ public class EntityTypeToEntity {
 
     @ApiStatus.Internal
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public static final class DummyWorld extends Level implements LightChunkGetter {
+    public static abstract class DummyWorld extends Level implements LightChunkGetter {
+        @FunctionalInterface
+        protected interface DummyWorldFactory {
+            DummyWorld create(WritableLevelData properties, ResourceKey<Level> levelKey, RegistryAccess registryAccess, Holder<DimensionType> dimensionType, boolean isClient, boolean debugWorld, long seed);
+        }
+
+        protected static DummyWorldFactory factory;
+
         public static final Level INSTANCE_UNSAFE;
         public static final Level INSTANCE_REGULAR;
 
@@ -348,7 +354,7 @@ public class EntityTypeToEntity {
                                 ResourceLocation.fromNamespaceAndPath("dummy", "world")
                         );
 
-                worldDefault = new DummyWorld(
+                worldDefault = factory.create(
                         props,
                         levelKey,
                         FALLBACK_REGISTRY_ACCESS,
@@ -401,7 +407,7 @@ public class EntityTypeToEntity {
             ));
         }
 
-        private DummyWorld(WritableLevelData properties, ResourceKey<Level> levelKey, RegistryAccess registryAccess, Holder<DimensionType> dimensionType, boolean isClient, boolean debugWorld, long seed) {
+        protected DummyWorld(WritableLevelData properties, ResourceKey<Level> levelKey, RegistryAccess registryAccess, Holder<DimensionType> dimensionType, boolean isClient, boolean debugWorld, long seed) {
             super(properties, levelKey, registryAccess, dimensionType, isClient, debugWorld, seed, 0);
         }
 
@@ -409,13 +415,12 @@ public class EntityTypeToEntity {
         @Override public void playSeededSound(@Nullable Entity entity, double x, double y, double z, Holder<SoundEvent> sound, SoundSource source, float volume, float pitch, long seed) {}
         @Override public void playSeededSound(@Nullable Entity entity, Entity sourceEntity, Holder<SoundEvent> sound, SoundSource source, float volume, float pitch, long seed) {}
         @Override public void explode(@Nullable Entity entity, double x, double y, double z, float power, ExplosionInteraction mode) {}
-        @Override public void explode(@Nullable Entity source, @Nullable DamageSource damageSource, @Nullable ExplosionDamageCalculator damageCalculator, double x, double y, double z, float radius, boolean fire, ExplosionInteraction explosionInteraction, ParticleOptions smallExplosionParticles, ParticleOptions largeExplosionParticles, WeightedList<ExplosionParticleInfo> blockParticles, Holder<SoundEvent> explosionSound) {}
+        @Override public void explode(@Nullable Entity entity, @Nullable DamageSource damageSource, @Nullable ExplosionDamageCalculator explosionDamageCalculator, double v, double v1, double v2, float v3, boolean b, ExplosionInteraction explosionInteraction, ParticleOptions particleOptions, ParticleOptions particleOptions1, WeightedList<ExplosionParticleInfo> weightedList, Holder<SoundEvent> holder) {}
         @Override public @NotNull String gatherChunkSourceStats() { return ""; }
         @Override public void setRespawnData(LevelData.RespawnData respawnData) {}
-        @Override public @NotNull LevelData.RespawnData getRespawnData() { return new LevelData.RespawnData(new GlobalPos(Level.OVERWORLD, BlockPos.ZERO), 0f, 0f); }
+        @Override public LevelData.RespawnData getRespawnData() { return null; }
         @Override public String toString() { return "DummyWorld"; }
         @Override public @Nullable Entity getEntity(int id) { return null; }
-        @Override public @NotNull Collection<EnderDragonPart> dragonParts() { return List.of(); }
         @Override public @NotNull TickRateManager tickRateManager() { return this.tickManager; }
         @Override public @Nullable MapItemSavedData getMapData(MapId mapId) { return null; }
         @Override public void destroyBlockProgress(int breakerId, BlockPos pos, int progress) {}
@@ -453,7 +458,7 @@ public class EntityTypeToEntity {
             @Override public boolean isHardcore() { return false; }
             @Override public @NotNull Difficulty getDifficulty() { return Difficulty.NORMAL; }
             @Override public boolean isDifficultyLocked() { return false; }
-            @Override public void setSpawn(LevelData.RespawnData spawn) {}
+            @Override public void setSpawn(RespawnData respawnData) {}
         }
     }
 

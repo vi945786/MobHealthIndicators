@@ -1,6 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
+  "refmap": "mobhealthindicators.refmap.json",
   "package": "net.vi.mobhealthindicators.mixin",
   "client": [
     "EntityMixin",
@@ -13,6 +14,5 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "refmap": "MobHealthIndicators-refmap.json"
+  }
 }
