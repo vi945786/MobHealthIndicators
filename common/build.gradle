@@ -25,7 +25,6 @@ dependencies {
     annotationProcessor "io.github.llamalad7:mixinextras-common:0.5.0"
 
     implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
-    api "maven.modrinth:iris:${project.iris_version}-neoforge"
 }
 
 configurations {
