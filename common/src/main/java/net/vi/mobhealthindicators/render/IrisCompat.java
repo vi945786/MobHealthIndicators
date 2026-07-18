@@ -14,4 +14,8 @@ final class IrisCompat {
         iris.assignPipeline(worldPipeline, IrisProgram.ENTITIES_TRANSLUCENT);
         iris.assignPipeline(onTopPipeline, IrisProgram.ENTITIES_TRANSLUCENT);
     }
+
+    static boolean isRenderingShadowPass() {
+        return IrisApi.getInstance().isRenderingShadowPass();
+    }
 }
