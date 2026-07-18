@@ -1,8 +1,6 @@
 package net.vi.mobhealthindicators;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import net.irisshaders.iris.api.v0.IrisApi;
-import net.irisshaders.iris.api.v0.IrisProgram;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -22,7 +20,7 @@ public class ModInit {
 
     private static final KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(modId, "name"));
     public final static KeyMapping toggleKey = new KeyMapping(
-            "key." +modId + ".toggle",
+            "key." + modId + ".toggle",
             InputConstants.UNKNOWN.getValue(),
             category
     );
@@ -36,15 +34,15 @@ public class ModInit {
         Platform platform = Platform.getInstance();
         Config.load(platform);
         isIrisLoaded = platform.isModLoaded("iris");
-//        if(isIrisLoaded) {
-//            IrisApi.getInstance().assignPipeline(Renderer.FULL_BRIGHT_PIPELINE, IrisProgram.ENTITIES);
-//        }
-
         client = Minecraft.getInstance();
+
+        if (isIrisLoaded) {
+            Renderer.registerIrisPipelines();
+        }
     }
 
     public static void sendMessage(String message, ChatFormatting... style) {
-        if(client.player != null) {
+        if (client.player != null) {
             client.player.sendOverlayMessage(Component.translatable("message." + modId + "." + message).withStyle(style));
         }
     }
