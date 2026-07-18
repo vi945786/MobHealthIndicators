@@ -5,7 +5,6 @@
   "config.mobhealthindicators.option.showhearts": "Show Hearts",
   "config.mobhealthindicators.option.fullbright": "Full Bright",
   "config.mobhealthindicators.option.opacity": "Opacity",
-  "config.mobhealthindicators.option.opacity.tooltip": "Controls the health bar transparency.",
   "config.mobhealthindicators.option.height": "Height",
   "config.mobhealthindicators.option.renderontoponhover": "Render On Top On Hover",
   "config.mobhealthindicators.option.renderontoponhover.tooltip": "When looking at a mob, its health bar renders through blocks, particles, rain and other world effects.",

@@ -50,9 +50,9 @@ public class Config {
 
     @Expose @Command @ConfigScreen(category = Category.DISPLAY)
     public boolean showHearts = true;
-    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
-    public boolean fullBright = false;
-    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true) @Range(min = 10, max = 100)
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY)
+    public boolean fullBright = true;
+    @Expose @Command @ConfigScreen(category = Category.DISPLAY) @Range(min = 1, max = 100)
     public int opacity = 100;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY) @Range(min = -25, max = 25)
     public int height = 0;
@@ -75,9 +75,6 @@ public class Config {
     public boolean onlyShowDamaged = false;
     @Expose @Command @ConfigScreen(category = Category.FILTER, tooltip = true)
     public boolean onlyShowOnHover = false;
-
-    @Expose
-    public HashMap<String, String> entityTypeToEntity = new HashMap<>();
 
     public static void setName(String name, Object value) {
         try {
