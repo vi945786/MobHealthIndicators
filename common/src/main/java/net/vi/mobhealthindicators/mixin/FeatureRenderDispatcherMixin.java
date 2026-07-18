@@ -8,14 +8,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Places ordinary health bars between vanilla's opaque and translucent feature
- * phases. This lets glass, water, particles and later weather passes blend over
- * the bar while opaque terrain still occludes it through the depth buffer.
+ * Draws ordinary health bars after opaque terrain has populated the main depth
+ * buffer, but before vanilla flushes solid entity features and copies depth to
+ * its translucent targets. This gives glass, water, particles and weather the
+ * correct front/behind relationship with the bar.
  */
 @Mixin(FeatureRenderDispatcher.class)
 public abstract class FeatureRenderDispatcherMixin {
 
-    @Inject(method = "renderTranslucentFeatures", at = @At("HEAD"))
+    @Inject(method = "renderSolidFeatures", at = @At("HEAD"))
     private void mobhealthindicators$renderWorldHealthBars(CallbackInfo ci) {
         Renderer.flushWorld();
     }
