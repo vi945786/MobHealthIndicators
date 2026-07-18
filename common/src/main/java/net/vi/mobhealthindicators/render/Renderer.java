@@ -43,9 +43,9 @@ import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 
 /**
  * Collects immutable health-bar commands while Minecraft extracts level render
- * state. Depth-tested bars are drawn immediately before vanilla starts drawing
- * translucent features; explicitly on-top bars are drawn in a final frame-graph
- * pass after the level transparency composition has completed.
+ * state. Depth-tested bars are drawn between opaque terrain and vanilla's
+ * translucent feature phase; explicitly on-top bars are drawn in a final
+ * frame-graph pass after level transparency composition has completed.
  */
 public final class Renderer {
     public static final float defaultPixelSize = 0.025F;
@@ -54,9 +54,9 @@ public final class Renderer {
 
     /**
      * Uses the entity shader instead of the text shader so both normal and
-     * see-through bars sample the world lightmap. Depth is tested but not
-     * written, allowing glass, water, particles and weather drawn afterwards to
-     * blend over an ordinary health bar.
+     * see-through bars sample the world lightmap. Normal bars write their depth
+     * before vanilla copies it to the translucent targets, which gives glass,
+     * water and particles the correct front/behind ordering.
      */
     private static final RenderPipeline WORLD_HEALTH_BAR_PIPELINE = RenderPipelines.register(
             RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
@@ -65,7 +65,7 @@ public final class Renderer {
                     .withShaderDefine("NO_OVERLAY")
                     .withShaderDefine("NO_CARDINAL_LIGHTING")
                     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-                    .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
+                    .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
                     .withCull(false)
                     .build()
     );
@@ -195,8 +195,8 @@ public final class Renderer {
     }
 
     /**
-     * Draws ordinary bars after opaque depth exists but before vanilla draws
-     * translucent entities, glass, water, particles and weather.
+     * Draws ordinary bars after opaque terrain exists but before vanilla copies
+     * depth to and renders its translucent targets.
      */
     public static void flushWorld() {
         if (!collecting || worldCommandsFlushed) return;
