@@ -5,6 +5,7 @@
   "client": [
     "ClientPacketListenerMixin",
     "EntityRendererMixin",
+    "FeatureRenderDispatcherMixin",
     "LevelRendererMixin",
     "LocalPlayerAccessor",
     "MinecraftMixin",
