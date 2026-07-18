@@ -27,11 +27,11 @@
   "mixins": [
     "mobhealthindicators.mixins.json"
   ],
+  "accessWidener": "mobhealthindicators.classtweaker",
 
   "depends": {
     "fabricloader": "*",
-    "fabric": "*",
-    "minecraft": ">=1.21.9",
+    "minecraft": "~26.1",
     "cloth-config2": "*"
   }
 }

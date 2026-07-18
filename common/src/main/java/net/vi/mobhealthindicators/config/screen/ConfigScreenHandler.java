@@ -9,8 +9,9 @@ import me.shedaniel.clothconfig2.impl.builders.BooleanToggleBuilder;
 import me.shedaniel.clothconfig2.impl.builders.IntSliderBuilder;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.vi.mobhealthindicators.config.Config;
 
@@ -22,7 +23,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Function;
 
-import static net.vi.mobhealthindicators.EntityTypeToEntity.getLivingEntities;
 import static net.vi.mobhealthindicators.ModInit.*;
 
 public class ConfigScreenHandler {
@@ -117,7 +117,7 @@ public class ConfigScreenHandler {
 
     private static BetterDropdownNoRestListBuilder<String> startToggleableEntityDropdownList(Component fieldNameKey, List<String> value, boolean toggled) {
         BetterDropdownNoRestListBuilder<String> entry = ConfigScreenHandler.startToggleableDropdownList(fieldNameKey, value, toggled, (string) -> new BetterDropdownBoxEntry.DefaultSelectionTopCellElement<>(string == null ? "" : string, s -> s, Component::literal), new BetterDropdownBoxEntry.DefaultSelectionCellCreator<>());
-        entry.setSelections(getLivingEntities().stream().map(EntityType::getKey).map(ResourceLocation::toString).sorted().toList());
+        entry.setSelections(BuiltInRegistries.ENTITY_TYPE.stream().map(EntityType::getKey).map(Identifier::toString).sorted().toList());
         return entry;
     }
 

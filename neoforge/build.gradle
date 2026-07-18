@@ -10,9 +10,19 @@ neoForge {
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
     }
-    parchment {
-        minecraftVersion = "${project.minecraft_version}"
-        mappingsVersion = "${project.parchment_version}"
+    validateAccessTransformers = true
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+
+    runs {
+        client {
+            gameDirectory = project.file("../run")
+            client()
+        }
     }
 }
 
@@ -26,4 +36,18 @@ repositories {
 dependencies {
     implementation "net.neoforged:neoforge:${project.neoforge_loader_version}"
     implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
+
+    runtimeOnly "maven.modrinth:sodium:${project.sodium_version}-neoforge"
+    runtimeOnly "maven.modrinth:iris:${project.iris_version}-neoforge"
+}
+
+processResources {
+    dependsOn(configurations.commonResources)
+    from(configurations.commonResources)
+
+    inputs.property "version", project.mod_version
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.mod_version
+    }
 }

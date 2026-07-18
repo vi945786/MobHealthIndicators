@@ -4,8 +4,9 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.vi.mobhealthindicators.config.screen.ConfigScreenHandler;
 import net.vi.mobhealthindicators.config.Config;
@@ -19,7 +20,6 @@ import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
 import static com.mojang.brigadier.builder.RequiredArgumentBuilder.argument;
-import static net.vi.mobhealthindicators.EntityTypeToEntity.getLivingEntities;
 import static net.vi.mobhealthindicators.ModInit.client;
 import static net.vi.mobhealthindicators.config.Config.config;
 
@@ -36,7 +36,7 @@ public class RegisterCommands {
 
     @SuppressWarnings("unchecked")
     private static <T> void registerSubCommandOfBool(LiteralArgumentBuilder<T> builder, String name) {
-        builder.then((ArgumentBuilder<T, ?>) literal(name).executes(context -> {
+        builder.then((ArgumentBuilder<T, ?>) literal(name).executes(_ -> {
             sendMessage(Component.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", BoolArgumentType.bool()).executes(context -> {
@@ -51,7 +51,7 @@ public class RegisterCommands {
 
     @SuppressWarnings("unchecked")
     private static <T> void registerSubCommandOfInt(LiteralArgumentBuilder<T> builder, String name, int min, int max) {
-        builder.then((ArgumentBuilder<T, ?>) literal(name).executes(context -> {
+        builder.then((ArgumentBuilder<T, ?>) literal(name).executes(_ -> {
             sendMessage(Component.literal(name + " is currently set to: " + Config.getName(name)));
             return 1;
             }).then(argument("value", IntegerArgumentType.integer(min, max)).executes(context -> {
@@ -67,24 +67,24 @@ public class RegisterCommands {
     @SuppressWarnings("unchecked")
     private static <T> void registerSubCommandOfToggleableEntityList(LiteralArgumentBuilder<T> builder, String name) {
         Config.ToggleableEntityList list = Config.getName(name);
-        builder.then((ArgumentBuilder<T, ?>) literal(name).executes(context -> {
+        builder.then((ArgumentBuilder<T, ?>) literal(name).executes(_ -> {
             sendMessage(Component.literal(name + " is currently " + (list.toggle ? "enabled" : "disabled") + " with entities: " + list.entityList));
             return 1;
-            }).then(literal("enable").executes(context -> {
+            }).then(literal("enable").executes(_ -> {
                 list.toggle = true;
                 Config.save();
                 sendMessage(Component.literal("enabled " + name));
                 return 1;
             }))
 
-            .then(literal("disable").executes(context -> {
+            .then(literal("disable").executes(_ -> {
                 list.toggle = false;
                 Config.save();
                 sendMessage(Component.literal("disabled " + name));
                 return 1;
             }))
 
-            .then(literal("add").then(argument("value", SpecificStringArgumentType.specificString(() -> getLivingEntities().stream().map(EntityType::getKey).map(ResourceLocation::toString).collect(Collectors.toSet()))).executes(context -> {
+            .then(literal("add").then(argument("value", SpecificStringArgumentType.specificString(() -> BuiltInRegistries.ENTITY_TYPE.stream().map(EntityType::getKey).map(Identifier::toString).collect(Collectors.toSet()))).executes(context -> {
                 String value = context.getArgument("value", String.class);
 
                 list.entityList.add(value);
@@ -106,13 +106,13 @@ public class RegisterCommands {
 
     @SuppressWarnings("unchecked")
     private static <T> LiteralArgumentBuilder<T> registerSubCommands(LiteralArgumentBuilder<T> builder) {
-        builder.executes(context -> {
+        builder.executes(_ -> {
             sendMessage(Component.literal(config.toString()));
             return 1;
         });
 
         builder.then((ArgumentBuilder<T, ?>) literal("config").executes(context -> {
-            client.schedule(() -> client.setScreen(ConfigScreenHandler.getConfigScreen(client.screen)));
+            client.schedule(() -> client.setScreenAndShow(ConfigScreenHandler.getConfigScreen(client.screen)));
             return 1;
         }));
 
@@ -136,7 +136,6 @@ public class RegisterCommands {
     }
 
     private static void sendMessage(Component message) {
-        assert client.player != null;
-        client.player.displayClientMessage(message, false);
+        client.getChatListener().handleSystemMessage(message, false);
     }
 }

@@ -7,11 +7,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -53,11 +55,11 @@ public final class Renderer {
     private Renderer() {
     }
 
-    public static void beginFrame(Camera camera) {
+    public static void beginFrame(CameraRenderState camera) {
         COMMANDS.clear();
         QUEUED_ENTITY_IDS.clear();
-        cameraPosition = camera.position();
-        cameraYaw = camera.yaw();
+        cameraPosition = camera.pos;
+        cameraYaw = camera.yRot;
         collecting = true;
     }
 
@@ -69,7 +71,7 @@ public final class Renderer {
             LivingEntity livingEntity,
             EntityRenderState renderState,
             Vec3 renderOffset,
-            ResourceLocation texture,
+            Identifier texture,
             boolean targeted
     ) {
         if (!collecting || config == null || config.opacity <= 0) return;
@@ -100,7 +102,7 @@ public final class Renderer {
         poseStack.scale(pixelSize, pixelSize, pixelSize);
         poseStack.last().pose().rotateY(getYaw(cameraYaw));
 
-        int light = config.dynamicBrightness ? renderState.lightCoords : LightTexture.FULL_BRIGHT;
+        int light = config.dynamicBrightness ? renderState.lightCoords : LightCoordsUtil.FULL_BRIGHT;
         float opacity = Mth.clamp(config.opacity / 100.0F, 0.0F, 1.0F);
         boolean renderOnTop = config.renderThroughWalls || (targeted && config.renderOnTopOnHover);
 
@@ -144,8 +146,8 @@ public final class Renderer {
 
     private static void draw(RenderCommand command) {
         RenderType renderType = command.renderOnTop()
-                ? RenderType.textSeeThrough(command.texture())
-                : RenderType.text(command.texture());
+                ? RenderTypes.textSeeThrough(command.texture())
+                : RenderTypes.text(command.texture());
 
         BufferBuilder bufferBuilder = Tesselator.getInstance().begin(renderType.mode(), renderType.format());
         drawQuad(command, bufferBuilder);
@@ -190,7 +192,7 @@ public final class Renderer {
 
     private record RenderCommand(
             Matrix4f modelMatrix,
-            ResourceLocation texture,
+            Identifier texture,
             float halfWidth,
             float height,
             int light,
@@ -200,3 +202,89 @@ public final class Renderer {
     ) {
     }
 }
+
+//package net.vi.mobhealthindicators.render;
+//
+//import com.mojang.blaze3d.pipeline.*;
+//import com.mojang.blaze3d.platform.NativeImage;
+//import com.mojang.blaze3d.systems.RenderSystem;
+//import com.mojang.blaze3d.vertex.*;
+//import net.minecraft.client.renderer.RenderPipelines;
+//import net.minecraft.client.renderer.SubmitNodeCollector;
+//import net.minecraft.client.renderer.rendertype.RenderSetup;
+//import net.minecraft.client.renderer.rendertype.RenderType;
+//import net.minecraft.util.LightCoordsUtil;
+//import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+//import net.minecraft.client.renderer.texture.DynamicTexture;
+//import net.minecraft.client.renderer.texture.OverlayTexture;
+//import net.minecraft.resources.Identifier;
+//import net.minecraft.util.Util;
+//import net.minecraft.world.entity.LivingEntity;
+//import net.minecraft.world.scores.DisplaySlot;
+//import org.joml.Matrix4f;
+//
+//import java.util.Optional;
+//import java.util.function.Function;
+//
+//import static net.minecraft.client.renderer.RenderPipelines.ENTITY_SNIPPET;
+//import static net.vi.mobhealthindicators.ModInit.*;
+//import static net.vi.mobhealthindicators.config.Config.config;
+//import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
+//
+//public abstract class Renderer {
+//    public static final RenderPipeline FULL_BRIGHT_PIPELINE = RenderPipelines.register(RenderPipeline.builder(ENTITY_SNIPPET).withLocation(Identifier.fromNamespaceAndPath(modId, "pipeline/full_bright_indicators")).withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("NO_OVERLAY").withShaderDefine("NO_CARDINAL_LIGHTING").withSampler("Sampler1").withColorTargetState(new ColorTargetState(Optional.of(BlendFunction.TRANSLUCENT), ColorTargetState.WRITE_ALL)).withCull(false).build());
+//    public static final Function<Identifier, RenderType> FULL_BRIGHT_RENDER_TYPE = Util.memoize(texture -> {
+//        RenderSetup state = RenderSetup.builder(FULL_BRIGHT_PIPELINE).withTexture("Sampler0", texture).useLightmap().useOverlay().createRenderSetup();
+//        return RenderType.create("full_bright_indicators", state);
+//    });
+//
+//    public record RenderData(PoseStack.Pose pose, RenderType renderType, LivingEntity livingEntity, Identifier texture, int light, double distance, boolean shouldShowName, EntityRenderDispatcher dispatcher) {}
+//
+//    public static final float defaultPixelSize = 0.025f;
+//    public static float pixelSize = defaultPixelSize;
+//    public static final int heightDivisor = 50;
+//
+//    public static void render(RenderData renderData) {
+//        render(renderData.pose, renderData.renderType, renderData.livingEntity, renderData.texture, renderData.light, renderData.distance, renderData.shouldShowName, renderData.dispatcher);
+//    }
+//
+//    public static void render(PoseStack.Pose pose, RenderType renderType, LivingEntity livingEntity, Identifier texture, int light, double distance, boolean shouldShowName, EntityRenderDispatcher dispatcher) {
+//        pose.translate(0, livingEntity.getBbHeight() + 0.5f + config.height / (float) heightDivisor, 0);
+//        if (shouldShowName && distance <= 4096.0) {
+//            pose.translate(0.0F, 9.0F * 1.15F * pixelSize, 0.0F);
+//            if (distance < 100.0 && livingEntity.level().getScoreboard().getDisplayObjective(DisplaySlot.BELOW_NAME) != null) {
+//                pose.translate(0.0F, 9.0F * 1.15F * pixelSize, 0.0F);
+//            }
+//        }
+//
+//        pose.scale(pixelSize, pixelSize, pixelSize);
+//        pose.pose().rotateY(getYaw(dispatcher.camera.yaw()));
+//
+//        NativeImage image = ((DynamicTexture) client.getTextureManager().getTexture(texture)).getPixels();
+//
+//        VertexConsumer buffer = client.renderBuffers().bufferSource().getBuffer(renderType);
+//
+//        drawHeart(pose.pose(), buffer, image.getWidth() / 2f, image.getHeight(), config.dynamicBrightness ? light : LightCoordsUtil.FULL_BRIGHT);
+//    }
+//
+//    private static float getYaw(double yaw) {
+//        yaw = -Math.toRadians(yaw);
+//        yaw = yaw + Math.PI;
+//
+//        if (yaw > Math.PI) yaw -= (2 * Math.PI);
+//        if (yaw < -Math.PI) yaw += (2 * Math.PI);
+//
+//        return (float) yaw;
+//    }
+//
+//    public static void drawHeart(Matrix4f matrix4f, VertexConsumer bufferBuilder, float width, float height, int light) {
+//        drawVertex(matrix4f, bufferBuilder, -width, -heartSize, 0, 1, light);
+//        drawVertex(matrix4f, bufferBuilder, +width, -heartSize, 1, 1, light);
+//        drawVertex(matrix4f, bufferBuilder, +width, height-heartSize, 1, 0, light);
+//        drawVertex(matrix4f, bufferBuilder, -width, height-heartSize, 0, 0, light);
+//    }
+//
+//    private static void drawVertex(Matrix4f model, VertexConsumer bufferBuilder, float x, float y, float u, float v, int light) {
+//        bufferBuilder.addVertex(model, x, y, 0).setColor(1F, 1F, 1F, 1F).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 0, 0);
+//    }
+//}

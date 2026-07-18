@@ -3,7 +3,7 @@ package net.vi.mobhealthindicators.config.screen;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.AbstractContainerEventHandler;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.network.chat.Component;
@@ -31,7 +31,7 @@ public abstract class BetterBaseListCell extends AbstractContainerEventHandler i
 
     public abstract int getCellHeight();
 
-    public abstract void render(GuiGraphics var1, int var2, int var3, int var4, int var5, int var6, int var7, int var8, boolean var9, float var10);
+    public abstract void extractRenderState(GuiGraphicsExtractor graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isHovered, float delta);
 
     public void updateBounds(boolean expanded, int x, int y, int entryWidth, int entryHeight) {
     }
@@ -53,7 +53,7 @@ public abstract class BetterBaseListCell extends AbstractContainerEventHandler i
     public void onDelete() {
     }
 
-    public void lateRender(GuiGraphics graphics, int mouseX, int mouseY, float delta) {}
+    public void lateRender(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {}
 
     public int getMorePossibleHeight() {
         return 0;
