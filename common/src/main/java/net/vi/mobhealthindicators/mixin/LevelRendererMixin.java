@@ -29,8 +29,8 @@ public abstract class LevelRendererMixin {
     private LevelTargetBundle targets;
 
     /**
-     * Minecraft 26.1 extracts every entity render state before renderLevel is
-     * entered. Collection must therefore begin here, not at renderLevel HEAD.
+     * Minecraft 26.1 extracts entity render states before renderLevel builds the
+     * frame graph, so collection must begin in the extraction stage.
      */
     @Inject(method = "extractLevel", at = @At("HEAD"))
     private void mobhealthindicators$beginHealthBarFrame(
@@ -43,9 +43,9 @@ public abstract class LevelRendererMixin {
     }
 
     /**
-     * Appends a final level pass after the main pass, translucent features,
-     * particles, weather and the transparency post chain have all updated the
-     * main target.
+     * Appends only the explicitly always-on-top bars after vanilla's transparent
+     * targets, particles, clouds and weather have been composited into main.
+     * Ordinary bars are drawn earlier by FeatureRenderDispatcherMixin.
      */
     @WrapOperation(
             method = "renderLevel",
@@ -60,25 +60,27 @@ public abstract class LevelRendererMixin {
             FrameGraphBuilder.Inspector inspector,
             Operation<Void> original
     ) {
-        FramePass healthBarPass = frameGraphBuilder.addPass("mobhealthindicators_health_bars");
-        this.targets.main = healthBarPass.readsAndWrites(this.targets.main);
-        ResourceHandle<RenderTarget> mainTarget = this.targets.main;
+        if (Renderer.hasOnTopCommands()) {
+            FramePass healthBarPass = frameGraphBuilder.addPass("mobhealthindicators_on_top_health_bars");
+            this.targets.main = healthBarPass.readsAndWrites(this.targets.main);
+            ResourceHandle<RenderTarget> mainTarget = this.targets.main;
 
-        healthBarPass.executes(() -> {
-            RenderTarget renderTarget = mainTarget.get();
-            GpuTextureView previousColorTarget = RenderSystem.outputColorTextureOverride;
-            GpuTextureView previousDepthTarget = RenderSystem.outputDepthTextureOverride;
+            healthBarPass.executes(() -> {
+                RenderTarget renderTarget = mainTarget.get();
+                GpuTextureView previousColorTarget = RenderSystem.outputColorTextureOverride;
+                GpuTextureView previousDepthTarget = RenderSystem.outputDepthTextureOverride;
 
-            RenderSystem.outputColorTextureOverride = renderTarget.getColorTextureView();
-            RenderSystem.outputDepthTextureOverride = renderTarget.getDepthTextureView();
+                RenderSystem.outputColorTextureOverride = renderTarget.getColorTextureView();
+                RenderSystem.outputDepthTextureOverride = renderTarget.getDepthTextureView();
 
-            try {
-                Renderer.flush();
-            } finally {
-                RenderSystem.outputColorTextureOverride = previousColorTarget;
-                RenderSystem.outputDepthTextureOverride = previousDepthTarget;
-            }
-        });
+                try {
+                    Renderer.flushOnTop();
+                } finally {
+                    RenderSystem.outputColorTextureOverride = previousColorTarget;
+                    RenderSystem.outputDepthTextureOverride = previousDepthTarget;
+                }
+            });
+        }
 
         try {
             original.call(frameGraphBuilder, graphicsResourceAllocator, inspector);
