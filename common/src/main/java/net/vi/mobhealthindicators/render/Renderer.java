@@ -11,8 +11,6 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.irisshaders.iris.api.v0.IrisApi;
-import net.irisshaders.iris.api.v0.IrisProgram;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -111,9 +109,7 @@ public final class Renderer {
      * pipeline still controls depth testing, blending and lightmap use.
      */
     public static void registerIrisPipelines() {
-        IrisApi iris = IrisApi.getInstance();
-        iris.assignPipeline(WORLD_HEALTH_BAR_PIPELINE, IrisProgram.ENTITIES_TRANSLUCENT);
-        iris.assignPipeline(ON_TOP_HEALTH_BAR_PIPELINE, IrisProgram.ENTITIES_TRANSLUCENT);
+        IrisCompat.registerPipelines(WORLD_HEALTH_BAR_PIPELINE, ON_TOP_HEALTH_BAR_PIPELINE);
     }
 
     /** Starts collection before vanilla extracts entity render states. */
