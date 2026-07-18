@@ -13,10 +13,29 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven {
-            name = "Modrinth"
-            url = "https://api.modrinth.com/maven"
+
+        // Keep Modrinth isolated to its own group. A temporary Modrinth outage
+        // must not disable resolution of Fabric API or other unrelated modules.
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "Modrinth"
+                    url = uri("https://api.modrinth.com/maven")
+                }
+            }
+            filter {
+                includeGroup "maven.modrinth"
+            }
         }
+
+        maven {
+            name = "CaffeineMC"
+            url = uri("https://maven.caffeinemc.net/releases")
+            content {
+                includeGroup "net.caffeinemc"
+            }
+        }
+
         maven {
             name = "ParchmentMC"
             url = "https://maven.parchmentmc.org/"
