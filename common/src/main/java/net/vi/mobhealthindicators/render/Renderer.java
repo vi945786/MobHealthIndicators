@@ -25,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Matrix4fc;
+import org.joml.Quaternionf;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -62,7 +63,7 @@ public final class Renderer {
     private static final Set<Integer> QUEUED_ENTITY_IDS = new HashSet<>();
 
     private static Vec3 cameraPosition = Vec3.ZERO;
-    private static float cameraYaw;
+    private static final Quaternionf CAMERA_ORIENTATION = new Quaternionf();
     private static boolean collecting;
     private static boolean commandsSorted;
     private static boolean worldCommandsFlushed;
@@ -88,7 +89,7 @@ public final class Renderer {
         COMMANDS.clear();
         QUEUED_ENTITY_IDS.clear();
         cameraPosition = camera.position();
-        cameraYaw = camera.yRot();
+        CAMERA_ORIENTATION.set(camera.rotation());
         collecting = true;
         commandsSorted = false;
         worldCommandsFlushed = false;
@@ -143,17 +144,18 @@ public final class Renderer {
                 renderState.z + renderOffset.z - cameraPosition.z
         );
 
-        // Match vanilla's name-display stack. The health bar belongs above each
-        // line that vanilla submitted for this entity.
+        // Match vanilla name-tag billboarding. Using only camera yaw leaves pitch
+        // in the view matrix and makes the bar slide or shear while looking up/down.
+        poseStack.mulPose(CAMERA_ORIENTATION);
+        poseStack.scale(pixelSize, pixelSize, pixelSize);
+
+        // Name and score offsets are screen-local pixels, not world-space Y.
         if (renderState.nameTag != null) {
-            poseStack.translate(0.0F, 9.0F * 1.15F * pixelSize, 0.0F);
+            poseStack.translate(0.0F, 9.0F * 1.15F, 0.0F);
         }
         if (renderState.scoreText != null) {
-            poseStack.translate(0.0F, 9.0F * 1.15F * pixelSize, 0.0F);
+            poseStack.translate(0.0F, 9.0F * 1.15F, 0.0F);
         }
-
-        poseStack.scale(pixelSize, pixelSize, pixelSize);
-        poseStack.last().pose().rotateY(getYaw(cameraYaw));
 
         int light = config.fullBright ? LightCoordsUtil.FULL_BRIGHT : renderState.lightCoords;
         float opacity = Mth.clamp(config.opacity / 100.0F, 0.0F, 1.0F);
@@ -224,7 +226,9 @@ public final class Renderer {
     private static void drawOnTopCommands() {
         RenderTarget mainTarget = client.getMainRenderTarget();
         ensureOnTopDepthTarget(mainTarget.width, mainTarget.height);
-        RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(onTopDepthTarget.getDepthTexture(), 1.0D);
+
+        // Minecraft 26.2 uses reversed depth, so the far-plane clear value is 0.
+        RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(onTopDepthTarget.getDepthTexture(), 0.0D);
 
         GpuBufferSlice previousProjection = RenderSystem.getProjectionMatrixBuffer();
         ProjectionType previousProjectionType = RenderSystem.getProjectionType();
@@ -308,16 +312,6 @@ public final class Renderer {
                 .setColor(1.0F, 1.0F, 1.0F, command.opacity())
                 .setUv(u, v)
                 .setLight(command.light());
-    }
-
-    private static float getYaw(double yaw) {
-        yaw = -Math.toRadians(yaw);
-        yaw += Math.PI;
-
-        if (yaw > Math.PI) yaw -= 2.0 * Math.PI;
-        if (yaw < -Math.PI) yaw += 2.0 * Math.PI;
-
-        return (float) yaw;
     }
 
     private record RenderCommand(
