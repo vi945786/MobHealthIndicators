@@ -2,21 +2,18 @@ package net.vi.mobhealthindicators.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
+import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
-import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.vi.mobhealthindicators.render.Renderer;
-import org.joml.Matrix4fc;
-import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,20 +28,24 @@ public abstract class LevelRendererMixin {
     @Final
     private LevelTargetBundle targets;
 
-    @Inject(method = "renderLevel", at = @At("HEAD"))
+    /**
+     * Minecraft 26.1 extracts every entity render state before renderLevel is
+     * entered. Collection must therefore begin here, not at renderLevel HEAD.
+     */
+    @Inject(method = "extractLevel", at = @At("HEAD"))
     private void mobhealthindicators$beginHealthBarFrame(
-            GraphicsResourceAllocator resourceAllocator, DeltaTracker deltaTracker, boolean renderOutline, CameraRenderState cameraState, Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog, Vector4f fogColor, boolean shouldRenderSky, ChunkSectionsToRender chunkSectionsToRender, CallbackInfo ci
+            DeltaTracker deltaTracker,
+            Camera camera,
+            float deltaPartialTick,
+            CallbackInfo ci
     ) {
-        Renderer.beginFrame(cameraState);
+        Renderer.beginFrame(camera);
     }
 
     /**
-     * Adds the health-bar pass immediately before the frame graph is executed.
-     *
-     * <p>The wrapped target lives in Mojang's frame-graph package instead of a
-     * mapped Minecraft state package. This deliberately avoids depending on a
-     * refmap for the injection descriptor, fixing NeoForge production crashes
-     * where CameraRenderState is relocated to renderer/state/level.</p>
+     * Appends a final level pass after the main pass, translucent features,
+     * particles, weather and the transparency post chain have all updated the
+     * main target.
      */
     @WrapOperation(
             method = "renderLevel",
@@ -65,14 +66,17 @@ public abstract class LevelRendererMixin {
 
         healthBarPass.executes(() -> {
             RenderTarget renderTarget = mainTarget.get();
+            GpuTextureView previousColorTarget = RenderSystem.outputColorTextureOverride;
+            GpuTextureView previousDepthTarget = RenderSystem.outputDepthTextureOverride;
+
             RenderSystem.outputColorTextureOverride = renderTarget.getColorTextureView();
             RenderSystem.outputDepthTextureOverride = renderTarget.getDepthTextureView();
 
             try {
                 Renderer.flush();
             } finally {
-                RenderSystem.outputColorTextureOverride = null;
-                RenderSystem.outputDepthTextureOverride = null;
+                RenderSystem.outputColorTextureOverride = previousColorTarget;
+                RenderSystem.outputDepthTextureOverride = previousDepthTarget;
             }
         });
 
