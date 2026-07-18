@@ -13,7 +13,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.vi.mobhealthindicators.render.Renderer;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -48,19 +47,25 @@ public abstract class LevelRendererMixin {
         Renderer.beginFrame(camera);
     }
 
+    /**
+     * Adds the health-bar pass immediately before the frame graph is executed.
+     *
+     * <p>The wrapped target lives in Mojang's frame-graph package instead of a
+     * mapped Minecraft state package. This deliberately avoids depending on a
+     * refmap for the injection descriptor, fixing NeoForge production crashes
+     * where CameraRenderState is relocated to renderer/state/level.</p>
+     */
     @WrapOperation(
             method = "renderLevel",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/LevelRenderer;addLateDebugPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/state/CameraRenderState;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lorg/joml/Matrix4f;)V"
+                    target = "Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;execute(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder$Inspector;)V"
             )
     )
-    private void mobhealthindicators$insertHealthBarPass(
-            LevelRenderer levelRenderer,
+    private void mobhealthindicators$executeWithHealthBarPass(
             FrameGraphBuilder frameGraphBuilder,
-            CameraRenderState cameraRenderState,
-            GpuBufferSlice shaderFog,
-            Matrix4f worldModelViewMatrix,
+            GraphicsResourceAllocator graphicsResourceAllocator,
+            FrameGraphBuilder.Inspector inspector,
             Operation<Void> original
     ) {
         FramePass healthBarPass = frameGraphBuilder.addPass("mobhealthindicators_health_bars");
@@ -77,10 +82,13 @@ public abstract class LevelRendererMixin {
             } finally {
                 RenderSystem.outputColorTextureOverride = null;
                 RenderSystem.outputDepthTextureOverride = null;
-                Renderer.endFrame();
             }
         });
 
-        original.call(levelRenderer, frameGraphBuilder, cameraRenderState, shaderFog, worldModelViewMatrix);
+        try {
+            original.call(frameGraphBuilder, graphicsResourceAllocator, inspector);
+        } finally {
+            Renderer.endFrame();
+        }
     }
 }
