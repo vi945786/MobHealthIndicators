@@ -55,13 +55,17 @@ public final class Renderer {
      * see-through bars sample the world lightmap. Normal bars write their depth
      * before vanilla copies it to the translucent targets, which gives glass,
      * water and particles the correct front/behind ordering.
+     *
+     * <p>The complete entity sampler contract is retained even though every
+     * vertex uses {@link OverlayTexture#NO_OVERLAY}. Iris replaces the vanilla
+     * shader program and still expects Sampler1 to be declared and bound.</p>
      */
     private static final RenderPipeline WORLD_HEALTH_BAR_PIPELINE = RenderPipelines.register(
             RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(modId, "pipeline/world_health_bar"))
                     .withShaderDefine("ALPHA_CUTOUT", 0.1F)
-                    .withShaderDefine("NO_OVERLAY")
                     .withShaderDefine("NO_CARDINAL_LIGHTING")
+                    .withSampler("Sampler1")
                     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
                     .withCull(false)
@@ -76,8 +80,8 @@ public final class Renderer {
             RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(modId, "pipeline/on_top_health_bar"))
                     .withShaderDefine("ALPHA_CUTOUT", 0.1F)
-                    .withShaderDefine("NO_OVERLAY")
                     .withShaderDefine("NO_CARDINAL_LIGHTING")
+                    .withSampler("Sampler1")
                     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .withDepthStencilState(Optional.empty())
                     .withCull(false)
@@ -232,6 +236,7 @@ public final class Renderer {
         RenderSetup setup = RenderSetup.builder(pipeline)
                 .withTexture("Sampler0", texture)
                 .useLightmap()
+                .useOverlay()
                 .createRenderSetup();
         return RenderType.create(name, setup);
     }
