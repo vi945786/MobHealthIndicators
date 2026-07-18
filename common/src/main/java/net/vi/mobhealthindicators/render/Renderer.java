@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static net.vi.mobhealthindicators.ModInit.client;
+import static net.vi.mobhealthindicators.ModInit.isIrisLoaded;
 import static net.vi.mobhealthindicators.ModInit.modId;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
@@ -128,8 +129,17 @@ public final class Renderer {
         onTopCommandsFlushed = false;
     }
 
+    /**
+     * Iris re-extracts and renders entities while building the shadow map. That
+     * pass uses the same FeatureRenderDispatcher methods as the main world pass,
+     * so it must not consume this frame's health-bar queue.
+     */
+    private static boolean isRenderingIrisShadowPass() {
+        return isIrisLoaded && IrisCompat.isRenderingShadowPass();
+    }
+
     public static boolean isCollecting() {
-        return collecting;
+        return collecting && !isRenderingIrisShadowPass();
     }
 
     public static boolean hasOnTopCommands() {
@@ -148,7 +158,7 @@ public final class Renderer {
             Identifier texture,
             boolean targeted
     ) {
-        if (!collecting || client == null || config == null || config.opacity <= 0) return;
+        if (!isCollecting() || client == null || config == null || config.opacity <= 0) return;
         if (!QUEUED_ENTITY_IDS.add(livingEntity.getId())) return;
 
         if (!(client.getTextureManager().getTexture(texture) instanceof DynamicTexture dynamicTexture)) return;
@@ -199,7 +209,10 @@ public final class Renderer {
      * depth to and renders its translucent targets.
      */
     public static void flushWorld() {
-        if (!collecting || worldCommandsFlushed) return;
+        // Iris calls FeatureRenderDispatcher.renderAllFeatures() for its shadow
+        // map before the normal main pass. Do not mark the world queue as flushed
+        // there; the main pass still needs to draw it.
+        if (!collecting || worldCommandsFlushed || isRenderingIrisShadowPass()) return;
         worldCommandsFlushed = true;
         sortCommands();
 
@@ -212,7 +225,7 @@ public final class Renderer {
 
     /** Draws only the explicitly always-on-top commands in the final pass. */
     public static void flushOnTop() {
-        if (!collecting || onTopCommandsFlushed) return;
+        if (!collecting || onTopCommandsFlushed || isRenderingIrisShadowPass()) return;
         onTopCommandsFlushed = true;
         sortCommands();
 
