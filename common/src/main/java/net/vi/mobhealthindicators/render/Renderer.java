@@ -1,7 +1,6 @@
 package net.vi.mobhealthindicators.render;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -18,7 +17,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.DisplaySlot;
 import org.joml.Matrix4f;
-import org.joml.Matrix4fStack;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,12 +29,14 @@ import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 
 /**
- * Collects immutable health-bar draw commands while entity render states are
- * extracted and flushes them after Minecraft has completed the level render.
+ * Collects immutable health-bar commands during entity render-state extraction
+ * and draws them from a dedicated late level frame-graph pass.
  *
- * <p>No raw OpenGL state is changed here. Both depth-tested and through-wall
- * bars use vanilla text render types so resource packs, shader mods, and the
- * current render target remain in control of the actual pipeline.</p>
+ * <p>The pass runs after translucent blocks, particles, weather and the level
+ * post chain while the level color and depth targets are still active. The
+ * actual draw uses vanilla text render types, so lightmap selection, alpha
+ * blending, resource-pack textures and shader-mod render-target overrides stay
+ * inside Minecraft's rendering pipeline. No raw OpenGL state is mutated.</p>
  */
 public final class Renderer {
     public static final float defaultPixelSize = 0.025f;
@@ -101,7 +101,7 @@ public final class Renderer {
         poseStack.last().pose().rotateY(getYaw(cameraYaw));
 
         int light = config.dynamicBrightness ? renderState.lightCoords : LightTexture.FULL_BRIGHT;
-        float opacity = Mth.clamp(config.opacity / 100.0F, 0.1F, 1.0F);
+        float opacity = Mth.clamp(config.opacity / 100.0F, 0.0F, 1.0F);
         boolean renderOnTop = config.renderThroughWalls || (targeted && config.renderOnTopOnHover);
 
         COMMANDS.add(new RenderCommand(
@@ -117,28 +117,22 @@ public final class Renderer {
     }
 
     /**
-     * Flushes after LevelRenderer has finished, but before first-person hands
-     * are drawn. The supplied matrix is the same world model-view matrix used
-     * for the level render.
+     * Draws all queued bars while the level frame-graph pass has its color and
+     * depth outputs installed in {@code RenderSystem}. The world model-view
+     * matrix is already active at this point.
      */
-    public static void flush(Matrix4f worldModelViewMatrix) {
+    public static void flush() {
         if (!collecting || COMMANDS.isEmpty()) return;
 
         COMMANDS.sort(Comparator.comparingDouble(RenderCommand::distanceToCameraSq).reversed());
 
-        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
-        modelViewStack.pushMatrix();
-        modelViewStack.mul(worldModelViewMatrix);
-        try {
-            // Depth-tested bars first, then the explicitly always-on-top set.
-            for (RenderCommand command : COMMANDS) {
-                if (!command.renderOnTop()) draw(command);
-            }
-            for (RenderCommand command : COMMANDS) {
-                if (command.renderOnTop()) draw(command);
-            }
-        } finally {
-            modelViewStack.popMatrix();
+        // Preserve depth occlusion for normal bars. Explicitly on-top bars are
+        // drawn last with the vanilla see-through text pipeline.
+        for (RenderCommand command : COMMANDS) {
+            if (!command.renderOnTop()) draw(command);
+        }
+        for (RenderCommand command : COMMANDS) {
+            if (command.renderOnTop()) draw(command);
         }
     }
 
