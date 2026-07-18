@@ -2,14 +2,12 @@ package net.vi.mobhealthindicators.mixin;
 
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.vi.mobhealthindicators.render.Renderer;
-import org.joml.Matrix4fStack;
 import org.joml.Matrix4fc;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,11 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Runs after Iris' LevelRenderer mixins so the final overlay is submitted only
- * after the shader pack has completed its composite and final passes.
- */
-@Mixin(value = LevelRenderer.class, priority = 900)
+@Mixin(LevelRenderer.class)
 public abstract class LevelRendererMixin {
 
     /**
@@ -39,12 +33,12 @@ public abstract class LevelRendererMixin {
     }
 
     /**
-     * TAIL is after vanilla's frame graph and after Iris finalizes the level. The
-     * world model-view matrix has already been popped by vanilla, so temporarily
-     * restore the same matrix used by the level before drawing the overlay.
+     * GameRenderer switches to its hand/HUD projection after this method returns.
+     * Capture the level projection, fog and model-view matrix so the late on-top
+     * overlay can temporarily restore the exact world transform.
      */
-    @Inject(method = "renderLevel", at = @At("TAIL"))
-    private void mobhealthindicators$renderOnTopAfterLevel(
+    @Inject(method = "renderLevel", at = @At("HEAD"))
+    private void mobhealthindicators$captureWorldRenderState(
             GraphicsResourceAllocator resourceAllocator,
             DeltaTracker deltaTracker,
             boolean renderOutline,
@@ -56,14 +50,6 @@ public abstract class LevelRendererMixin {
             ChunkSectionsToRender chunkSectionsToRender,
             CallbackInfo ci
     ) {
-        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
-        modelViewStack.pushMatrix();
-        modelViewStack.mul(modelViewMatrix);
-        try {
-            Renderer.flushOnTop();
-        } finally {
-            modelViewStack.popMatrix();
-            Renderer.endFrame();
-        }
+        Renderer.captureWorldRenderState(modelViewMatrix, terrainFog);
     }
 }
