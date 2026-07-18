@@ -10,7 +10,7 @@ import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.Tessellator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -279,7 +279,7 @@ public final class Renderer {
     }
 
     private static void draw(RenderCommand command, RenderType renderType) {
-        BufferBuilder bufferBuilder = Tesselator.getInstance().begin(renderType.mode(), renderType.format());
+        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(renderType.mode(), renderType.format());
         drawQuad(command, bufferBuilder);
         MeshData meshData = bufferBuilder.build();
         renderType.draw(meshData);
