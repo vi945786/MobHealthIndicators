@@ -1,50 +1,49 @@
 package net.vi.mobhealthindicators.render;
 
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.ProjectionType;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.shaders.UniformType;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
+import org.joml.Matrix4fc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
 import static net.vi.mobhealthindicators.ModInit.client;
 import static net.vi.mobhealthindicators.ModInit.isIrisLoaded;
-import static net.vi.mobhealthindicators.ModInit.modId;
 import static net.vi.mobhealthindicators.config.Config.config;
 import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 
 /**
  * Collects immutable health-bar commands while Minecraft extracts level render
  * state. Depth-tested bars are drawn between opaque terrain and vanilla's
- * translucent feature phase. Explicitly on-top bars are drawn after the level
- * renderer and any shader-pack final pass have completed.
+ * translucent feature phase. Explicitly on-top bars are drawn after
+ * GameRenderer has completed the level, shader-pack finalization, hands and
+ * screen effects.
  */
 public final class Renderer {
     public static final float defaultPixelSize = 0.025F;
@@ -52,35 +51,12 @@ public final class Renderer {
     public static final int heightDivisor = 50;
 
     /**
-     * Ordinary bars use the exact same RenderType as vanilla world text. This is
-     * important for shader packs: Iris already knows how to route this pipeline,
-     * extend its vertex format and provide stable text lighting/motion semantics.
+     * Both paths use vanilla's world-text render type. Iris already has a stable
+     * mapping for this exact pipeline and vertex format, and it samples the
+     * lightmap used by dynamic-brightness mode.
      */
     private static final Function<Identifier, RenderType> WORLD_HEALTH_BAR_TYPES = RenderTypes::text;
-
-    /**
-     * Vanilla's see-through text shader omits the lightmap. The custom on-top
-     * variant instead uses the normal lightmapped text shaders with depth testing
-     * disabled. It is drawn after shader post-processing with Iris bypassed.
-     */
-    private static final RenderPipeline ON_TOP_HEALTH_BAR_PIPELINE = RenderPipeline.builder()
-            .withLocation(Identifier.fromNamespaceAndPath(modId, "pipeline/on_top_health_bar"))
-            .withVertexShader("core/rendertype_text")
-            .withFragmentShader("core/rendertype_text")
-            .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
-            .withUniform("Projection", UniformType.UNIFORM_BUFFER)
-            .withUniform("Fog", UniformType.UNIFORM_BUFFER)
-            .withSampler("Sampler0")
-            .withSampler("Sampler2")
-            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-            .withDepthStencilState(Optional.empty())
-            .withCull(false)
-            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS)
-            .build();
-
-    private static final Function<Identifier, RenderType> ON_TOP_HEALTH_BAR_TYPES = Util.memoize(
-            texture -> createOnTopRenderType(texture)
-    );
+    private static final Function<Identifier, RenderType> ON_TOP_HEALTH_BAR_TYPES = RenderTypes::text;
 
     private static final List<RenderCommand> COMMANDS = new ArrayList<>();
     private static final Set<Integer> QUEUED_ENTITY_IDS = new HashSet<>();
@@ -91,6 +67,18 @@ public final class Renderer {
     private static boolean commandsSorted;
     private static boolean worldCommandsFlushed;
     private static boolean onTopCommandsFlushed;
+
+    /** Render state captured before LevelRenderer and restored for the late overlay. */
+    private static final Matrix4f WORLD_MODEL_VIEW = new Matrix4f();
+    private static GpuBufferSlice worldProjection;
+    private static ProjectionType worldProjectionType = ProjectionType.PERSPECTIVE;
+    private static GpuBufferSlice worldFog;
+
+    /**
+     * A private depth attachment lets the normal lightmapped text pipeline pass
+     * depth testing without clearing or modifying Minecraft's real depth buffer.
+     */
+    private static TextureTarget onTopDepthTarget;
 
     private Renderer() {
     }
@@ -105,6 +93,17 @@ public final class Renderer {
         commandsSorted = false;
         worldCommandsFlushed = false;
         onTopCommandsFlushed = false;
+    }
+
+    /**
+     * Captures the matrices and fog that were active for the level. GameRenderer
+     * switches to the hand/HUD projection before the final on-top draw runs.
+     */
+    public static void captureWorldRenderState(Matrix4fc modelViewMatrix, GpuBufferSlice terrainFog) {
+        WORLD_MODEL_VIEW.set(modelViewMatrix);
+        worldProjection = RenderSystem.getProjectionMatrixBuffer();
+        worldProjectionType = RenderSystem.getProjectionType();
+        worldFog = terrainFog;
     }
 
     /**
@@ -176,8 +175,8 @@ public final class Renderer {
     /**
      * Draws ordinary bars after opaque terrain exists but before vanilla copies
      * depth to and renders its translucent targets. Using RenderTypes.text keeps
-     * the shader-pack path identical to vanilla name tags while still writing the
-     * bar's depth for correct glass, water, particle and weather composition.
+     * the shader-pack path identical to vanilla name tags while writing the bar's
+     * depth for correct glass, water, particle and weather composition.
      */
     public static void flushWorld() {
         // Iris calls FeatureRenderDispatcher.renderAllFeatures() for its shadow
@@ -194,28 +193,73 @@ public final class Renderer {
     }
 
     /**
-     * Draws always-on-top bars after shader post-processing. When Iris is loaded,
-     * the draw temporarily bypasses its gbuffer replacement and extended vertex
-     * format, preventing temporal ghosting, motion-vector trails and brightness
-     * instability from shader-pack entity programs.
+     * Draws always-on-top bars after GameRenderer.renderLevel has returned. The
+     * exact vanilla text pipeline is used with Iris bypassed, while color is sent
+     * to the real main target and depth is sent to a private cleared attachment.
+     * This preserves lightmap brightness without feeding the bar into shader-pack
+     * temporal history or requiring a custom Iris pipeline mapping.
      */
     public static void flushOnTop() {
         if (!collecting || onTopCommandsFlushed || isRenderingIrisShadowPass()) return;
         onTopCommandsFlushed = true;
         sortCommands();
 
-        Runnable drawCommands = () -> {
+        boolean hasOnTopCommands = false;
+        for (RenderCommand command : COMMANDS) {
+            if (command.renderOnTop()) {
+                hasOnTopCommands = true;
+                break;
+            }
+        }
+        if (!hasOnTopCommands || client == null) return;
+
+        Runnable drawCommands = Renderer::drawOnTopCommands;
+        if (isIrisLoaded) {
+            IrisCompat.runVanilla(drawCommands);
+        } else {
+            drawCommands.run();
+        }
+    }
+
+    private static void drawOnTopCommands() {
+        RenderTarget mainTarget = client.getMainRenderTarget();
+        ensureOnTopDepthTarget(mainTarget.width, mainTarget.height);
+        RenderSystem.getDevice().createCommandEncoder().clearDepthTexture(onTopDepthTarget.getDepthTexture(), 1.0D);
+
+        GpuBufferSlice previousProjection = RenderSystem.getProjectionMatrixBuffer();
+        ProjectionType previousProjectionType = RenderSystem.getProjectionType();
+        GpuBufferSlice previousFog = RenderSystem.getShaderFog();
+        GpuTextureView previousColorTarget = RenderSystem.outputColorTextureOverride;
+        GpuTextureView previousDepthTarget = RenderSystem.outputDepthTextureOverride;
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+
+        modelViewStack.pushMatrix();
+        modelViewStack.set(WORLD_MODEL_VIEW);
+        RenderSystem.setProjectionMatrix(worldProjection, worldProjectionType);
+        RenderSystem.setShaderFog(worldFog);
+        RenderSystem.outputColorTextureOverride = mainTarget.getColorTextureView();
+        RenderSystem.outputDepthTextureOverride = onTopDepthTarget.getDepthTextureView();
+
+        try {
             for (RenderCommand command : COMMANDS) {
                 if (command.renderOnTop()) {
                     draw(command, ON_TOP_HEALTH_BAR_TYPES.apply(command.texture()));
                 }
             }
-        };
+        } finally {
+            RenderSystem.outputDepthTextureOverride = previousDepthTarget;
+            RenderSystem.outputColorTextureOverride = previousColorTarget;
+            RenderSystem.setShaderFog(previousFog);
+            RenderSystem.setProjectionMatrix(previousProjection, previousProjectionType);
+            modelViewStack.popMatrix();
+        }
+    }
 
-        if (isIrisLoaded) {
-            IrisCompat.runVanilla(drawCommands);
-        } else {
-            drawCommands.run();
+    private static void ensureOnTopDepthTarget(int width, int height) {
+        if (onTopDepthTarget == null) {
+            onTopDepthTarget = new TextureTarget("Mob Health Indicators on-top depth", width, height, true);
+        } else if (onTopDepthTarget.width != width || onTopDepthTarget.height != height) {
+            onTopDepthTarget.resize(width, height);
         }
     }
 
@@ -226,14 +270,6 @@ public final class Renderer {
         onTopCommandsFlushed = false;
         COMMANDS.clear();
         QUEUED_ENTITY_IDS.clear();
-    }
-
-    private static RenderType createOnTopRenderType(Identifier texture) {
-        RenderSetup setup = RenderSetup.builder(ON_TOP_HEALTH_BAR_PIPELINE)
-                .withTexture("Sampler0", texture)
-                .useLightmap()
-                .createRenderSetup();
-        return RenderType.create("mobhealthindicators_on_top_health_bar", setup);
     }
 
     private static void sortCommands() {
