@@ -1,32 +1,28 @@
 package net.vi.mobhealthindicators.mixin;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
-import com.mojang.blaze3d.framegraph.FramePass;
-import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
-import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTextureView;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.LevelTargetBundle;
+import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.vi.mobhealthindicators.render.Renderer;
-import org.spongepowered.asm.mixin.Final;
+import org.joml.Matrix4fStack;
+import org.joml.Matrix4fc;
+import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(LevelRenderer.class)
+/**
+ * Runs after Iris' LevelRenderer mixins so the final overlay is submitted only
+ * after the shader pack has completed its composite and final passes.
+ */
+@Mixin(value = LevelRenderer.class, priority = 900)
 public abstract class LevelRendererMixin {
-
-    @Shadow
-    @Final
-    private LevelTargetBundle targets;
 
     /**
      * Minecraft 26.1 extracts entity render states before renderLevel builds the
@@ -43,48 +39,30 @@ public abstract class LevelRendererMixin {
     }
 
     /**
-     * Appends only the explicitly always-on-top bars after vanilla's transparent
-     * targets, particles, clouds and weather have been composited into main.
-     * Ordinary bars are drawn earlier by FeatureRenderDispatcherMixin.
+     * TAIL is after vanilla's frame graph and after Iris finalizes the level. The
+     * world model-view matrix has already been popped by vanilla, so temporarily
+     * restore the same matrix used by the level before drawing the overlay.
      */
-    @WrapOperation(
-            method = "renderLevel",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;execute(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder$Inspector;)V"
-            )
-    )
-    private void mobhealthindicators$executeWithHealthBarPass(
-            FrameGraphBuilder frameGraphBuilder,
-            GraphicsResourceAllocator graphicsResourceAllocator,
-            FrameGraphBuilder.Inspector inspector,
-            Operation<Void> original
+    @Inject(method = "renderLevel", at = @At("TAIL"))
+    private void mobhealthindicators$renderOnTopAfterLevel(
+            GraphicsResourceAllocator resourceAllocator,
+            DeltaTracker deltaTracker,
+            boolean renderOutline,
+            CameraRenderState cameraState,
+            Matrix4fc modelViewMatrix,
+            GpuBufferSlice terrainFog,
+            Vector4f fogColor,
+            boolean shouldRenderSky,
+            ChunkSectionsToRender chunkSectionsToRender,
+            CallbackInfo ci
     ) {
-        if (Renderer.hasOnTopCommands()) {
-            FramePass healthBarPass = frameGraphBuilder.addPass("mobhealthindicators_on_top_health_bars");
-            this.targets.main = healthBarPass.readsAndWrites(this.targets.main);
-            ResourceHandle<RenderTarget> mainTarget = this.targets.main;
-
-            healthBarPass.executes(() -> {
-                RenderTarget renderTarget = mainTarget.get();
-                GpuTextureView previousColorTarget = RenderSystem.outputColorTextureOverride;
-                GpuTextureView previousDepthTarget = RenderSystem.outputDepthTextureOverride;
-
-                RenderSystem.outputColorTextureOverride = renderTarget.getColorTextureView();
-                RenderSystem.outputDepthTextureOverride = renderTarget.getDepthTextureView();
-
-                try {
-                    Renderer.flushOnTop();
-                } finally {
-                    RenderSystem.outputColorTextureOverride = previousColorTarget;
-                    RenderSystem.outputDepthTextureOverride = previousDepthTarget;
-                }
-            });
-        }
-
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+        modelViewStack.pushMatrix();
+        modelViewStack.mul(modelViewMatrix);
         try {
-            original.call(frameGraphBuilder, graphicsResourceAllocator, inspector);
+            Renderer.flushOnTop();
         } finally {
+            modelViewStack.popMatrix();
             Renderer.endFrame();
         }
     }
