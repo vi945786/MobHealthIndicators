@@ -55,7 +55,7 @@ public abstract class LevelRendererMixin {
     )
     private void mobhealthindicators$executeWithHealthBarPass(
             FrameGraphBuilder frameGraphBuilder,
-            GraphicsResourceAllocator resourceAllocator,
+            GraphicsResourceAllocator graphicsResourceAllocator,
             FrameGraphBuilder.Inspector inspector,
             Operation<Void> original
     ) {
@@ -77,7 +77,7 @@ public abstract class LevelRendererMixin {
         });
 
         try {
-            original.call(frameGraphBuilder, resourceAllocator, inspector);
+            original.call(frameGraphBuilder, graphicsResourceAllocator, inspector);
         } finally {
             Renderer.endFrame();
         }
