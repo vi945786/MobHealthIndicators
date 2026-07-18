@@ -44,8 +44,8 @@ import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
 /**
  * Collects immutable health-bar commands while Minecraft extracts level render
  * state. Depth-tested bars are drawn between opaque terrain and vanilla's
- * translucent feature phase; explicitly on-top bars are drawn in a final
- * frame-graph pass after level transparency composition has completed.
+ * translucent feature phase. Explicitly on-top bars are drawn after the level
+ * frame graph and shader-pack final pass have completed.
  */
 public final class Renderer {
     public static final float defaultPixelSize = 0.025F;
@@ -95,37 +95,34 @@ public final class Renderer {
     }
 
     /**
-     * Creates a text-compatible pipeline with configurable depth testing. The
-     * regular text shaders provide alpha cutout, fog and lightmap sampling while
-     * avoiding entity-specific diffuse lighting and velocity assumptions.
+     * Creates an unregistered text-compatible pipeline with configurable depth
+     * testing. Keeping these pipelines out of Minecraft's static preload list is
+     * important for the post-shader on-top path: Iris must not precompile that
+     * pipeline with a gbuffer override before the final overlay draw.
      */
     private static RenderPipeline createHealthBarPipeline(
             String path,
             Optional<DepthStencilState> depthStencilState
     ) {
-        return RenderPipelines.register(
-                RenderPipeline.builder()
-                        .withLocation(Identifier.fromNamespaceAndPath(modId, path))
-                        .withVertexShader("core/rendertype_text")
-                        .withFragmentShader("core/rendertype_text")
-                        .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
-                        .withUniform("Projection", UniformType.UNIFORM_BUFFER)
-                        .withUniform("Fog", UniformType.UNIFORM_BUFFER)
-                        .withSampler("Sampler0")
-                        .withSampler("Sampler2")
-                        .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-                        .withDepthStencilState(depthStencilState)
-                        .withCull(false)
-                        .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS)
-                        .build()
-        );
+        return RenderPipeline.builder()
+                .withLocation(Identifier.fromNamespaceAndPath(modId, path))
+                .withVertexShader("core/rendertype_text")
+                .withFragmentShader("core/rendertype_text")
+                .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
+                .withUniform("Projection", UniformType.UNIFORM_BUFFER)
+                .withUniform("Fog", UniformType.UNIFORM_BUFFER)
+                .withSampler("Sampler0")
+                .withSampler("Sampler2")
+                .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+                .withDepthStencilState(depthStencilState)
+                .withCull(false)
+                .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS)
+                .build();
     }
 
-    /**
-     * Copies Iris' native text-pipeline mapping onto the custom depth variants.
-     */
+    /** Copies Iris' native text-pipeline mapping onto the in-world variant. */
     public static void registerIrisPipelines() {
-        IrisCompat.registerPipelines(WORLD_HEALTH_BAR_PIPELINE, ON_TOP_HEALTH_BAR_PIPELINE);
+        IrisCompat.registerWorldPipeline(WORLD_HEALTH_BAR_PIPELINE);
     }
 
     /** Starts collection before vanilla extracts entity render states. */
@@ -151,15 +148,6 @@ public final class Renderer {
 
     public static boolean isCollecting() {
         return collecting && !isRenderingIrisShadowPass();
-    }
-
-    public static boolean hasOnTopCommands() {
-        if (!collecting || onTopCommandsFlushed) return false;
-
-        for (RenderCommand command : COMMANDS) {
-            if (command.renderOnTop()) return true;
-        }
-        return false;
     }
 
     public static void queue(
@@ -234,16 +222,29 @@ public final class Renderer {
         }
     }
 
-    /** Draws only the explicitly always-on-top commands in the final pass. */
+    /**
+     * Draws always-on-top bars after shader post-processing. When Iris is loaded,
+     * the draw temporarily bypasses its gbuffer program replacement and extended
+     * vertex format so the final overlay cannot be fed into temporal AA, motion
+     * blur, bloom history, or an already-finalized shader render target.
+     */
     public static void flushOnTop() {
         if (!collecting || onTopCommandsFlushed || isRenderingIrisShadowPass()) return;
         onTopCommandsFlushed = true;
         sortCommands();
 
-        for (RenderCommand command : COMMANDS) {
-            if (command.renderOnTop()) {
-                draw(command, ON_TOP_HEALTH_BAR_TYPES.apply(command.texture()));
+        Runnable drawCommands = () -> {
+            for (RenderCommand command : COMMANDS) {
+                if (command.renderOnTop()) {
+                    draw(command, ON_TOP_HEALTH_BAR_TYPES.apply(command.texture()));
+                }
             }
+        };
+
+        if (isIrisLoaded) {
+            IrisCompat.runVanilla(drawCommands);
+        } else {
+            drawCommands.run();
         }
     }
 
