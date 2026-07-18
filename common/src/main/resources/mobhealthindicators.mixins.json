@@ -1,15 +1,16 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "refmap": "mobhealthindicators.refmap.json",
   "package": "net.vi.mobhealthindicators.mixin",
   "client": [
-    "EntityMixin",
+    "ClientPacketListenerMixin",
     "EntityRendererMixin",
-    "EntityTypeAccessor",
-    "GameRendererAccessor",
-    "LevelAccessor",
+    "FeatureRenderDispatcherMixin",
+    "GameRendererMixin",
+    "LevelRendererMixin",
+    "LocalPlayerAccessor",
     "MinecraftMixin",
+    "OptionsMixin",
     "ReloadableResourceManagerImplMixin"
   ],
   "injectors": {

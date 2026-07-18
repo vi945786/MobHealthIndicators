@@ -1,37 +1,62 @@
 plugins {
 	id 'java'
-	id 'fabric-loom' version "${fabric_loom_version}"
+	id 'net.fabricmc.fabric-loom' version "${fabric_loom_version}"
 }
 
 repositories {
 	maven { url "https://maven.terraformersmc.com/releases/" }
 }
 
+// Optional renderer mods are useful for runClient, but they are not build-time
+// dependencies of Mob Health Indicators. Keeping them out of plain `build`
+// makes releases reproducible even when a third-party download service is down.
+def includeRenderMods = providers.gradleProperty("includeRenderMods")
+        .map { it.toBoolean() }
+        .orElse(gradle.startParameter.taskNames.any { it.toLowerCase().contains("runclient") })
+        .get()
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
+	implementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+
+    runtimeOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    implementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
+    compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+    if (includeRenderMods) {
+        runtimeOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+        runtimeOnly "net.caffeinemc:sodium-fabric:${project.sodium_version}"
+        runtimeOnly "maven.modrinth:iris:${project.iris_version}-fabric"
     }
-	modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-    modImplementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
-	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
-
-    modRuntimeOnly "maven.modrinth:sodium:mc1.21.9-0.7.0-fabric"
-    modRuntimeOnly "maven.modrinth:iris:1.9.4+1.21.10-fabric"
-    modRuntimeOnly "org.anarres:jcpp:1.4.14"
-    modRuntimeOnly "io.github.douira:glsl-transformer:2.0.1"
-    modRuntimeOnly "io.github.douira:glsl-preprocessor:1.0.0"
 }
 
 loom {
-    def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
+    def aw = project(':common').file("src/main/resources/${mod_id}.classtweaker")
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
-    mixin {
-        defaultRefmapName.set("${mod_id}.refmap.json")
+
+    runs {
+        client {
+            runDir = "../run"
+            ideConfigGenerated = true
+            client()
+        }
     }
+}
+
+processResources {
+    dependsOn(configurations.commonResources)
+    from(configurations.commonResources)
+
+    def props = [version: project.mod_version]
+    inputs.properties(props)
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.mod_version
+    }
+}
+
+tasks.named("check") {
+    dependsOn "validateAccessWidener"
 }

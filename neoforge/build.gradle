@@ -10,9 +10,19 @@ neoForge {
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
     }
-    parchment {
-        minecraftVersion = "${project.minecraft_version}"
-        mappingsVersion = "${project.parchment_version}"
+    validateAccessTransformers = true
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+
+    runs {
+        client {
+            gameDirectory = project.file("../run")
+            client()
+        }
     }
 }
 
@@ -23,7 +33,31 @@ repositories {
     }
 }
 
+// Sodium and Iris are optional compatibility-test dependencies, not required
+// to compile or package the mod. They are enabled automatically for runClient
+// and can be forced for another task with -PincludeRenderMods=true.
+def includeRenderMods = providers.gradleProperty("includeRenderMods")
+        .map { it.toBoolean() }
+        .orElse(gradle.startParameter.taskNames.any { it.toLowerCase().contains("runclient") })
+        .get()
+
 dependencies {
     implementation "net.neoforged:neoforge:${project.neoforge_loader_version}"
     implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
+
+    if (includeRenderMods) {
+        runtimeOnly "net.caffeinemc:sodium-neoforge-mod:${project.sodium_version}"
+        runtimeOnly "maven.modrinth:iris:${project.iris_version}-neoforge"
+    }
+}
+
+processResources {
+    dependsOn(configurations.commonResources)
+    from(configurations.commonResources)
+
+    inputs.property "version", project.mod_version
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.mod_version
+    }
 }

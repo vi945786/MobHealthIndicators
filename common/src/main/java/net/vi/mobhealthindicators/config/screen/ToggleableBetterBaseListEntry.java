@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import me.shedaniel.clothconfig2.api.Expandable;
 import me.shedaniel.clothconfig2.gui.entries.TooltipListEntry;
 import me.shedaniel.math.Rectangle;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -13,7 +13,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 import static net.vi.mobhealthindicators.ModInit.client;
 
 public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListCell, SELF extends ToggleableBetterBaseListEntry<T, C, SELF>> extends TooltipListEntry<List<T>> implements Expandable {
-    protected static final ResourceLocation CONFIG_TEX = ResourceLocation.fromNamespaceAndPath("cloth-config2", "textures/gui/cloth_config.png");
+    protected static final Identifier CONFIG_TEX = Identifier.fromNamespaceAndPath("cloth-config2", "textures/gui/cloth_config.png");
     protected final @NotNull List<C> cells;
     protected final @NotNull List<GuiEventListener> widgets;
     protected final @NotNull List<NarratableEntry> narratables;
@@ -263,8 +263,8 @@ public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListC
         }
     }
 
-    public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isHovered, float delta) {
-        super.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isHovered, delta);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isHovered, float delta) {
+        super.extractRenderState(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isHovered, delta);
         BetterBaseListCell focused = this.isExpanded() && this.getFocused() != null && this.getFocused() instanceof BetterBaseListCell ? (BetterBaseListCell)this.getFocused() : null;
         boolean insideLabel = this.labelWidget.rectangle.contains(mouseX, mouseY);
         boolean insideCreateNew = this.isInsideCreateNew(mouseX, mouseY);
@@ -281,22 +281,22 @@ public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListC
         this.resetWidget.setX(x + entryWidth - this.resetWidget.getWidth());
         this.resetWidget.setY(y);
         this.resetWidget.active = this.isEditable() && this.getDefaultValue().isPresent() && !this.isMatchDefault();
-        this.resetWidget.render(graphics, mouseX, mouseY, delta);
+        this.resetWidget.extractRenderState(graphics, mouseX, mouseY, delta);
 
         this.toggleWidget.setX(x + entryWidth - 150);
         this.toggleWidget.setY(y);
         this.toggleWidget.active = this.isEditable();
-        this.toggleWidget.render(graphics, mouseX, mouseY, delta);
+        this.toggleWidget.extractRenderState(graphics, mouseX, mouseY, delta);
         this.toggleWidget.setMessage(this.getYesNoText(this.toggled.get()));
         this.toggleWidget.setWidth(150 - this.resetWidget.getWidth() - 2);
 
         int offset = (!this.isInsertButtonEnabled() && !this.isDeleteButtonEnabled() ? 0 : 6) + (this.isInsertButtonEnabled() ? 9 : 0) + (this.isDeleteButtonEnabled() ? 9 : 0);
-        graphics.drawString(client.font, this.getDisplayedFieldName().getVisualOrderText(), x + offset, y + 6, this.getPreferredTextColor());
+        graphics.text(client.font, this.getDisplayedFieldName().getVisualOrderText(), x + offset, y + 6, this.getPreferredTextColor());
         if (this.isExpanded()) {
             int yy = y + 24;
 
             for(BetterBaseListCell cell : this.cells) {
-                cell.render(graphics, -1, yy, x + 14, entryWidth - 14, cell.getCellHeight(), mouseX, mouseY, this.getParent().getFocused() != null && this.getParent().getFocused().equals(this) && this.getFocused() != null && this.getFocused().equals(cell), delta);
+                cell.extractRenderState(graphics, -1, yy, x + 14, entryWidth - 14, cell.getCellHeight(), mouseX, mouseY, this.getParent().getFocused() != null && this.getParent().getFocused().equals(this) && this.getFocused() != null && this.getFocused().equals(cell), delta);
                 cell.updateBounds(true, x + 14, yy, entryWidth - 14, cell.getCellHeight());
                 yy += cell.getCellHeight();
             }
@@ -316,7 +316,7 @@ public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListC
     }
 
     @Override
-    public void lateRender(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void lateRender(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.lateRender(graphics, mouseX, mouseY, delta);
         BetterBaseListCell focused = !isExpanded() || getFocused() == null || !(getFocused() instanceof BetterBaseListCell) ? null : (BetterBaseListCell) getFocused();
         if(focused != null) {
@@ -358,6 +358,12 @@ public abstract class ToggleableBetterBaseListEntry<T, C extends BetterBaseListC
             }
 
             return false;
+        }
+    }
+
+    public void setFocused(@Nullable GuiEventListener guiEventListener) {
+        if(getFocused() != guiEventListener) {
+            super.setFocused(guiEventListener);
         }
     }
 

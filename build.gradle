@@ -7,16 +7,35 @@ subprojects {
 
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+            languageVersion = JavaLanguageVersion.of(25)
         }
     }
 
     repositories {
         mavenCentral()
-        maven {
-            name = "Modrinth"
-            url = "https://api.modrinth.com/maven"
+
+        // Keep Modrinth isolated to its own group. A temporary Modrinth outage
+        // must not disable resolution of Fabric API or other unrelated modules.
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "Modrinth"
+                    url = uri("https://api.modrinth.com/maven")
+                }
+            }
+            filter {
+                includeGroup "maven.modrinth"
+            }
         }
+
+        maven {
+            name = "CaffeineMC"
+            url = uri("https://maven.caffeinemc.net/releases")
+            content {
+                includeGroup "net.caffeinemc"
+            }
+        }
+
         maven {
             name = "ParchmentMC"
             url = "https://maven.parchmentmc.org/"
@@ -39,32 +58,31 @@ subprojects {
         compileOnly project(':common')
         commonJava project(path: ':common', configuration: 'commonJava')
         commonResources project(path: ':common', configuration: 'commonResources')
-        compileOnly project(path: ':common', configuration: 'stub')
     }
 
     tasks.named('compileJava', JavaCompile) {
         dependsOn(configurations.commonJava)
         source(configurations.commonJava)
     }
+}
 
-    base {
-        archivesName = "${project.archives_base_name}-${project.mod_version}-${project.minecraft_version}-${project.name}"
+jar {
+    dependsOn subprojects.collect {
+        it.tasks.named('build')
     }
 
-    jar {
-         from(rootProject.file("LICENSE")) {
-            rename { "${it}_${project.archives_base_name}"}
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    subprojects.each {
+        from(it.tasks.named('jar', Jar).flatMap { it.archiveFile }.map { zipTree(it.asFile) }) {
+            exclude 'META-INF/MANIFEST.MF'
         }
     }
 
-    processResources {
-        dependsOn(configurations.commonResources)
-        from(configurations.commonResources)
-
-        inputs.property "version", project.mod_version
-
-        filesMatching(["fabric.mod.json", "META-INF/neoforge.mods.toml"]) {
-            expand "version": project.mod_version
-        }
+    from(rootProject.file("LICENSE")) {
+        rename { "${it}_${project.archives_base_name}" }
     }
+}
+
+base {
+    archivesName = "${project.archives_base_name}-${project.mod_version}-${project.minecraft_version}"
 }

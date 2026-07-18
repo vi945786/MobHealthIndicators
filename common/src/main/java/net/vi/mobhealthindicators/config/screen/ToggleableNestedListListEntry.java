@@ -14,7 +14,7 @@ import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ReferenceProvider;
 import me.shedaniel.clothconfig2.gui.widget.DynamicEntryListWidget;
 import me.shedaniel.math.Rectangle;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -69,13 +69,13 @@ public class ToggleableNestedListListEntry<T, INNER extends AbstractConfigListEn
             return this.nestedEntry.getItemHeight();
         }
 
-        public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isSelected, float delta) {
+        public void extractRenderState(GuiGraphicsExtractor graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isSelected, float delta) {
             this.nestedEntry.setParent(((ToggleableNestedListListEntry)this.listListEntry).getParent());
             this.nestedEntry.setScreen(this.listListEntry.getConfigScreen());
-            this.nestedEntry.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isSelected, delta);
+            this.nestedEntry.extractRenderState(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isSelected, delta);
         }
 
-        public void lateRender(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        public void lateRender(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         	nestedEntry.setParent((DynamicEntryListWidget) listListEntry.getParent());
             nestedEntry.setScreen(listListEntry.getConfigScreen());
             nestedEntry.lateRender(graphics, mouseX, mouseY, delta);

@@ -53,8 +53,8 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
         this.selectionElement = new SelectionElement<>(this, new Rectangle(0, 0, fieldName.getString().isBlank() ? 300 : 150, 20), new DefaultDropdownMenuElement<>(selections == null ? ImmutableList.of() : ImmutableList.copyOf(selections)), topRenderer, cellCreator);
     }
 
-    public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isHovered, float delta) {
-        super.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isHovered, delta);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean isHovered, float delta) {
+        super.extractRenderState(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, isHovered, delta);
         Window window = client.getWindow();
         this.resetButton.active = this.isEditable() && this.getDefaultValue().isPresent() && (!this.defaultValue.get().equals(this.getValue()) || this.getConfigError().isPresent());
         this.resetButton.setY(y);
@@ -63,18 +63,18 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
         Component displayedFieldName = this.getDisplayedFieldName();
         boolean hasName = !displayedFieldName.getString().isBlank();
         if (client.font.isBidirectional()) {
-            graphics.drawString(client.font, displayedFieldName.getVisualOrderText(), window.getGuiScaledWidth() - x - client.font.width(displayedFieldName), y + 6, this.getPreferredTextColor());
+            graphics.text(client.font, displayedFieldName.getVisualOrderText(), window.getGuiScaledWidth() - x - client.font.width(displayedFieldName), y + 6, this.getPreferredTextColor());
             this.resetButton.setX(x);
             this.selectionElement.bounds.x = x + this.resetButton.getWidth() + 1;
         } else {
-            graphics.drawString(client.font, displayedFieldName.getVisualOrderText(), x, y + 6, this.getPreferredTextColor());
+            graphics.text(client.font, displayedFieldName.getVisualOrderText(), x, y + 6, this.getPreferredTextColor());
             this.resetButton.setX(x + entryWidth - this.resetButton.getWidth());
             this.selectionElement.bounds.x = x + (hasName ? entryWidth - 150 : 0) + 1;
         }
 
         this.selectionElement.bounds.width = (hasName ? 150 : entryWidth) - resetButton.getWidth() - 4;
-        this.resetButton.render(graphics, mouseX, mouseY, delta);
-        this.selectionElement.render(graphics, mouseX, mouseY, delta);
+        this.resetButton.extractRenderState(graphics, mouseX, mouseY, delta);
+        this.selectionElement.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 
     public boolean isEdited() {
@@ -124,7 +124,7 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
         return this.selectionElement.topRenderer.getError();
     }
 
-    public void lateRender(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void lateRender(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         this.selectionElement.lateRender(graphics, mouseX, mouseY, delta);
     }
 
@@ -168,13 +168,13 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             this.topRenderer.entry = entry;
         }
 
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             graphics.fill(this.bounds.x, this.bounds.y, this.bounds.x + this.bounds.width, this.bounds.y + this.bounds.height, this.topRenderer.isSelected ? -1 : -6250336);
             graphics.fill(this.bounds.x + 1, this.bounds.y + 1, this.bounds.x + this.bounds.width - 1, this.bounds.y + this.bounds.height - 1, -16777216);
-            this.topRenderer.render(graphics, mouseX, mouseY, this.bounds.x, this.bounds.y, this.bounds.width, this.bounds.height, delta);
+            this.topRenderer.extractRenderState(graphics, mouseX, mouseY, this.bounds.x, this.bounds.y, this.bounds.width, this.bounds.height, delta);
             this.topRenderer.updateBounds(this.bounds);
             if (this.menu.isExpanded()) {
-                this.menu.render(graphics, mouseX, mouseY, this.bounds, delta);
+                this.menu.extractRenderState(graphics, mouseX, mouseY, this.bounds, delta);
             }
 
         }
@@ -185,11 +185,11 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             return this.topRenderer;
         }
 
-        public boolean mouseScrolled(double double_1, double double_2, double amountX, double amountY) {
-            return this.menu.isExpanded() ? this.menu.mouseScrolled(double_1, double_2, amountX, amountY) : false;
+        public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+            return this.menu.isExpanded() && this.menu.mouseScrolled(x, y, scrollX, scrollY);
         }
 
-        public void lateRender(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        public void lateRender(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             if (this.menu.isExpanded()) {
                 this.menu.lateRender(graphics, mouseX, mouseY, delta);
             }
@@ -249,9 +249,9 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
 
         public abstract void initCells();
 
-        public abstract void render(GuiGraphics var1, int var2, int var3, Rectangle var4, float var5);
+        public abstract void extractRenderState(GuiGraphicsExtractor var1, int var2, int var3, Rectangle var4, float var5);
 
-        public abstract void lateRender(GuiGraphics var1, int var2, int var3, float var4);
+        public abstract void lateRender(GuiGraphicsExtractor var1, int var2, int var3, float var4);
 
         public abstract int getHeight();
 
@@ -378,7 +378,7 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             return longerLength == 0 ? (double)1.0F : (double)(longerLength - this.editDistance(longer, shorter)) / (double)longerLength;
         }
 
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, Rectangle rectangle, float delta) {
+        public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, Rectangle rectangle, float delta) {
             if (!this.getEntry().selectionElement.topRenderer.getSearchTerm().equals(this.lastSearchKeyword)) {
                 this.lastSearchKeyword = this.getEntry().selectionElement.topRenderer.getSearchTerm();
                 this.search();
@@ -395,7 +395,7 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             this.target = target[0];
         }
 
-        public void lateRender(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        public void lateRender(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             int last10Height = this.getHeight();
             int cWidth = getCellWidth();
             graphics.fill(this.lastRectangle.x, this.lastRectangle.y + this.lastRectangle.height, this.lastRectangle.x + cWidth, this.lastRectangle.y + this.lastRectangle.height + last10Height + 1, this.isExpanded() ? -1 : -6250336);
@@ -407,7 +407,7 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
                 if (yy + (double)this.getCellCreator().getCellHeight() >= (double)(this.lastRectangle.y + this.lastRectangle.height) && yy <= (double)(this.lastRectangle.y + this.lastRectangle.height + last10Height + 1)) {
                     graphics.fill(lastRectangle.x + 1, (int) yy, lastRectangle.x + cWidth, (int) yy + getCellCreator().getCellHeight(), 0xFF000000);
                     cell.bounds.setBounds(this.lastRectangle.x, (int)yy, this.getMaxScrollPosition() > (double)6.0F ? this.getCellCreator().getCellWidth() - 6 : this.getCellCreator().getCellWidth(), this.getCellCreator().getCellHeight());
-                    cell.render(graphics, mouseX, mouseY, lastRectangle.x, (int) yy, getMaxScrollPosition() > 6 ? cWidth - 6 : cWidth, getCellCreator().getCellHeight(), delta);
+                    cell.extractRenderState(graphics, mouseX, mouseY, lastRectangle.x, (int) yy, getMaxScrollPosition() > 6 ? cWidth - 6 : cWidth, getCellCreator().getCellHeight(), delta);
                 } else {
                     cell.bounds.setBounds(0, 0, 0, 0);
                     cell.dontRender(graphics, delta);
@@ -420,7 +420,7 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             if (this.currentElements.isEmpty()) {
                 Font font = client.font;
                 Component text = Component.translatable("text.cloth-config.dropdown.value.unknown");
-                graphics.drawString(font, text.getVisualOrderText(), (int)((float)this.lastRectangle.x + (float)cWidth / 2.0F - (float)font.width(text) / 2.0F), this.lastRectangle.y + this.lastRectangle.height + 3, -1);
+                graphics.text(font, text.getVisualOrderText(), (int)((float)this.lastRectangle.x + (float)cWidth / 2.0F - (float)font.width(text) / 2.0F), this.lastRectangle.y + this.lastRectangle.height + 3, -1);
             }
 
             if (this.getMaxScrollPosition() > (double)6.0F) {
@@ -579,9 +579,9 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             return this.entry;
         }
 
-        public abstract void render(GuiGraphics var1, int var2, int var3, int var4, int var5, int var6, int var7, float var8);
+        public abstract void extractRenderState(GuiGraphicsExtractor var1, int var2, int var3, int var4, int var5, int var6, int var7, float var8);
 
-        public abstract void dontRender(GuiGraphics var1, float var2);
+        public abstract void dontRender(GuiGraphicsExtractor var1, float var2);
 
         public abstract @Nullable Component getSearchKey();
 
@@ -606,7 +606,7 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             this.toTextFunction = toTextFunction;
         }
 
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, int x, int y, int width, int height, float delta) {
+        public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int x, int y, int width, int height, float delta) {
             this.rendering = true;
             this.x = x;
             this.y = y;
@@ -617,10 +617,10 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
                 graphics.fill(x +1, y, x + width -1, y + height, -15132391);
             }
 
-            graphics.drawString(client.font, ((Component)this.toTextFunction.apply(this.r)).getVisualOrderText(), x + 6, y + 3, b ? -1 : -7829368);
+            graphics.text(client.font, this.toTextFunction.apply(this.r).getVisualOrderText(), x + 6, y + 3, b ? -1 : -7829368);
         }
 
-        public void dontRender(GuiGraphics graphics, float delta) {
+        public void dontRender(GuiGraphicsExtractor graphics, float delta) {
             this.rendering = false;
         }
 
@@ -712,7 +712,7 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
 
         }
 
-        public abstract void render(GuiGraphics var1, int var2, int var3, int var4, int var5, int var6, int var7, float var8);
+        public abstract void extractRenderState(GuiGraphicsExtractor var1, int var2, int var3, int var4, int var5, int var6, int var7, float var8);
 
         private void updateBounds(Rectangle bounds) {
             this.bounds.setBounds(bounds);
@@ -731,14 +731,14 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
         protected R value;
 
         public DefaultSelectionTopCellElement(R value, Function<String, R> toObjectFunction, Function<R, Component> toTextFunction) {
-            this.original = (R)Objects.requireNonNull(value);
-            this.value = (R)Objects.requireNonNull(value);
+            this.original = Objects.requireNonNull(value);
+            this.value = Objects.requireNonNull(value);
             this.toObjectFunction = Objects.requireNonNull(toObjectFunction);
             this.toTextFunction = Objects.requireNonNull(toTextFunction);
             this.textFieldWidget = new EditBox(client.font, 0, 0, 148, 18, Component.empty()) {
-                public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+                public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
                     this.setFocused(BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.isSuggestionMode() && BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.isSelected && BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.getParent().getFocused() == BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.getParent().selectionElement && BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.getParent().selectionElement.getFocused() == BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this && BetterDropdownBoxEntry.DefaultSelectionTopCellElement.this.getFocused() == this);
-                    super.renderWidget(graphics, mouseX, mouseY, delta);
+                    super.extractWidgetRenderState(graphics, mouseX, mouseY, delta);
                 }
 
                 public boolean keyPressed(KeyEvent event) {
@@ -763,13 +763,13 @@ public class BetterDropdownBoxEntry<T> extends TooltipListEntry<T> {
             return super.isEdited() || !this.getValue().equals(this.original);
         }
 
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, int x, int y, int width, int height, float delta) {
+        public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int x, int y, int width, int height, float delta) {
             this.textFieldWidget.setX(x + 4);
             this.textFieldWidget.setY(y + 6);
             this.textFieldWidget.setWidth(width - 8);
             this.textFieldWidget.setEditable(this.getParent().isEditable());
             this.textFieldWidget.setTextColor(this.getPreferredTextColor());
-            this.textFieldWidget.render(graphics, mouseX, mouseY, delta);
+            this.textFieldWidget.extractRenderState(graphics, mouseX, mouseY, delta);
         }
 
         public R getValue() {
