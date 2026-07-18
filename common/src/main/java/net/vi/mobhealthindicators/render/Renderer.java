@@ -25,7 +25,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Matrix4fc;
-import org.joml.Quaternionf;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -63,7 +62,7 @@ public final class Renderer {
     private static final Set<Integer> QUEUED_ENTITY_IDS = new HashSet<>();
 
     private static Vec3 cameraPosition = Vec3.ZERO;
-    private static final Quaternionf CAMERA_ORIENTATION = new Quaternionf();
+    private static float cameraYaw;
     private static boolean collecting;
     private static boolean commandsSorted;
     private static boolean worldCommandsFlushed;
@@ -89,7 +88,7 @@ public final class Renderer {
         COMMANDS.clear();
         QUEUED_ENTITY_IDS.clear();
         cameraPosition = camera.position();
-        CAMERA_ORIENTATION.set(camera.rotation());
+        cameraYaw = camera.yRot();
         collecting = true;
         commandsSorted = false;
         worldCommandsFlushed = false;
@@ -144,20 +143,17 @@ public final class Renderer {
                 renderState.z + renderOffset.z - cameraPosition.z
         );
 
-        // Match vanilla name tags: billboard with the complete camera quaternion.
-        // The old yaw-only transform left camera pitch un-cancelled, making bars
-        // slide and stretch when the player looked up or down.
-        poseStack.mulPose(CAMERA_ORIENTATION);
-        poseStack.scale(pixelSize, pixelSize, pixelSize);
-
-        // Name and score offsets belong in billboard-local pixels. Applying them
-        // before the camera rotation made their spacing change with view pitch.
+        // Match vanilla's name-display stack. The health bar belongs above each
+        // line that vanilla submitted for this entity.
         if (renderState.nameTag != null) {
-            poseStack.translate(0.0F, 9.0F * 1.15F, 0.0F);
+            poseStack.translate(0.0F, 9.0F * 1.15F * pixelSize, 0.0F);
         }
         if (renderState.scoreText != null) {
-            poseStack.translate(0.0F, 9.0F * 1.15F, 0.0F);
+            poseStack.translate(0.0F, 9.0F * 1.15F * pixelSize, 0.0F);
         }
+
+        poseStack.scale(pixelSize, pixelSize, pixelSize);
+        poseStack.last().pose().rotateY(getYaw(cameraYaw));
 
         int light = config.fullBright ? LightCoordsUtil.FULL_BRIGHT : renderState.lightCoords;
         float opacity = Mth.clamp(config.opacity / 100.0F, 0.0F, 1.0F);
@@ -312,6 +308,16 @@ public final class Renderer {
                 .setColor(1.0F, 1.0F, 1.0F, command.opacity())
                 .setUv(u, v)
                 .setLight(command.light());
+    }
+
+    private static float getYaw(double yaw) {
+        yaw = -Math.toRadians(yaw);
+        yaw += Math.PI;
+
+        if (yaw > Math.PI) yaw -= 2.0 * Math.PI;
+        if (yaw < -Math.PI) yaw += 2.0 * Math.PI;
+
+        return (float) yaw;
     }
 
     private record RenderCommand(
