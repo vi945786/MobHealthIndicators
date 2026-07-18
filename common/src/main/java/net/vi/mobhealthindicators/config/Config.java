@@ -51,13 +51,11 @@ public class Config {
     @Expose @Command @ConfigScreen(category = Category.DISPLAY)
     public boolean showHearts = true;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
-    public boolean dynamicBrightness = false;
+    public boolean fullBright = false;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true) @Range(min = 10, max = 100)
     public int opacity = 100;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY) @Range(min = -25, max = 25)
     public int height = 0;
-    @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
-    public boolean renderThroughWalls = false;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)
     public boolean renderOnTopOnHover = true;
     @Expose @Command @ConfigScreen(category = Category.DISPLAY, tooltip = true)

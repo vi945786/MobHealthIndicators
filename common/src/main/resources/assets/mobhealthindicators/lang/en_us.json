@@ -3,8 +3,7 @@
 
   "config.mobhealthindicators.category.display": "General",
   "config.mobhealthindicators.option.showhearts": "Show Hearts",
-  "config.mobhealthindicators.option.dynamicbrightness": "Dynamic Brightness",
-  "config.mobhealthindicators.option.dynamicbrightness.tooltip": "Render the health bar at the mob's light level.\nIf disabled, it always renders at full brightness.",
+  "config.mobhealthindicators.option.fullbright": "Full Bright",
   "config.mobhealthindicators.option.opacity": "Opacity",
   "config.mobhealthindicators.option.opacity.tooltip": "Controls the health bar transparency.",
   "config.mobhealthindicators.option.height": "Height",

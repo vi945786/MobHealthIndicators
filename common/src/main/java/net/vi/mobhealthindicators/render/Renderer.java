@@ -155,9 +155,9 @@ public final class Renderer {
         poseStack.scale(pixelSize, pixelSize, pixelSize);
         poseStack.last().pose().rotateY(getYaw(cameraYaw));
 
-        int light = config.dynamicBrightness ? renderState.lightCoords : LightCoordsUtil.FULL_BRIGHT;
+        int light = config.fullBright ? LightCoordsUtil.FULL_BRIGHT : renderState.lightCoords;
         float opacity = Mth.clamp(config.opacity / 100.0F, 0.0F, 1.0F);
-        boolean renderOnTop = config.renderThroughWalls || (targeted && config.renderOnTopOnHover);
+        boolean renderOnTop = (targeted && config.renderOnTopOnHover);
 
         COMMANDS.add(new RenderCommand(
                 new Matrix4f(poseStack.last().pose()),
