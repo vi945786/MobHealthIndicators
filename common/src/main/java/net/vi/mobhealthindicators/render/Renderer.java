@@ -4,20 +4,21 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
@@ -52,41 +53,25 @@ public final class Renderer {
     public static final int heightDivisor = 50;
 
     /**
-     * Uses the entity shader instead of the text shader so both normal and
-     * see-through bars sample the world lightmap. Normal bars write their depth
-     * before vanilla copies it to the translucent targets, which gives glass,
-     * water and particles the correct front/behind ordering.
-     *
-     * <p>The complete entity sampler contract is retained even though every
-     * vertex uses {@link OverlayTexture#NO_OVERLAY}. Iris replaces the vanilla
-     * shader program and still expects Sampler1 to be declared and bound.</p>
+     * Health bars deliberately use Minecraft's text shader contract rather than
+     * the entity contract. Shader packs already handle billboarding text and its
+     * lightmap-only lighting model, so the bar does not inherit entity diffuse
+     * lighting, motion-vector artifacts, or temporal ghosting.
      */
-    private static final RenderPipeline WORLD_HEALTH_BAR_PIPELINE = RenderPipelines.register(
-            RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
-                    .withLocation(Identifier.fromNamespaceAndPath(modId, "pipeline/world_health_bar"))
-                    .withShaderDefine("ALPHA_CUTOUT", 0.1F)
-                    .withShaderDefine("NO_CARDINAL_LIGHTING")
-                    .withSampler("Sampler1")
-                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-                    .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
-                    .withCull(false)
-                    .build()
+    private static final RenderPipeline WORLD_HEALTH_BAR_PIPELINE = createHealthBarPipeline(
+            "pipeline/world_health_bar",
+            Optional.of(DepthStencilState.DEFAULT)
     );
 
     /**
-     * Same lightmapped entity shader, but with depth testing disabled. This is
-     * used only for render-through-walls and render-on-hover commands.
+     * Uses the same lightmapped text shader as the world pipeline, but disables
+     * depth testing for render-through-walls and render-on-hover commands.
+     * Unlike vanilla's text-see-through shader, this still samples Sampler2, so
+     * dynamic brightness works for always-on-top bars as well.
      */
-    private static final RenderPipeline ON_TOP_HEALTH_BAR_PIPELINE = RenderPipelines.register(
-            RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
-                    .withLocation(Identifier.fromNamespaceAndPath(modId, "pipeline/on_top_health_bar"))
-                    .withShaderDefine("ALPHA_CUTOUT", 0.1F)
-                    .withShaderDefine("NO_CARDINAL_LIGHTING")
-                    .withSampler("Sampler1")
-                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-                    .withDepthStencilState(Optional.empty())
-                    .withCull(false)
-                    .build()
+    private static final RenderPipeline ON_TOP_HEALTH_BAR_PIPELINE = createHealthBarPipeline(
+            "pipeline/on_top_health_bar",
+            Optional.empty()
     );
 
     private static final Function<Identifier, RenderType> WORLD_HEALTH_BAR_TYPES = Util.memoize(
@@ -110,8 +95,34 @@ public final class Renderer {
     }
 
     /**
-     * Maps the custom pipelines to Iris' translucent entity program. The
-     * pipeline still controls depth testing, blending and lightmap use.
+     * Creates a text-compatible pipeline with configurable depth testing. The
+     * regular text shaders provide alpha cutout, fog and lightmap sampling while
+     * avoiding entity-specific diffuse lighting and velocity assumptions.
+     */
+    private static RenderPipeline createHealthBarPipeline(
+            String path,
+            Optional<DepthStencilState> depthStencilState
+    ) {
+        return RenderPipelines.register(
+                RenderPipeline.builder()
+                        .withLocation(Identifier.fromNamespaceAndPath(modId, path))
+                        .withVertexShader("core/rendertype_text")
+                        .withFragmentShader("core/rendertype_text")
+                        .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
+                        .withUniform("Projection", UniformType.UNIFORM_BUFFER)
+                        .withUniform("Fog", UniformType.UNIFORM_BUFFER)
+                        .withSampler("Sampler0")
+                        .withSampler("Sampler2")
+                        .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+                        .withDepthStencilState(depthStencilState)
+                        .withCull(false)
+                        .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS)
+                        .build()
+        );
+    }
+
+    /**
+     * Copies Iris' native text-pipeline mapping onto the custom depth variants.
      */
     public static void registerIrisPipelines() {
         IrisCompat.registerPipelines(WORLD_HEALTH_BAR_PIPELINE, ON_TOP_HEALTH_BAR_PIPELINE);
@@ -249,7 +260,6 @@ public final class Renderer {
         RenderSetup setup = RenderSetup.builder(pipeline)
                 .withTexture("Sampler0", texture)
                 .useLightmap()
-                .useOverlay()
                 .createRenderSetup();
         return RenderType.create(name, setup);
     }
@@ -289,9 +299,7 @@ public final class Renderer {
         consumer.addVertex(command.modelMatrix(), x, y, 0.0F)
                 .setColor(1.0F, 1.0F, 1.0F, command.opacity())
                 .setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(command.light())
-                .setNormal(0.0F, 0.0F, 1.0F);
+                .setLight(command.light());
     }
 
     private static float getYaw(double yaw) {
