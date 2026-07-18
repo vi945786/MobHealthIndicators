@@ -2,7 +2,6 @@ package net.vi.mobhealthindicators.render;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.shaders.UniformType;
@@ -14,10 +13,10 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
@@ -45,7 +44,7 @@ import static net.vi.mobhealthindicators.render.TextureBuilder.heartSize;
  * Collects immutable health-bar commands while Minecraft extracts level render
  * state. Depth-tested bars are drawn between opaque terrain and vanilla's
  * translucent feature phase. Explicitly on-top bars are drawn after the level
- * frame graph and shader-pack final pass have completed.
+ * renderer and any shader-pack final pass have completed.
  */
 public final class Renderer {
     public static final float defaultPixelSize = 0.025F;
@@ -53,32 +52,34 @@ public final class Renderer {
     public static final int heightDivisor = 50;
 
     /**
-     * Health bars deliberately use Minecraft's text shader contract rather than
-     * the entity contract. Shader packs already handle billboarding text and its
-     * lightmap-only lighting model, so the bar does not inherit entity diffuse
-     * lighting, motion-vector artifacts, or temporal ghosting.
+     * Ordinary bars use the exact same RenderType as vanilla world text. This is
+     * important for shader packs: Iris already knows how to route this pipeline,
+     * extend its vertex format and provide stable text lighting/motion semantics.
      */
-    private static final RenderPipeline WORLD_HEALTH_BAR_PIPELINE = createHealthBarPipeline(
-            "pipeline/world_health_bar",
-            Optional.of(DepthStencilState.DEFAULT)
-    );
+    private static final Function<Identifier, RenderType> WORLD_HEALTH_BAR_TYPES = RenderTypes::text;
 
     /**
-     * Uses the same lightmapped text shader as the world pipeline, but disables
-     * depth testing for render-through-walls and render-on-hover commands.
-     * Unlike vanilla's text-see-through shader, this still samples Sampler2, so
-     * dynamic brightness works for always-on-top bars as well.
+     * Vanilla's see-through text shader omits the lightmap. The custom on-top
+     * variant instead uses the normal lightmapped text shaders with depth testing
+     * disabled. It is drawn after shader post-processing with Iris bypassed.
      */
-    private static final RenderPipeline ON_TOP_HEALTH_BAR_PIPELINE = createHealthBarPipeline(
-            "pipeline/on_top_health_bar",
-            Optional.empty()
-    );
+    private static final RenderPipeline ON_TOP_HEALTH_BAR_PIPELINE = RenderPipeline.builder()
+            .withLocation(Identifier.fromNamespaceAndPath(modId, "pipeline/on_top_health_bar"))
+            .withVertexShader("core/rendertype_text")
+            .withFragmentShader("core/rendertype_text")
+            .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
+            .withUniform("Projection", UniformType.UNIFORM_BUFFER)
+            .withUniform("Fog", UniformType.UNIFORM_BUFFER)
+            .withSampler("Sampler0")
+            .withSampler("Sampler2")
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(Optional.empty())
+            .withCull(false)
+            .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS)
+            .build();
 
-    private static final Function<Identifier, RenderType> WORLD_HEALTH_BAR_TYPES = Util.memoize(
-            texture -> createRenderType("mobhealthindicators_world_health_bar", WORLD_HEALTH_BAR_PIPELINE, texture)
-    );
     private static final Function<Identifier, RenderType> ON_TOP_HEALTH_BAR_TYPES = Util.memoize(
-            texture -> createRenderType("mobhealthindicators_on_top_health_bar", ON_TOP_HEALTH_BAR_PIPELINE, texture)
+            texture -> createOnTopRenderType(texture)
     );
 
     private static final List<RenderCommand> COMMANDS = new ArrayList<>();
@@ -92,37 +93,6 @@ public final class Renderer {
     private static boolean onTopCommandsFlushed;
 
     private Renderer() {
-    }
-
-    /**
-     * Creates an unregistered text-compatible pipeline with configurable depth
-     * testing. Keeping these pipelines out of Minecraft's static preload list is
-     * important for the post-shader on-top path: Iris must not precompile that
-     * pipeline with a gbuffer override before the final overlay draw.
-     */
-    private static RenderPipeline createHealthBarPipeline(
-            String path,
-            Optional<DepthStencilState> depthStencilState
-    ) {
-        return RenderPipeline.builder()
-                .withLocation(Identifier.fromNamespaceAndPath(modId, path))
-                .withVertexShader("core/rendertype_text")
-                .withFragmentShader("core/rendertype_text")
-                .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
-                .withUniform("Projection", UniformType.UNIFORM_BUFFER)
-                .withUniform("Fog", UniformType.UNIFORM_BUFFER)
-                .withSampler("Sampler0")
-                .withSampler("Sampler2")
-                .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-                .withDepthStencilState(depthStencilState)
-                .withCull(false)
-                .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS)
-                .build();
-    }
-
-    /** Copies Iris' native text-pipeline mapping onto the in-world variant. */
-    public static void registerIrisPipelines() {
-        IrisCompat.registerWorldPipeline(WORLD_HEALTH_BAR_PIPELINE);
     }
 
     /** Starts collection before vanilla extracts entity render states. */
@@ -140,7 +110,7 @@ public final class Renderer {
     /**
      * Iris re-extracts and renders entities while building the shadow map. That
      * pass uses the same FeatureRenderDispatcher methods as the main world pass,
-     * so it must not consume this frame's health-bar queue.
+     * so it must not add to or consume this frame's health-bar queue.
      */
     private static boolean isRenderingIrisShadowPass() {
         return isIrisLoaded && IrisCompat.isRenderingShadowPass();
@@ -205,12 +175,13 @@ public final class Renderer {
 
     /**
      * Draws ordinary bars after opaque terrain exists but before vanilla copies
-     * depth to and renders its translucent targets.
+     * depth to and renders its translucent targets. Using RenderTypes.text keeps
+     * the shader-pack path identical to vanilla name tags while still writing the
+     * bar's depth for correct glass, water, particle and weather composition.
      */
     public static void flushWorld() {
         // Iris calls FeatureRenderDispatcher.renderAllFeatures() for its shadow
-        // map before the normal main pass. Do not mark the world queue as flushed
-        // there; the main pass still needs to draw it.
+        // map before the normal main pass. Do not mark the queue as flushed there.
         if (!collecting || worldCommandsFlushed || isRenderingIrisShadowPass()) return;
         worldCommandsFlushed = true;
         sortCommands();
@@ -224,9 +195,9 @@ public final class Renderer {
 
     /**
      * Draws always-on-top bars after shader post-processing. When Iris is loaded,
-     * the draw temporarily bypasses its gbuffer program replacement and extended
-     * vertex format so the final overlay cannot be fed into temporal AA, motion
-     * blur, bloom history, or an already-finalized shader render target.
+     * the draw temporarily bypasses its gbuffer replacement and extended vertex
+     * format, preventing temporal ghosting, motion-vector trails and brightness
+     * instability from shader-pack entity programs.
      */
     public static void flushOnTop() {
         if (!collecting || onTopCommandsFlushed || isRenderingIrisShadowPass()) return;
@@ -257,12 +228,12 @@ public final class Renderer {
         QUEUED_ENTITY_IDS.clear();
     }
 
-    private static RenderType createRenderType(String name, RenderPipeline pipeline, Identifier texture) {
-        RenderSetup setup = RenderSetup.builder(pipeline)
+    private static RenderType createOnTopRenderType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(ON_TOP_HEALTH_BAR_PIPELINE)
                 .withTexture("Sampler0", texture)
                 .useLightmap()
                 .createRenderSetup();
-        return RenderType.create(name, setup);
+        return RenderType.create("mobhealthindicators_on_top_health_bar", setup);
     }
 
     private static void sortCommands() {
