@@ -6,7 +6,6 @@
     "ClientPacketListenerMixin",
     "EntityRendererMixin",
     "FeatureRenderDispatcherMixin",
-    "GameRendererMixin",
     "LevelRendererMixin",
     "LocalPlayerAccessor",
     "MinecraftMixin",
