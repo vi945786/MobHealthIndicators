@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.vi.mobhealthindicators.config.Config;
+import net.vi.mobhealthindicators.render.Renderer;
 
 public class ModInit {
 
@@ -34,6 +35,10 @@ public class ModInit {
         Config.load(platform);
         isIrisLoaded = platform.isModLoaded("iris");
         client = Minecraft.getInstance();
+
+        if (isIrisLoaded) {
+            Renderer.registerIrisPipelines();
+        }
     }
 
     public static void sendMessage(String message, ChatFormatting... style) {
