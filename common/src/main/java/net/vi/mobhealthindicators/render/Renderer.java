@@ -1,5 +1,6 @@
 package net.vi.mobhealthindicators.render;
 
+import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -229,7 +230,7 @@ public final class Renderer {
     }
 
     private static void drawOnTopCommands() {
-        RenderTarget mainTarget = client.getMainRenderTarget();
+        RenderTarget mainTarget = client.gameRenderer.mainRenderTarget();
         ensureOnTopDepthTarget(mainTarget.width, mainTarget.height);
 
         // Minecraft 26.2 uses reversed depth, so the far-plane clear value is 0.
@@ -262,7 +263,13 @@ public final class Renderer {
 
     private static void ensureOnTopDepthTarget(int width, int height) {
         if (onTopDepthTarget == null) {
-            onTopDepthTarget = new TextureTarget("Mob Health Indicators on-top depth", width, height, true);
+            onTopDepthTarget = new TextureTarget(
+                    "Mob Health Indicators on-top depth",
+                    width,
+                    height,
+                    true,
+                    GpuFormat.RGBA8_UNORM
+            );
         } else if (onTopDepthTarget.width != width || onTopDepthTarget.height != height) {
             onTopDepthTarget.resize(width, height);
         }
