@@ -9,6 +9,7 @@
     "EntityTypeAccessor",
     "GameRendererAccessor",
     "LevelAccessor",
+    "LevelRendererMixin",
     "MinecraftMixin",
     "ReloadableResourceManagerImplMixin"
   ],
