@@ -1,12 +1,14 @@
 package net.vi.mobhealthindicators.render;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,6 +17,8 @@ import java.util.Map;
 
 import static net.vi.mobhealthindicators.ModInit.client;
 import static net.vi.mobhealthindicators.ModInit.modId;
+import static net.vi.mobhealthindicators.render.Renderer.defaultPixelSize;
+import static net.vi.mobhealthindicators.render.Renderer.pixelSize;
 
 public class TextureBuilder {
 
@@ -26,12 +30,53 @@ public class TextureBuilder {
     public static HeartType.HeartColor frozenHeart;
 
     public static final int defaultHeartSize = 9;
-    public static int heartSize;
+    public static int heartSize = defaultHeartSize;
 
     public static final Map<String, ResourceLocation> textures = new HashMap<>();
     private static final int heartsPerRow = 10;
 
+    /**
+     * Rebuilds source sprites only after the resource reload has completed.
+     * This guarantees that generated bars use the currently selected pack,
+     * including custom heart dimensions and status-effect variants.
+     */
+    public static synchronized void reload() {
+        Minecraft minecraft = Minecraft.getInstance();
+
+        textures.values().forEach(minecraft.getTextureManager()::release);
+        textures.clear();
+
+        emptyTexture = new HeartType.HeartColor(
+                HeartType.EMPTY.getTexture(HeartType.Effect.none, minecraft),
+                HeartType.EMPTY.getTexture(HeartType.Effect.none, minecraft)
+        );
+        normalHeart = new HeartType.HeartColor(
+                HeartType.FULL.getTexture(HeartType.Effect.none, minecraft),
+                HeartType.HALF.getTexture(HeartType.Effect.none, minecraft)
+        );
+        poisonHeart = new HeartType.HeartColor(
+                HeartType.FULL.getTexture(HeartType.Effect.poison, minecraft),
+                HeartType.HALF.getTexture(HeartType.Effect.poison, minecraft)
+        );
+        witherHeart = new HeartType.HeartColor(
+                HeartType.FULL.getTexture(HeartType.Effect.wither, minecraft),
+                HeartType.HALF.getTexture(HeartType.Effect.wither, minecraft)
+        );
+        absorptionHeart = new HeartType.HeartColor(
+                HeartType.FULL.getTexture(HeartType.Effect.absorption, minecraft),
+                HeartType.HALF.getTexture(HeartType.Effect.absorption, minecraft)
+        );
+        frozenHeart = new HeartType.HeartColor(
+                HeartType.FULL.getTexture(HeartType.Effect.frozen, minecraft),
+                HeartType.HALF.getTexture(HeartType.Effect.frozen, minecraft)
+        );
+
+        heartSize = Math.max(1, emptyTexture.fullHeartTexture().getWidth());
+        pixelSize = defaultPixelSize / ((float) heartSize / defaultHeartSize);
+    }
+
     public static ResourceLocation getTexture(int normalHealth, int maxHealth, int absorptionHealth, HeartType.Effect effect) {
+        if (emptyTexture == null) reload();
         String healthId = normalHealth + "_" + (maxHealth - normalHealth) + "_" + absorptionHealth + "_" + effect;
         if (textures.containsKey(healthId)) return textures.get(healthId);
 
@@ -46,18 +91,24 @@ public class TextureBuilder {
 
         int heartDensity = Math.max(heartsPerRow - (heartRows - 2), 3);
         int yPixelsTotal = (heartRows - 1) * heartDensity + heartSize;
-
-        int xPixelsTotal = Math.min(totalHearts, heartsPerRow) * (heartSize -1) + 1;
+        int xPixelsTotal = Math.min(totalHearts, heartsPerRow) * (heartSize - 1) + 1;
 
         BufferedImage healthBar = new BufferedImage(xPixelsTotal, yPixelsTotal, BufferedImage.TYPE_INT_ARGB);
         Graphics graphics = healthBar.getGraphics();
 
         for (int heart = totalHearts - 1; heart >= 0; heart--) {
             addHeart(graphics, emptyTexture.fullHeartTexture(), heartRows, heartDensity, heart, heartSize);
-            BufferedImage heartTexture = getHeartTexture(heart, totalHearts, maxHearts, normalHearts, lastNormalHalf, lastAbsorptionHalf, effect);
+            BufferedImage heartTexture = getHeartTexture(
+                    heart,
+                    totalHearts,
+                    maxHearts,
+                    normalHearts,
+                    lastNormalHalf,
+                    lastAbsorptionHalf,
+                    effect
+            );
 
-            if(heartTexture == null) continue;
-
+            if (heartTexture == null) continue;
             addHeart(graphics, heartTexture, heartRows, heartDensity, heart, heartSize);
         }
 
@@ -79,11 +130,19 @@ public class TextureBuilder {
         }
     }
 
-    public static BufferedImage getHeartTexture(int currentHeart, int totalHearts, int maxNormalHearts, int normalHearts, boolean lastNormalHalf, boolean lastAbsorptionHalf, HeartType.Effect effect) {
+    public static BufferedImage getHeartTexture(
+            int currentHeart,
+            int totalHearts,
+            int maxNormalHearts,
+            int normalHearts,
+            boolean lastNormalHalf,
+            boolean lastAbsorptionHalf,
+            HeartType.Effect effect
+    ) {
         HeartType.HeartColor heartColor = null;
         boolean isHalf = false;
         if (currentHeart < normalHearts) {
-            isHalf = currentHeart == normalHearts -1 && lastNormalHalf;
+            isHalf = currentHeart == normalHearts - 1 && lastNormalHalf;
             switch (effect) {
                 case none, absorption -> heartColor = normalHeart;
                 case poison -> heartColor = poisonHeart;
@@ -93,13 +152,20 @@ public class TextureBuilder {
         } else if (currentHeart < maxNormalHearts) {
             heartColor = emptyTexture;
         } else {
-            isHalf = currentHeart == totalHearts -1 && lastAbsorptionHalf;
+            isHalf = currentHeart == totalHearts - 1 && lastAbsorptionHalf;
             heartColor = absorptionHeart;
         }
         return isHalf ? heartColor.halfHeartTexture() : heartColor.fullHeartTexture();
     }
 
     private static void addHeart(Graphics graphics, Image image, int heartRows, int heartDensity, int heart, int heartSize) {
-        graphics.drawImage(image, (heart % heartsPerRow) * (heartSize -1), (heartRows - (heart / heartsPerRow) - 1) * heartDensity, heartSize, heartSize, null);
+        graphics.drawImage(
+                image,
+                (heart % heartsPerRow) * (heartSize - 1),
+                (heartRows - (heart / heartsPerRow) - 1) * heartDensity,
+                heartSize,
+                heartSize,
+                null
+        );
     }
 }
