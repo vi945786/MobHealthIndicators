@@ -7,13 +7,13 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tessellator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.StagedVertexBuffer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.rendertype.PreparedRenderType;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -58,6 +58,16 @@ public final class Renderer {
      */
     private static final Function<Identifier, RenderType> WORLD_HEALTH_BAR_TYPES = RenderTypes::text;
     private static final Function<Identifier, RenderType> ON_TOP_HEALTH_BAR_TYPES = RenderTypes::text;
+
+    /**
+     * Minecraft 26.2 removed RenderType's immediate MeshData draw path. Geometry
+     * must be staged, uploaded, and then executed through PreparedRenderType.
+     * One shared buffer batches every health bar in a flush into a single upload.
+     */
+    private static final StagedVertexBuffer STAGED_VERTEX_BUFFER = new StagedVertexBuffer(
+            () -> "Mob Health Indicators",
+            RenderType.TRANSIENT_BUFFER_SIZE
+    );
 
     private static final List<RenderCommand> COMMANDS = new ArrayList<>();
     private static final Set<Integer> QUEUED_ENTITY_IDS = new HashSet<>();
@@ -186,12 +196,7 @@ public final class Renderer {
         if (!collecting || worldCommandsFlushed || isRenderingIrisShadowPass()) return;
         worldCommandsFlushed = true;
         sortCommands();
-
-        for (RenderCommand command : COMMANDS) {
-            if (!command.renderOnTop()) {
-                draw(command, WORLD_HEALTH_BAR_TYPES.apply(command.texture()));
-            }
-        }
+        drawCommands(false);
     }
 
     /**
@@ -245,11 +250,7 @@ public final class Renderer {
         RenderSystem.outputDepthTextureOverride = onTopDepthTarget.getDepthTextureView();
 
         try {
-            for (RenderCommand command : COMMANDS) {
-                if (command.renderOnTop()) {
-                    draw(command, ON_TOP_HEALTH_BAR_TYPES.apply(command.texture()));
-                }
-            }
+            drawCommands(true);
         } finally {
             RenderSystem.outputDepthTextureOverride = previousDepthTarget;
             RenderSystem.outputColorTextureOverride = previousColorTarget;
@@ -268,6 +269,7 @@ public final class Renderer {
     }
 
     public static void endFrame() {
+        STAGED_VERTEX_BUFFER.endFrame();
         collecting = false;
         commandsSorted = false;
         worldCommandsFlushed = false;
@@ -282,11 +284,46 @@ public final class Renderer {
         commandsSorted = true;
     }
 
-    private static void draw(RenderCommand command, RenderType renderType) {
-        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(renderType.mode(), renderType.format());
-        drawQuad(command, bufferBuilder);
-        MeshData meshData = bufferBuilder.build();
-        renderType.draw(meshData);
+    /**
+     * Builds all matching commands in a single staged upload, then executes each
+     * draw in command order. This is the replacement for the removed 26.1 API:
+     * Tessellator.begin(RenderType.mode(), RenderType.format()) and RenderType.draw().
+     */
+    private static void drawCommands(boolean renderOnTop) {
+        List<PreparedDraw> draws = new ArrayList<>();
+
+        try {
+            for (RenderCommand command : COMMANDS) {
+                if (command.renderOnTop() != renderOnTop) continue;
+
+                RenderType renderType = (renderOnTop ? ON_TOP_HEALTH_BAR_TYPES : WORLD_HEALTH_BAR_TYPES)
+                        .apply(command.texture());
+                PreparedRenderType preparedRenderType = renderType.prepare();
+                VertexSorting sorting = renderType.sortOnUpload()
+                        ? RenderSystem.getProjectionType().vertexSorting()
+                        : null;
+                StagedVertexBuffer.Draw draw = STAGED_VERTEX_BUFFER.appendDraw(
+                        renderType.format(),
+                        renderType.primitiveTopology(),
+                        sorting
+                );
+
+                drawQuad(command, STAGED_VERTEX_BUFFER.getVertexBuilder(draw));
+                draws.add(new PreparedDraw(preparedRenderType, draw));
+            }
+
+            if (draws.isEmpty()) return;
+
+            STAGED_VERTEX_BUFFER.upload();
+            for (PreparedDraw draw : draws) {
+                StagedVertexBuffer.ExecuteInfo executeInfo = STAGED_VERTEX_BUFFER.getExecuteInfo(draw.draw());
+                if (executeInfo != null) {
+                    draw.renderType().drawFromBuffer(executeInfo);
+                }
+            }
+        } finally {
+            STAGED_VERTEX_BUFFER.endDraw();
+        }
     }
 
     private static void drawQuad(RenderCommand command, VertexConsumer consumer) {
@@ -312,6 +349,12 @@ public final class Renderer {
                 .setColor(1.0F, 1.0F, 1.0F, command.opacity())
                 .setUv(u, v)
                 .setLight(command.light());
+    }
+
+    private record PreparedDraw(
+            PreparedRenderType renderType,
+            StagedVertexBuffer.Draw draw
+    ) {
     }
 
     private record RenderCommand(
